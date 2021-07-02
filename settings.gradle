@@ -1,2 +1,3 @@
 rootProject.name = "Merlin"
 include ':app'
+include ':Core'
