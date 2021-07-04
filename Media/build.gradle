@@ -26,4 +26,5 @@ android {
 }
 
 dependencies {
+    api project(path: ':Core')
 }

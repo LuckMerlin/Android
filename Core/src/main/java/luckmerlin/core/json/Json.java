@@ -1,4 +1,4 @@
-package luckmerlin.json;
+package luckmerlin.core.json;
 
 import org.json.JSONArray;
 import org.json.JSONException;

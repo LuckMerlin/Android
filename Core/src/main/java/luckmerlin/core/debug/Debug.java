@@ -1,4 +1,4 @@
-package luckmerlin.debug;
+package luckmerlin.core.debug;
 
 import android.util.Log;
 
