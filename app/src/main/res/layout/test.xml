@@ -3,42 +3,9 @@
     xmlns:binding="http://schemas.android.com/apk/res-auto">
     <data>
         <import type="luckmerlin.databinding.touch.Touch"/>
+        <variable name="vm" type="luckmerlin.android.TestModel" />
     </data>
-    <FrameLayout
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content">
-        <luckmerlin.widget.layout.FlowLayout
-            android:layout_gravity="center"
-            android:background="#20f0"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-            <TextView android:text="小河马"
-                android:background="#3000"
-                android:textColor="#fff"
-                android:padding="5dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+    <FrameLayout binding:m="@{vm.model()}" android:layout_height="wrap_content" android:layout_width="wrap_content">
 
-            <TextView android:text="小河马我们是的发生"
-                android:background="#3000"
-                android:textColor="#fff"
-                android:padding="5dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
-            <TextView android:text="是打发打发沙发上"
-                android:background="#3000"
-                android:textColor="#fff"
-                android:padding="5dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
-            <TextView android:text="小河马"
-                android:background="#3000"
-                android:textColor="#fff"
-                android:padding="5dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-        </luckmerlin.widget.layout.FlowLayout>
     </FrameLayout>
 </layout>
