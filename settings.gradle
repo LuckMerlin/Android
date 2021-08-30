@@ -2,8 +2,11 @@ rootProject.name = "Merlin"
 include ':app'
 include ':Core'
 include ':DataBinding'
+include ':FileManager'
+
 //include ':database'
 //include ':Media'
 //include ':Widgets'
 //include ':Gallery'
 //include ':Asm'
+//include ':APT'

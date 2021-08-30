@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:binding="http://schemas.android.com/apk/res-auto">
+    <data>
+        <import type="luckmerlin.databinding.touch.Image"/>
+        <variable name="visibility" type="int" />
+        <variable name="src" type="Object" />
+    </data>
+    <ImageView android:layout_width="@dimen/titleIconSize" android:layout_height="@dimen/titleIconSize"
+        android:layout_marginLeft="5dp" android:layout_marginRight="15dp"
+        android:visibility="@{visibility}" binding:m="@{Image.image(src)}"/>
+</layout>

@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="luckmerlin.android.demo">
+    package="com.file.manager">
 
-    <application android:allowBackup="true"
-        android:name="luckmerlin.android.TestApplication"
-        android:supportsRtl="true">
-        <activity android:name="luckmerlin.android.TestActivity">
+    <application android:label="@string/app_name">
+        <activity android:name="com.merlin.file.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

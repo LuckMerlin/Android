@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:binding="http://schemas.android.com/apk/res-auto">
+    <data>
+        <import type="luckmerlin.databinding.touch.Click"/>
+        <variable name="device" type="com.merlin.file.Client" />
+    </data>
+    <TextView binding:m="@{Click.c().tag(device)}" android:text="@{device.name}"
+        android:textSize="@dimen/textTitle" android:padding="5dp"
+        android:minWidth="40dp" android:textStyle="bold"
+        style="@style/titleNormalTextView"/>
+</layout>

@@ -4,9 +4,9 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public class AndroidAttachBaseContextMethodVisitor extends MethodVisitor implements Opcodes{
+public class AndroidMethodVisitor extends MethodVisitor implements Opcodes{
 
-    public AndroidAttachBaseContextMethodVisitor(MethodVisitor mv) {
+    public AndroidMethodVisitor(MethodVisitor mv) {
         super(Opcodes.ASM7, mv);
     }
 

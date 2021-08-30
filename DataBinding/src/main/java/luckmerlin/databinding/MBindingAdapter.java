@@ -14,4 +14,5 @@ public class MBindingAdapter {
             binding.onBind(view);
         }
     }
+
 }

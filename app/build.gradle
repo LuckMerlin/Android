@@ -1,7 +1,6 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
-    id 'com.luckmerlin.asm.Asm'
 }
 
 android {
@@ -39,6 +38,9 @@ android {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation project(path: ':Core')
-//    implementation project(path: ':Widgets')
     implementation project(path: ':DataBinding')
+//    implementation project(path: ':Widgets')
+//    implementation 'com.google.auto.service:auto-service:1.0-rc5'
+//    annotationProcessor project(':APT')
+//    implementation project(':APT')
 }

@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.library'
+    id 'com.android.application'
 }
 
 android {
@@ -7,6 +7,7 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
+        applicationId "luckmerlin.file.manager"
         minSdkVersion 14
         targetSdkVersion 30
         versionCode 1
@@ -20,6 +21,10 @@ android {
         }
     }
 
+    dataBinding {
+        enabled = true
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -27,4 +32,8 @@ android {
 }
 
 dependencies {
+    implementation project(path: ':Core')
+    implementation project(path: ':DataBinding')
+
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
 }

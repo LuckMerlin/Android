@@ -11,10 +11,12 @@ import com.android.build.api.transform.TransformOutputProvider
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.android.utils.FileUtils
+import luckmerlin.asm.model.AndroidMethodVisitor
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.compress.utils.IOUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.objectweb.asm.Opcodes
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
@@ -83,24 +85,18 @@ class Asm extends Transform implements Plugin<Project> {
     static void handleDirectoryInput(DirectoryInput directoryInput, TransformOutputProvider outputProvider) {
         //是否是目录
         if (directoryInput.file.isDirectory()) {
-            MClassVisitor visitor=new MClassVisitor();
             //列出目录所有文件（包含子文件夹，子文件夹内文件）
             directoryInput.file.eachFileRecurse { File file ->
                 def name = file.name
-                boolean localClass=true
-                String filePath=file.getAbsolutePath()
-                if (visitor.isSupportClassName(localClass,filePath)) {
-                    ClassReader classReader = new ClassReader(file.bytes)
-                    if (visitor.isClassMatch(localClass,classReader,filePath)){
-                        ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
-                        ClassVisitor cv = visitor.visit(true,file.getAbsolutePath(),classReader,classWriter)
-                        classReader.accept(cv, EXPAND_FRAMES)
-                        byte[] code = classWriter.toByteArray()
-                        FileOutputStream fos = new FileOutputStream(file.parentFile.absolutePath + File.separator + name)
-                        fos.write(code)
-                        fos.close()
-                    }
-                }
+                ClassReader classReader = new ClassReader(file.bytes)
+                ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
+                ClassVisitor cv = new LifecycleClassVisitor(classWriter)
+                classReader.accept(cv, EXPAND_FRAMES)
+                byte[] code = classWriter.toByteArray()
+                FileOutputStream fos = new FileOutputStream(
+                        file.parentFile.absolutePath + File.separator + name)
+                fos.write(code)
+                fos.close()
             }
         }
         //处理完输入文件之后，要把输出给下一个任务
@@ -130,27 +126,26 @@ class Asm extends Transform implements Plugin<Project> {
             }
             JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tmpFile))
             //用于保存
-            MClassVisitor classFinder=new MClassVisitor()
             while (enumeration.hasMoreElements()) {
                 JarEntry jarEntry = (JarEntry) enumeration.nextElement()
                 String entryName = jarEntry.getName()
                 ZipEntry zipEntry = new ZipEntry(entryName)
                 InputStream inputStream = jarFile.getInputStream(jarEntry)
-                boolean localClass=false
                 //插桩class
-                byte[] code=null
-                jarOutputStream.putNextEntry(zipEntry)
-                if (classFinder.isSupportClassName(localClass,entryName)) { //class文件处理
-                    code=IOUtils.toByteArray(inputStream)
-                    ClassReader classReader = new ClassReader(code)
-                    if (classFinder.isClassMatch(localClass,classReader,entryName)){
-                        ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
-                        ClassVisitor cv = classFinder.visit(localClass,entryName,classReader,classWriter)
-                        classReader.accept(cv, EXPAND_FRAMES)
-                        code = classWriter.toByteArray()
-                    }
+                if (entryName.endsWith(".class") && !entryName.startsWith("R\$")
+                        && !"R.class".equals(entryName) && !"BuildConfig.class".equals(entryName)
+                        && "android/support/v4/app/FragmentActivity.class".equals(entryName)) {
+                    jarOutputStream.putNextEntry(zipEntry)
+                    ClassReader classReader = new ClassReader(IOUtils.toByteArray(inputStream))
+                    ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
+                    ClassVisitor cv = new LifecycleClassVisitor(classWriter)
+                    classReader.accept(cv, EXPAND_FRAMES)
+                    byte[] code = classWriter.toByteArray()
+                    jarOutputStream.write(code)
+                } else {
+                    jarOutputStream.putNextEntry(zipEntry)
+                    jarOutputStream.write(IOUtils.toByteArray(inputStream))
                 }
-                jarOutputStream.write(null!=code?code:IOUtils.toByteArray(inputStream))
                 jarOutputStream.closeEntry()
             }
             //结束

@@ -15,9 +15,10 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.Window;
 import android.widget.TextView;
+import androidx.annotation.RequiresApi;
+import androidx.databinding.ViewDataBinding;
 import java.lang.ref.WeakReference;
 import luckmerlin.core.debug.Debug;
-import luckmerlin.databinding.Binding;
 
 /**
  * Create LuckMerlin
@@ -27,8 +28,9 @@ import luckmerlin.databinding.Binding;
 public abstract class Model {
     private Handler mHandler;
     private WeakReference<View> mRoot;
+    private static final int TAG_ID=(2<<24);
 
-    protected void onRootAttached(String debug){
+    protected void onRootAttached(){
         //Do nothing
     }
 
@@ -44,26 +46,49 @@ public abstract class Model {
         return null!=view&&(Build.VERSION.SDK_INT >= 19?view.isAttachedToWindow():null!=view.getWindowToken());
     }
 
-    public static Binding model(){
-        return new Binding() {
-            @Override
-            public void onBind(View view) {
-                new ModelBinder().bind(view);
-            }
-        };
+    public static Model findModel(View view){
+        Object tagObject=null!=view?view.getTag(TAG_ID):null;
+        return null!=tagObject&&tagObject instanceof Model?(Model)tagObject:null;
     }
 
-    final boolean attachRoot(View root, String debug){
+    public final boolean attachRoot(ViewDataBinding binding){
+        return null!=binding&&attachRoot(binding.getRoot());
+    }
+
+    public final boolean attachRoot(View root){
         if (null!=root&&null==mRoot){
-            mRoot=new WeakReference<View>(root);
-            Debug.TD(null,"On attach root."+this);
-            onRootAttached(debug);
+            final View current=root;
+            final View.OnAttachStateChangeListener listener=new View.OnAttachStateChangeListener(){
+                @Override
+                public void onViewAttachedToWindow(View v) {
+                    if (null!=v&&v==current){
+                        Debug.TD(null,"Attached model view."+this);
+                        v.setTag(TAG_ID,Model.this);
+                        mRoot=new WeakReference<View>(v);
+                        onRootAttached();
+                    }
+                }
+
+                @Override
+                public void onViewDetachedFromWindow(View v) {
+                    if (null!=v&&v==current){
+                        v.setTag(TAG_ID,null);
+                        Debug.TD(null,"Detached model view."+this);
+                        detachedRoot(v);
+                    }
+                }
+            };
+            if (null==current.getParent()){
+                root.addOnAttachStateChangeListener(listener);
+                return true;
+            }
+            listener.onViewAttachedToWindow(root);
             return true;
         }
         return false;
     }
 
-    protected void onRootDetached(String debug){
+    protected void onRootDetached(){
         //Do nothing
     }
 
@@ -72,24 +97,27 @@ public abstract class Model {
         return null!=context?context.getApplicationContext():null;
     }
 
-    final boolean detachedRoot(String debug){
+    private final boolean detachedRoot(View v){
         WeakReference<View> reference=mRoot;
         View view=null!=reference?reference.get():null;
-        mRoot=null;
-        if (null!=view){
-            Debug.TD(null,"On detached root."+this);
-            onRootDetached(debug);
-            reference.clear();
+        if (null!=v&&null!=view&&v==view){
+            mRoot=null;
+            if (null!=view){
+                Debug.TD(null,"On detached root."+this);
+                onRootDetached();
+                reference.clear();
+            }
+            return null!=view;
         }
-        return null!=view;
+        return false;
     }
 
-    protected final boolean detach(String debug){
+    public final boolean detach(){
         View root=getRootView();
         ViewParent parent=null!=root?root.getParent():null;
         if (null!=parent&&parent instanceof ViewGroup){
             ((ViewGroup)parent).removeView(root);
-            Debug.D("Detach model root "+(null!=debug?debug:"."));
+            Debug.D("Detach model root.");
             return true;
         }
         return false;
