@@ -6,6 +6,7 @@
     <string name="move">移动</string>
     <string name="copy">复制</string>
     <string name="download">下载</string>
+    <string name="local">本地</string>
     <!-- -->
     <color name="textTitle">#ffffff</color>
     <color name="textTitleSub">#ffffff</color>
@@ -15,5 +16,6 @@
     <dimen name="titleIconSize">28dp</dimen>
     <dimen name="textTitle">18sp</dimen>
     <dimen name="textSmall">13sp</dimen>
+    <dimen name="listIconNormal">40dp</dimen>
 
 </resources>

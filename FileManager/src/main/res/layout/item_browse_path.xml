@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:binding="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable name="multiChoose" type="boolean" />
+        <variable name="choosed" type="boolean" />
+        <variable name="path" type="com.merlin.file.Path" />
+        <variable name="position" type="int" />
+        <import type="android.view.View"/>
+        <import type="luckmerlin.databinding.touch.Click"/>
+        <import type="com.file.manager.R"/>
+        <import type="merlin.file.util.Thumbs"/>
+        <import type="merlin.file.util.FileSize"/>
+        <import type="merlin.file.util.Time"/>
+    </data>
+    <RelativeLayout android:clickable="true" android:layout_marginBottom="4dp"
+        android:backgroundResource="@{path.access?R.drawable.selector_round_dark_corner_small:R.drawable.round_dark_corner_small_disable}"
+        android:layout_width="match_parent" android:layout_height="@dimen/listItemNormal">
+
+            <ImageView android:layout_alignParentLeft="true" android:padding="2dp"
+                android:layout_margin="1dp"
+                android:layout_width="@dimen/listItemNormal" android:layout_height="@dimen/listItemNormal"/>
+
+            <LinearLayout android:layout_width="match_parent" android:orientation="vertical"
+                android:layout_margin="5dp" android:layout_height="wrap_content">
+
+                <TextView android:layout_width="match_parent" android:textSize="@dimen/textTitle"
+                    android:singleLine="true" android:text="@{path.title??path.name}"
+                    android:textColor="@color/textTitle" android:layout_height="wrap_content"/>
+                <LinearLayout android:orientation="horizontal"
+                    android:layout_width="match_parent" android:layout_height="wrap_content">
+                    <View android:visibility="@{path.local?View.VISIBLE:View.GONE}"
+                        android:alpha="0.9" android:layout_marginTop="3dp" android:layout_marginBottom="3dp"
+                        android:layout_width="3dp" android:layout_height="3dp"/>
+                    <TextView android:visibility="@{path.directory?View.GONE:View.VISIBLE}"
+                        android:text="@{path.directory?``:FileSize.formatSizeText((double)path.length)}"
+                        style="@style/titleSmallTextView"/>
+                    <TextView android:text="@{path.directory?`(`+(path.size)+`)`:(path.extension??``)}"
+                        style="@style/titleSmallTextView"/>
+                    <TextView android:text="@{Time.formatTime(path.modifyTime)}"
+                        style="@style/titleSmallTextView"/>
+                    <TextView style="@style/titleSmallTextView"
+                        android:text="@{path.permission??``}"/>
+                </LinearLayout>
+            </LinearLayout>
+            <CheckBox android:layout_alignParentRight="true"
+                style="@style/checkboxStyle" android:clickable="false" android:duplicateParentState="true"
+                android:visibility="@{multiChoose?View.VISIBLE:View.GONE}"
+                android:layout_centerVertical="true" android:checked="@{choosed}"
+                android:layout_width="@dimen/listIconNormal" android:layout_height="@dimen/listIconNormal"/>
+        </RelativeLayout>
+    </layout>

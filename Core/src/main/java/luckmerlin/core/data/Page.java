@@ -1,31 +1,36 @@
 package luckmerlin.core.data;
 
-import java.util.List;
+import java.util.Collection;
 
 public class Page<T>{
-    private final List<T> mData;
-    private final long mFrom;
-    private final long mTotal;
-
-    public Page(long from, List<T> data){
-        this(from,data,-1);
-    }
-
-    public Page(long from, List<T> data, long total){
-        mFrom=from;
-        mData=data;
-        mTotal=total;
-    }
+    private Collection<T> mData;
+    private long mFrom;
+    private long mTotal;
 
     public final long getFrom() {
         return mFrom;
     }
 
-    public final List<T> getData() {
+    public final Collection<T> getData() {
         return mData;
     }
 
     public final long getTotal() {
         return mTotal;
+    }
+
+    public final Page setData(Collection<T> data) {
+        this.mData = data;
+        return this;
+    }
+
+    public final Page setTotal(long total) {
+        this.mTotal = total;
+        return this;
+    }
+
+    public final Page setFrom(long from) {
+        this.mFrom = from;
+        return this;
     }
 }
