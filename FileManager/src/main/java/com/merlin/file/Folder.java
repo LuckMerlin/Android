@@ -26,6 +26,12 @@ public class Folder extends Page<Path> implements Path {
     }
 
     @Override
+    public String getMimeType() {
+        Path path=mPath;
+        return null!=path?path.getMimeType():null;
+    }
+
+    @Override
     public final long getSize() {
         Path path=mPath;
         return null!=path?path.getSize():0;

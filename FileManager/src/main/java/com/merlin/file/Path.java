@@ -12,6 +12,8 @@ public interface Path {
         return getSize()>=0;
     }
 
+    String getMimeType();
+
     public default boolean isAccess(){
         return true;
     }

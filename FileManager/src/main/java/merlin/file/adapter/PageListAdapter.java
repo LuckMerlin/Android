@@ -13,13 +13,43 @@ public class PageListAdapter<A,T> extends ListAdapter<T>{
     private Loading<T> mLoading=null;
     private Integer mLatestCode;
     private A mArg;
+    private int mPageSize=20;
+
+    public final PageListAdapter setPageSize(int pageSize){
+        if (pageSize>0&&mPageSize!=pageSize){
+            mPageSize=pageSize;
+        }
+        return this;
+    }
+
+    @Override
+    public void onRefresh(int where) {
+        super.onRefresh(where);
+        if (where==Refresher.TOP){
+            pre(mPageSize, (int code, String note, Page<T> data)-> {
+                if ((code&Code.CODE_CANCEL)==0){
+                    super.setRefreshing(false,where);
+                }
+            });
+        }else if (where==Refresher.BOTTOM){
+            next(mPageSize,(int code, String note, Page<T> data)-> {
+                if ((code&Code.CODE_CANCEL)==0){
+                    super.setRefreshing(false,where);
+                }
+            });
+        }
+    }
+
+    public final int getPageSize() {
+        return mPageSize;
+    }
 
     public final Canceler setPager(Pager<A,T> pager){
         return setPager(pager,null);
     }
 
     public final Canceler setPager(Pager<A,T> pager,A arg){
-        return setPager(pager,arg,-1);
+        return setPager(pager,arg,mPageSize);
     }
 
     public final Canceler setPager(Pager<A,T> pager,A arg,int limit){
@@ -32,19 +62,35 @@ public class PageListAdapter<A,T> extends ListAdapter<T>{
         return reset(arg,limit);
     }
 
-    public final Canceler pre(int limit){
+    public final Canceler pre(){
+        return pre(mPageSize,null);
+    }
+
+    public final Canceler pre(int limit,OnPageLoadFinish<T> callback){
         return pending(()-> loadPage(mArg, getFirst(),-Math.abs(limit),(int code, String note, Page<T> data)-> {
             if (code==Code.CODE_SUCCEED&&null!=data){
                 insert(0,data.getData(),null);
-            } }));
+            }
+            notifyFinish(code,note,data,callback);
+        }));
     }
 
-    public final Canceler next(int limit){
+    public final Canceler next(){
+        return next(mPageSize,null);
+    }
+
+    public final Canceler next(int limit,OnPageLoadFinish<T> callback){
         final int count=getDataCount();
         return pending(()->loadPage(mArg, getLatest(),Math.abs(limit),(int code, String note, Page<T> data)-> {
             if (code==Code.CODE_SUCCEED&&null!=data){
                 insert(count,data.getData(),null);
-            } }));
+            }
+            notifyFinish(code,note,data,callback);
+        }));
+    }
+
+    public final Canceler reset(A arg){
+        return reset(arg,mPageSize);
     }
 
     public final Canceler reset(A arg,int limit){
@@ -72,7 +118,6 @@ public class PageListAdapter<A,T> extends ListAdapter<T>{
 
     private final Canceler loadPage(A arg,T anchor,int limit,OnPageLoadFinish<T> callback){
         if (null!=mLoading){
-
             notifyFinish(Code.CODE_ALREADY_DOING,"Already doing.",null,callback);
             return null;
         }

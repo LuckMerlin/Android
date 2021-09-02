@@ -62,14 +62,17 @@ public class LocalClient extends Client<Path,Path> {
         final int shift=limit>0?1:-1;
         if (null!=anchorPath&&anchorPath.length()>0) {
             if ((anchorIndex=Arrays.binarySearch(files, new File(anchorPath)))>=0&&anchorIndex<length){
+                Debug.D("DDDDDDDDD "+anchorIndex);
                 anchorIndex+=shift;//Make shift to ignore anchor
             }
+            Debug.D("DDDDDd  DDDD "+anchorIndex);
         }
         if (anchorIndex<0||anchorIndex>=length){
-            Debug.W("Can't load local folder while anchor index invalid.");
+            Debug.W("Can't load local folder while anchor index invalid."+anchorIndex+" "+length+" "+anchorPath);
             notifyFinish(Code.CODE_FAIL,"Anchor index invalid",browseFolder,callback);
             return null;
         }
+        Debug.D("Browse local folder from "+anchorIndex+" with size "+limit);
         int size=Math.abs(limit);
         final LinkedList<Path> list=new LinkedList<>();
         File child=null;Path childPath=null;

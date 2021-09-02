@@ -1,6 +1,10 @@
 package com.merlin.file;
 
+import android.os.Build;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class LocalPath implements Path {
     private File mFile;
@@ -14,6 +18,23 @@ public class LocalPath implements Path {
     public long getModifyTime() {
         File file=mFile;
         return null!=file?file.lastModified():-1;
+    }
+
+    @Override
+    public String getMimeType() {
+        String path=getPath();
+        if (null!=path&&path.length()>0){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                try {
+                    return Files.probeContentType(Paths.get(path));
+                } catch (IOException e) {
+                    //Do nothing
+                }
+            }else{
+
+            }
+        }
+        return null;
     }
 
     @Override

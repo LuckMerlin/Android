@@ -102,14 +102,12 @@
                         binding:menuText="@{R.string.delete}"/>
                 </LinearLayout>
             </HorizontalScrollView>
-            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-                android:paddingLeft="5dp" android:paddingRight="5dp"
-                android:background="#f00"
+            <merlin.file.view.SwipeRefreshLayout android:paddingLeft="5dp" android:paddingRight="5dp"
                 android:layout_above="@id/activityFileBrowser_bottomHSV"
                 android:layout_width="match_parent" android:layout_height="match_parent">
                 <androidx.recyclerview.widget.RecyclerView android:layout_width="match_parent"
                     android:adapter="@{vm.contentAdapter}" android:layout_height="match_parent"/>
-            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+            </merlin.file.view.SwipeRefreshLayout>
         </RelativeLayout>
         </LinearLayout>
 </layout>

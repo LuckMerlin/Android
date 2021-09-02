@@ -20,6 +20,7 @@ public class FileBrowserModel extends BaseModel {
     private final ObservableField<Folder> mCurrentFolder=new ObservableField<>();
     private final ObservableField<Integer> mClientCount=new ObservableField<>();
     private final ObservableField<RecyclerView.Adapter> mContentAdapter=new ObservableField<>();
+    private final ClientBrowseAdapter mBrowserAdapter=new ClientBrowseAdapter();
     private List<Client> mClients;
 
     @Override
@@ -27,6 +28,7 @@ public class FileBrowserModel extends BaseModel {
         super.onRootAttached();
         addClient(new LocalClient(getText(R.string.local)));
         selectAny();
+        mContentAdapter.set(mBrowserAdapter);
     }
 
     public boolean addClient(Client client){
@@ -87,11 +89,9 @@ public class FileBrowserModel extends BaseModel {
         }
         //
         Debug.TD("Select client.",client);
-        RecyclerView.Adapter adapter=mContentAdapter.get();
-        if (null==adapter){
-            mContentAdapter.set(new ClientBrowseAdapter(client));
-        }else if (adapter instanceof ClientBrowseAdapter){
-            ((ClientBrowseAdapter)adapter).setPager(client);
+        ClientBrowseAdapter browseAdapter=mBrowserAdapter;
+        if (null!=browseAdapter){
+            browseAdapter.setPager(client);
         }
         mCurrentClient.set(client);
         return true;

@@ -7,13 +7,11 @@ import com.file.manager.databinding.ItemBrowsePathBinding;
 import com.merlin.file.Client;
 import com.merlin.file.Path;
 import java.util.List;
-import luckmerlin.core.debug.Debug;
+import luckmerlin.databinding.touch.Image;
+import merlin.file.util.ThumbResources;
 
 public final class ClientBrowseAdapter extends PageListAdapter<Client<Object,Path>, Path>{
-
-    public ClientBrowseAdapter(Client client){
-        super.setPager(client);
-    }
+    private final ThumbResources mThumbs=new ThumbResources();
 
     @Override
     protected Integer onResolveViewTypeLayoutId(int viewType) {
@@ -22,10 +20,11 @@ public final class ClientBrowseAdapter extends PageListAdapter<Client<Object,Pat
 
     @Override
     protected void onBindViewHolder(RecyclerView.ViewHolder holder, int viewType, ViewDataBinding binding, int position, Path data, List<Object> payloads) {
-        Debug.D("DDD "+position+" "+data
-        );
         if (null!=binding&&binding instanceof ItemBrowsePathBinding){
             ItemBrowsePathBinding itemBinding=(ItemBrowsePathBinding)binding;
+            Object thumbObject=null!=data?data.isDirectory()?R.drawable.icon_folder:mThumbs.getThumb(data.getPath()):null;
+            thumbObject=null!=thumbObject||null==data?thumbObject:mThumbs.getMimeTypeThumb(data.getMimeType());
+            itemBinding.setThumb(null!=thumbObject?Image.image(thumbObject):null);
             itemBinding.setPath(data);
         }
     }
