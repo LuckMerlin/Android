@@ -1,5 +1,8 @@
 package com.merlin.file;
 
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -17,6 +20,24 @@ public class LocalClient extends Client<Path,Path> {
     }
 
     @Override
+    public boolean open(Context context, Path path) {
+        String filePath=null!=context&&null!=path?path.getPath():null;
+        if (null!=filePath&&filePath.length()>0){
+            try {
+                Intent intent = new Intent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).
+                        setAction(Intent.ACTION_VIEW).setDataAndType(Uri.
+                        fromFile(new File(filePath)), path.getMimeType());
+                context.startActivity(intent);
+                return true;
+            }catch (Exception e){
+                Debug.E("Exception open path.e="+e);
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    @Override
     public Canceler onLoad(Path folder, Path anchor, int limit, OnPageLoadFinish<Path> callback) {
         if (null==(folder=null!=folder?folder:getHome())){
             Debug.W("Can't load local folder while folder invalid.");
@@ -31,7 +52,7 @@ public class LocalClient extends Client<Path,Path> {
             notifyFinish(Code.CODE_ARGS,"Args invalid",null,callback);
             return null;
         }else if (!file.exists()){
-            Debug.W("Can't load local folder while folder not exist.");
+            Debug.W("Can't load local folder while folder not exist. "+file);
             notifyFinish(Code.CODE_NOT_EXIST,"Directory not exist.",null,callback);
             return null;
         }else if (!file.isDirectory()){
@@ -46,7 +67,7 @@ public class LocalClient extends Client<Path,Path> {
         final File[] files=file.listFiles();
         final int length=null!=files?files.length:0;
         final Folder browseFolder=new Folder(new LocalPath().apply(file));
-        browseFolder.setTotal(length);
+        browseFolder.setFreeSpace(file.getFreeSpace()).setTotalSpace(file.getTotalSpace()).setTotal(length);
         if (length<=0){
             notifyFinish(Code.CODE_SUCCEED,"Directory empty",browseFolder,callback);
             return null;
@@ -55,7 +76,8 @@ public class LocalClient extends Client<Path,Path> {
             notifyFinish(Code.CODE_FAIL,"Limit invalid",browseFolder,callback);
             return null;
         }
-        final Comparator<File> comparator=(File o1, File o2)->null!=o1&&o1.isDirectory()?-1:null!=o2&&o2.isDirectory()?1:0;
+        final Comparator<File> comparator=(File o1, File o2)->null!=o1&&o1.isDirectory()
+                ?-1:null!=o2&&o2.isDirectory()?1:o1.compareTo(o2);
         Arrays.sort(files,comparator);
         String anchorPath=null!=anchor?anchor.getPath():null;
         int anchorIndex=limit>0?0:length-1;

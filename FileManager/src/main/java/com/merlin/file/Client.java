@@ -1,5 +1,6 @@
 package com.merlin.file;
 
+import android.content.Context;
 import android.os.Environment;
 import luckmerlin.core.OnFinish;
 import luckmerlin.core.data.Pager;
@@ -16,6 +17,8 @@ public abstract class Client<A,T extends Path> implements Pager<A,T> {
         mHome=path;
         return this;
     }
+
+    public abstract boolean open(Context context,Path path);
 
     public final String getName() {
         return mName;

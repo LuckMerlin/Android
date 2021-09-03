@@ -1,5 +1,7 @@
 package merlin.file.adapter;
 
+import android.view.ViewParent;
+import androidx.recyclerview.widget.RecyclerView;
 import luckmerlin.core.Canceler;
 import luckmerlin.core.Code;
 import luckmerlin.core.OnFinish;
@@ -8,7 +10,7 @@ import luckmerlin.core.data.Page;
 import luckmerlin.core.data.Pager;
 import luckmerlin.core.debug.Debug;
 
-public class PageListAdapter<A,T> extends ListAdapter<T>{
+public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.OnRefreshListener{
     private Pager<A,T> mPager;
     private Loading<T> mLoading=null;
     private Integer mLatestCode;
@@ -22,21 +24,57 @@ public class PageListAdapter<A,T> extends ListAdapter<T>{
         return this;
     }
 
+    protected final boolean setRefreshing(boolean refreshing,int where){
+        Refresher refresher=getRefresher();
+        return null!=refresher&&refresher.setRefreshing(refreshing,where);
+    }
+
+    protected Refresher getRefresher(){
+        RecyclerView recyclerView=getRecyclerView();
+        ViewParent parent=null!=recyclerView?recyclerView.getParent():null;
+        return null!=parent&&parent instanceof Refresher?(Refresher)parent:null;
+    }
+
+    public final Pager<A, T> getPager() {
+        return mPager;
+    }
+
+    public final A getArg() {
+        return mArg;
+    }
+
     @Override
     public void onRefresh(int where) {
-        super.onRefresh(where);
         if (where==Refresher.TOP){
             pre(mPageSize, (int code, String note, Page<T> data)-> {
                 if ((code&Code.CODE_CANCEL)==0){
-                    super.setRefreshing(false,where);
+                    PageListAdapter.this.setRefreshing(false,where);
                 }
             });
         }else if (where==Refresher.BOTTOM){
             next(mPageSize,(int code, String note, Page<T> data)-> {
                 if ((code&Code.CODE_CANCEL)==0){
-                    super.setRefreshing(false,where);
+                    PageListAdapter.this.setRefreshing(false,where);
                 }
             });
+        }
+    }
+
+    @Override
+    public void onAttachedRecyclerView(RecyclerView recyclerView) {
+        super.onAttachedRecyclerView(recyclerView);
+        Refresher refresher=getRefresher();//Try bind refresher
+        if (null!=refresher){
+            refresher.setOnRefreshListener(this);
+        }
+    }
+
+    @Override
+    public void onDetachedRecyclerView(RecyclerView recyclerView) {
+        super.onDetachedRecyclerView(recyclerView);
+        Refresher refresher=getRefresher();//Try unbind refresher
+        if (null!=refresher){
+            refresher.setOnRefreshListener(null);
         }
     }
 

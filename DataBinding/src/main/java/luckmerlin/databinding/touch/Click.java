@@ -187,7 +187,7 @@ public final class Click implements Binding {
         }else if (isMatched(view,matchable)){
         }else if (!(view instanceof View)){
             return false;
-        }else if (isMatched(Model.findModel((View) view),matchable)) {
+        }else if (isMatched(Model.findModel((View) view,false,null),matchable)) {
             return true;
         }else if (((View)view).getId()==android.R.id.content){
             return false;

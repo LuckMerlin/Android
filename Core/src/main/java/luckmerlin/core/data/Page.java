@@ -15,7 +15,7 @@ public class Page<T>{
         return mData;
     }
 
-    public final long getTotal() {
+    public final long getToal() {
         return mTotal;
     }
 

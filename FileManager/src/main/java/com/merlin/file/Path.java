@@ -46,17 +46,25 @@ public interface Path {
         return index>=0&&index<length?fileName.substring(index):null;
     }
 
-    public String getParent();
+    public Path getParent();
 
     public String getSep();
 
     public String getName();
 
     public default String getPath(){
-        String parent=getParent();
+        Path parentPath=getParent();
+        String parent=null!=parentPath?parentPath.getPath():null;
         String sep=getSep();
+        if (null==sep){
+            return null;
+        }else if (null==parent){
+            parent=sep;
+        }else if (!parent.endsWith(sep)){
+            parent+=sep;
+        }
         String name=getName();
-        return (null!=parent?parent:"")+(null!=sep?sep:"")+(null!=name?name:"");
+        return null!=name?parent+name:parent;
     }
 
 }

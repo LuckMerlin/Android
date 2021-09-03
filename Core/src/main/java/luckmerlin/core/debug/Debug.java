@@ -35,11 +35,11 @@ public final class Debug {
         }
     }
 
-    public static void TD(String msg,Object encrypt) {
+    public static void TD(Object msg,Object encrypt) {
         TD(null,msg,encrypt);
     }
 
-    public static void TD(String tag, String msg,Object encrypt) {
+    public static void TD(String tag, Object msg,Object encrypt) {
         T(tag,msg,encrypt);
     }
 

@@ -4,9 +4,21 @@ import luckmerlin.core.data.Page;
 
 public class Folder extends Page<Path> implements Path {
     private Path mPath;
+    private long mFree;
+    private long mTotal;
 
     public Folder(Path path){
         apply(path);
+    }
+
+    public Folder setTotalSpace(long total){
+        mTotal=total;
+        return this;
+    }
+
+    public Folder setFreeSpace(long free){
+        mFree=free;
+        return this;
     }
 
     public Folder apply(Path path){
@@ -14,9 +26,12 @@ public class Folder extends Page<Path> implements Path {
         return this;
     }
 
-    public final long getFree() {
-        Path path=mPath;
-        return 0;
+    public final long getTotalSpace() {
+        return mTotal;
+    }
+
+    public final long getFreeSpace() {
+        return mFree;
     }
 
     @Override
@@ -50,7 +65,7 @@ public class Folder extends Page<Path> implements Path {
     }
 
     @Override
-    public String getParent() {
+    public Path getParent() {
         Path path=mPath;
         return null!=path?path.getParent():null;
     }

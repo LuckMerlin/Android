@@ -1,10 +1,13 @@
 package com.merlin.file;
 
 import android.os.Build;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
+import luckmerlin.core.debug.Debug;
 
 public class LocalPath implements Path {
     private File mFile;
@@ -54,9 +57,10 @@ public class LocalPath implements Path {
     }
 
     @Override
-    public String getParent() {
+    public Path getParent() {
         File file=mFile;
-        return null!=file?file.getParent():null;
+        file=null!=file?file.getParentFile():null;
+        return null!=file?new LocalPath().apply(file):null;
     }
 
     @Override

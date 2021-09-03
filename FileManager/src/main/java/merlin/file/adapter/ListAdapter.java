@@ -18,8 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import luckmerlin.core.debug.Debug;
 
-public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder>
-        implements Refresher.OnRefreshListener {
+public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private ArrayList<T> mData;
     public final static int TYPE_NONE=0;
     public final static int TYPE_TAIL=-1;
@@ -37,17 +36,6 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         if (null!=list&&list.size()>0) {
             add(list,true,null);
         }
-    }
-
-    protected final boolean setRefreshing(boolean refreshing,int where){
-        Refresher refresher=getRefresher();
-        return null!=refresher&&refresher.setRefreshing(refreshing,where);
-    }
-
-    protected Refresher getRefresher(){
-        RecyclerView recyclerView=getRecyclerView();
-        ViewParent parent=null!=recyclerView?recyclerView.getParent():null;
-        return null!=parent&&parent instanceof Refresher?(Refresher)parent:null;
     }
 
     public final T getFirst(){
@@ -85,11 +73,6 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void onRefresh(int where) {
-
     }
 
     @Override
@@ -446,10 +429,6 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
     }
 
   public void onAttachedRecyclerView(RecyclerView recyclerView) {
-      Refresher refresher=getRefresher();//Try bind refresher
-      if (null!=refresher){
-          refresher.setOnRefreshListener(this);
-      }
   }
 
   public final boolean updateItems(int from,int to){
@@ -466,10 +445,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
   }
 
   public void onDetachedRecyclerView(RecyclerView recyclerView) {
-      Refresher refresher=getRefresher();//Try unbind refresher
-      if (null!=refresher){
-          refresher.setOnRefreshListener(null);
-      }
+    //Do nothing
   }
 
   public final Context getAdapterContext(){
@@ -512,7 +488,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
      if (null!=recyclerView){
          mRecyclerView=new WeakReference<>(recyclerView);
          if (null==recyclerView.getLayoutManager()){
-            recyclerView.setLayoutManager(onResolveLayoutManager(recyclerView));
+             recyclerView.setLayoutManager(onResolveLayoutManager(recyclerView));
          }
      }
      onAttachedRecyclerView(recyclerView);

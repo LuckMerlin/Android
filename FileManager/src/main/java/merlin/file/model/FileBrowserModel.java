@@ -1,5 +1,8 @@
 package merlin.file.model;
 
+import android.view.View;
+import android.widget.ImageView;
+
 import androidx.databinding.ObservableField;
 import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
@@ -7,20 +10,33 @@ import com.merlin.file.Client;
 import com.merlin.file.Folder;
 import com.merlin.file.LocalClient;
 import com.merlin.file.Mode;
+import com.merlin.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
+import luckmerlin.core.Code;
+import luckmerlin.core.data.Page;
+import luckmerlin.core.data.Pager;
 import luckmerlin.core.debug.Debug;
+import luckmerlin.databinding.touch.Click;
+import luckmerlin.databinding.touch.OnViewClick;
 import merlin.file.adapter.ClientBrowseAdapter;
 
-public class FileBrowserModel extends BaseModel {
+public class FileBrowserModel extends BaseModel implements OnViewClick {
     private final ObservableField<Client> mCurrentClient=new ObservableField<>();
     private final ObservableField<Mode> mCurrentMode=new ObservableField<>();
     private final ObservableField<Folder> mCurrentFolder=new ObservableField<>();
     private final ObservableField<Integer> mClientCount=new ObservableField<>();
     private final ObservableField<RecyclerView.Adapter> mContentAdapter=new ObservableField<>();
-    private final ClientBrowseAdapter mBrowserAdapter=new ClientBrowseAdapter();
+    private final ClientBrowseAdapter mBrowserAdapter=new ClientBrowseAdapter(){
+        @Override
+        protected void onPageLoadFinish(int code, String note, Page<Path> data, Path arg, Path anchor, int limit) {
+            super.onPageLoadFinish(code, note, data, arg, anchor, limit);
+            if (code==Code.CODE_SUCCEED&&null!=data&&data instanceof Folder){
+                mCurrentFolder.set((Folder)data);
+            }
+        }
+    };
     private List<Client> mClients;
 
     @Override
@@ -41,6 +57,36 @@ public class FileBrowserModel extends BaseModel {
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean onClicked(View view, int id, int count, Object tag) {
+        switch (id){
+            case R.layout.item_browse_path:
+                return openPath(null!=tag&&tag instanceof Path?(Path)tag:null)||true;
+            case R.drawable.selector_back:
+                return backward()||true;
+        }
+        return false;
+    }
+
+    private boolean backward(){
+        ClientBrowseAdapter adapter=mBrowserAdapter;
+        Path path=adapter.getArg();
+        Path parent=null!=path?path.getParent():null;
+        return null!=parent&&null!=adapter.reset(parent);
+    }
+
+    private boolean openPath(Path path){
+        if (null==path){
+            return false;
+        }else if (path.isDirectory()){
+            Debug.TD("To browse directory.",path);
+            ClientBrowseAdapter adapter=mBrowserAdapter;
+            return null!=adapter&&null!=adapter.reset(path);
+        }
+        Client client=mCurrentClient.get();
+        return null!=client&&client.open(getContext(),path);
     }
 
     public boolean removeClient(Client client){

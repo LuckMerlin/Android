@@ -46,9 +46,17 @@ public abstract class Model {
         return null!=view&&(Build.VERSION.SDK_INT >= 19?view.isAttachedToWindow():null!=view.getWindowToken());
     }
 
-    public static Model findModel(View view){
-        Object tagObject=null!=view?view.getTag(TAG_ID):null;
-        return null!=tagObject&&tagObject instanceof Model?(Model)tagObject:null;
+    public static <T extends Model> T findModel(View view,boolean iterate,Class<T> cls){
+        if (null!=view){
+            Object tagObject=view.getTag(TAG_ID);
+            if (null!=tagObject&&tagObject instanceof Model&&(null==cls||cls.isAssignableFrom(tagObject.getClass()))){
+                return (T)tagObject;
+            }else if (iterate){
+                ViewParent parent=view.getParent();
+                return null!=parent&&parent instanceof View?findModel((View)parent,true,cls):null;
+            }
+        }
+        return null;
     }
 
     public final boolean attachRoot(ViewDataBinding binding){
