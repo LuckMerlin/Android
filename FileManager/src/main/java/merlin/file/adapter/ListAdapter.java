@@ -16,6 +16,8 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import luckmerlin.core.Code;
 import luckmerlin.core.debug.Debug;
 
 public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -77,11 +79,13 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
 
     @Override
   public final RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-      final LayoutInflater in=LayoutInflater.from(parent.getContext());
+      final Context context=parent.getContext();
+      final LayoutInflater in=LayoutInflater.from(context);
         RecyclerView.ViewHolder viewHolder=onCreateViewHolder(in,viewType,parent);
         if (viewHolder ==null){
            Integer integer= onResolveViewTypeLayoutId(viewType);
-           ViewDataBinding binding=null!=integer&&integer!= Resources.ID_NULL?DataBindingUtil.inflate(in,integer,parent,false):null;
+           ViewDataBinding binding=null!=integer&&integer!= Resources.ID_NULL?
+                   DataBindingUtil.inflate(in,integer,parent,false):null;
            viewHolder= null!=binding?new ViewHolder(binding):null;
         }
         if (null==viewHolder){
@@ -103,7 +107,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
                     break;
             }
         }
-       return viewHolder;
+       return null!=viewHolder?viewHolder:new RecyclerView.ViewHolder(new View(context)){};
     }
 
   protected void onBindViewHolder(RecyclerView.ViewHolder holder,int viewType,ViewDataBinding binding,
@@ -274,19 +278,24 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         return null;
     }
 
-  public boolean set(Collection<T> data,String debug){
+  public boolean set(Collection<T> data,String debug) {
         List<T> list=mData;
-        int size=null!=data?data.size():0;
+        final int size=null!=data?data.size():0;
         if (size>0){
             list=null!=list?list:(mData=new ArrayList<>(size));
             int currentSize=list.size();
-            if (currentSize > size){
+            if (currentSize> size){
                 list.removeAll(list.subList(size,currentSize));
                 notifyItemRangeRemoved(size, currentSize);
+                notifyItemRangeChanged(0,currentSize,"Set");
             }
             list.clear();
             list.addAll(data);
-            notifyItemRangeChanged(0,currentSize,"Set");
+            if (currentSize<size){
+                notifyDataSetChanged();
+            }else{
+                notifyItemRangeChanged(0,currentSize,"Set");
+            }
         }else if(null!=list){
             list.clear();
             mData=null;

@@ -39,8 +39,8 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
         @Override
         protected void onPageLoadFinish(int code, String note, Page<Path> data, Query arg, Path anchor, int limit) {
             super.onPageLoadFinish(code, note, data, arg, anchor, limit);
-            if (code==Code.CODE_SUCCEED&&null!=data&&data instanceof Folder){
-                mCurrentFolder.set((Folder)data);
+            if ((code&Code.CODE_CANCEL)<=0){
+                mCurrentFolder.set(null!=data&&data instanceof Folder?(Folder)data:null);
             }
         }
     };
@@ -49,7 +49,7 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
     @Override
     protected void onRootAttached() {
         super.onRootAttached();
-//        addClient(new LocalClient(getText(R.string.local)));
+        addClient(new LocalClient(getText(R.string.local)));
         addClient(new NasClient(getText(R.string.nas),"http://192.168.0.4:5000"));
         selectAny();
         mContentAdapter.set(mBrowserAdapter);
@@ -67,6 +67,16 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
         return false;
     }
 
+    private Client nextClient(Client client){
+        List<Client> clients=mClients;
+        int length=null!=clients?clients.size():-1;
+        if (length>0){
+            int index=(null!=client?clients.indexOf(client):-1)+1;
+            return clients.get(index>=0&&index<length?index:0);
+        }
+        return null;
+    }
+
     @Override
     public boolean onClicked(View view, int id, int count, Object tag) {
         switch (id){
@@ -74,6 +84,14 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
                 return openPath(null!=tag&&tag instanceof Path?(Path)tag:null)||true;
             case R.drawable.selector_back:
                 return backward()||true;
+            case R.layout.device_text:
+                if (null!=tag&&tag instanceof Client){
+                    Client client=nextClient((Client)tag);
+                    if (null!=client){
+                        return select(client)||true;
+                    }
+                }
+                return true;
         }
         return false;
     }

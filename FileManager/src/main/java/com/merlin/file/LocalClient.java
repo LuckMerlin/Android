@@ -8,13 +8,16 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.Queue;
+
 import luckmerlin.core.Canceler;
 import luckmerlin.core.Code;
 import luckmerlin.core.Reply;
 import luckmerlin.core.data.OnPageLoadFinish;
 import luckmerlin.core.debug.Debug;
+import merlin.file.adapter.Query;
 
-public class LocalClient extends Client<Path,Path> {
+public class LocalClient extends Client<Query,Path> {
     private Path mHome;
 
     public LocalClient(String name) {
@@ -51,7 +54,7 @@ public class LocalClient extends Client<Path,Path> {
     }
 
     @Override
-    public Canceler onLoad(Path folder, Path anchor, int limit, OnPageLoadFinish<Path> callback) {
+    public Canceler onLoad(Query folder, Path anchor, int limit, OnPageLoadFinish<Path> callback) {
         if (null==folder){
             Debug.W("Can't load local folder while folder invalid.");
             notifyFinish(Code.CODE_ARGS,"Args invalid",null,callback);

@@ -23,7 +23,13 @@ public class ClientBrowseAdapter extends PageListAdapter<Query, Path>{
 
     @Override
     protected final Integer onResolveViewTypeLayoutId(int viewType) {
-        return R.layout.item_browse_path;
+        switch (viewType){
+            case TYPE_DATA:
+                return R.layout.item_browse_path;
+            case TYPE_EMPTY:
+                return R.layout.list_empty;
+        }
+        return null;
     }
 
     public final boolean browse(String path){

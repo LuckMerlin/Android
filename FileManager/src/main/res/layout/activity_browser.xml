@@ -32,7 +32,7 @@
                                 android:visibility="@{vm.clientCount&lt;1?View.GONE:View.VISIBLE}"
                                 android:paddingBottom="5dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 
-                            <include android:id="@+id/fileBrowser_deviceNameTV" binding:device="@{vm.currentClient}" layout="@layout/device_text" />
+                            <include binding:device="@{vm.currentClient}" layout="@layout/device_text" />
 
 <!--                            <TextView style="@style/titleNormalTextView" android:textStyle="bold"-->
 <!--                                android:text="@{` (`+((null==vm.currentMultiChooseCount||(vm.currentMultiChooseCount&lt;0))?``:``+vm.currentMultiChooseCount+`/`)+vm.currentFolder.length+')'}"-->
@@ -71,7 +71,7 @@
             android:scrollbars="none" android:layout_width="match_parent" android:layout_height="wrap_content">
             <TextView android:layout_width="wrap_content" android:singleLine="true" android:textSize="@dimen/textSmall"
                 android:text="@{vm.currentFolder.path??``}" android:layout_height="wrap_content"
-                android:visibility="@{vm.currentFolder.path.length()>0?View.VISIBLE:View.GONE}" />
+                android:visibility="@{vm.currentFolder.path.length()>0?View.VISIBLE:View.INVISIBLE}" />
         </HorizontalScrollView>
 
         <View android:paddingLeft="5dp" android:paddingRight="5dp" style="@style/horizontalDividerLine"/>
