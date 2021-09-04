@@ -51,18 +51,33 @@ public class Json extends JSONObject {
         return getText(this,key,def);
     }
 
-    public static JSONArray createArray(String jsonText){
+    public static JSONArray createArray(Object json){
         try {
-            return null!=jsonText&&jsonText.length()>0&&jsonText.startsWith("[")&&jsonText.endsWith("]")?new JSONArray(jsonText):null;
+            if (null==json){
+
+            }else if (json instanceof JSONArray){
+                return (JSONArray)json;
+            }
+            String jsonText=json instanceof String?(String)json:json.toString();
+            return null!=(jsonText=null!=jsonText?jsonText.trim():null)&&jsonText.length()>0&&
+                    jsonText.startsWith("[")&&jsonText.endsWith("]")?new JSONArray(jsonText):null;
         } catch (JSONException e) {
             //Do nothing
         }
         return null;
     }
 
-    public static Json create(String jsonText){
+    public static Json create(Object json){
         try {
-            return null!=jsonText&&jsonText.length()>0&&jsonText.startsWith("{")&&jsonText.endsWith("}")? new Json(jsonText):null;
+            if (null==json){
+
+            }else if (json instanceof JSONObject){
+                return new Json((JSONObject)json);
+            }
+            String jsonText=json instanceof String?(String)json:json.toString();
+            return null!=(jsonText=null!=jsonText?jsonText.trim():null)&&
+                    jsonText.length()>0&&jsonText.startsWith("{")&&jsonText.endsWith("}")?
+                    new Json(jsonText):null;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;

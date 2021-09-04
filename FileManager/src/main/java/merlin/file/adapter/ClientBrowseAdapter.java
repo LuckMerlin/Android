@@ -5,19 +5,29 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
 import com.file.manager.databinding.ItemBrowsePathBinding;
 import com.merlin.file.Client;
+import com.merlin.file.Label;
 import com.merlin.file.Path;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.List;
 
 import luckmerlin.core.data.Pager;
+import luckmerlin.core.json.Json;
 import luckmerlin.databinding.touch.Image;
 import merlin.file.util.ThumbResources;
 
-public class ClientBrowseAdapter extends PageListAdapter<Path, Path>{
+public class ClientBrowseAdapter extends PageListAdapter<Query, Path>{
     private final ThumbResources mThumbs=new ThumbResources();
 
     @Override
     protected final Integer onResolveViewTypeLayoutId(int viewType) {
         return R.layout.item_browse_path;
+    }
+
+    public final boolean browse(String path){
+        return null!=path&&null!=reset(new Query().setPath(path));
     }
 
     public final Client getClient(){
@@ -26,9 +36,14 @@ public class ClientBrowseAdapter extends PageListAdapter<Path, Path>{
     }
 
     @Override
-    protected Path onPreResetLoad(Path arg) {
+    protected Query onPreResetLoad(Query arg) {
         Client client=getClient();
-        return null==arg&&null!=client?client.getHome(getAdapterContext()):arg;
+        if (null==arg&&null!=client){
+            Path path=client.getHome(getAdapterContext());
+            String pathValue=null!=path?path.getPath():null;
+            return null!=pathValue?new Query().setPath(pathValue):null;
+        }
+        return arg;
     }
 
     @Override

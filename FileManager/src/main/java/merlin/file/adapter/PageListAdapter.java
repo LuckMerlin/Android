@@ -1,5 +1,7 @@
 package merlin.file.adapter;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.view.ViewParent;
 import androidx.recyclerview.widget.RecyclerView;
 import luckmerlin.core.Canceler;
@@ -16,6 +18,7 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
     private Integer mLatestCode;
     private A mArg;
     private int mPageSize=20;
+    private Handler mHandler;
 
     public final PageListAdapter setPageSize(int pageSize){
         if (pageSize>0&&mPageSize!=pageSize){
@@ -33,6 +36,20 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
         RecyclerView recyclerView=getRecyclerView();
         ViewParent parent=null!=recyclerView?recyclerView.getParent():null;
         return null!=parent&&parent instanceof Refresher?(Refresher)parent:null;
+    }
+
+    public final boolean runOnUiThread(Runnable runnable,int delay){
+        if (null==runnable){
+            return false;
+        }
+        delay=delay<=0?0:delay;
+        RecyclerView recyclerView=getRecyclerView();
+        if (null!=recyclerView){
+            return recyclerView.postDelayed(runnable,delay);
+        }
+        Handler handler=mHandler;
+        return (null!=handler?handler:(mHandler=new Handler(Looper.getMainLooper()))).
+                postDelayed(runnable,delay);
     }
 
     public final Pager<A, T> getPager() {
@@ -67,6 +84,7 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
         if (null!=refresher){
             refresher.setOnRefreshListener(this);
         }
+        mHandler=null;
     }
 
     @Override
@@ -171,10 +189,10 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
                     mArg=arg;
                     mLoading=null;
                     mLatestCode=code;
-                    notifyFinish(code,note,data,callback);
+                    runOnUiThread(()->notifyFinish(code,note,data,callback),0);
                     onPageLoadFinish(code,note,data,arg,anchor,limit);
                 }else{
-                    notifyFinish(code|Code.CODE_CANCEL,note,data,callback);
+                    runOnUiThread(()->notifyFinish(code|Code.CODE_CANCEL,note,data,callback),0);
                 }
                 super.onFinish(code,note,data);
             }

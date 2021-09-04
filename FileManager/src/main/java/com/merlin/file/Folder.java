@@ -2,36 +2,29 @@ package com.merlin.file;
 
 import luckmerlin.core.data.Page;
 
-public class Folder extends Page<Path> implements Path {
+public class Folder<T extends Path> extends Page<T> implements Path {
     private Path mPath;
-    private long mFree;
-    private long mTotal;
 
-    public Folder(Path path){
-        apply(path);
+    public Folder(Path folder,long from,long total){
+        super(from,total);
+        apply(folder);
     }
 
-    public Folder setTotalSpace(long total){
-        mTotal=total;
-        return this;
+    @Override
+    public long getFreeSpace() {
+        Path path=mPath;
+        return null!=path?path.getFreeSpace():-1;
     }
 
-    public Folder setFreeSpace(long free){
-        mFree=free;
-        return this;
+    @Override
+    public long getTotalSpace() {
+        Path path=mPath;
+        return null!=path?path.getTotalSpace():-1;
     }
 
     public Folder apply(Path path){
         mPath=path;
         return this;
-    }
-
-    public final long getTotalSpace() {
-        return mTotal;
-    }
-
-    public final long getFreeSpace() {
-        return mFree;
     }
 
     @Override
@@ -65,7 +58,7 @@ public class Folder extends Page<Path> implements Path {
     }
 
     @Override
-    public Path getParent() {
+    public String getParent() {
         Path path=mPath;
         return null!=path?path.getParent():null;
     }
@@ -82,4 +75,10 @@ public class Folder extends Page<Path> implements Path {
         return null!=path?path.getName():null;
     }
 
+    @Override
+    public String toString() {
+        return "Folder{" +
+                "path=" + getPath() +" size="+getSize()+
+                '}';
+    }
 }

@@ -79,9 +79,8 @@ public class LocalClient extends Client<Path,Path> {
         }
         final File[] files=file.listFiles();
         final int length=null!=files?files.length:0;
-        final Folder browseFolder=new Folder(new LocalPath().apply(file));
-        browseFolder.setFreeSpace(file.getFreeSpace()).
-                setTotalSpace(file.getTotalSpace()).setTotal(length);
+        final Folder browseFolder=new Folder(new LocalPath().apply(file),0,length);
+        browseFolder.setTotal(length);
         if (length<=0){
             notifyFinish(Code.CODE_SUCCEED,"Directory empty",browseFolder,callback);
             return null;
@@ -108,7 +107,6 @@ public class LocalClient extends Client<Path,Path> {
             notifyFinish(Code.CODE_FAIL,"Anchor index invalid",browseFolder,callback);
             return null;
         }
-
         int size=Math.abs(limit);
         final LinkedList<Path> list=new LinkedList<>();
         File child=null;Path childPath=null;

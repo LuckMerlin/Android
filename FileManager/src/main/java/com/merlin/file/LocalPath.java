@@ -18,6 +18,18 @@ public class LocalPath implements Path {
     }
 
     @Override
+    public long getTotalSpace() {
+        File file=mFile;
+        return null!=file?file.getTotalSpace():-1;
+    }
+
+    @Override
+    public long getFreeSpace() {
+        File file=mFile;
+        return null!=file?file.getFreeSpace():-1;
+    }
+
+    @Override
     public long getModifyTime() {
         File file=mFile;
         return null!=file?file.lastModified():-1;
@@ -57,10 +69,9 @@ public class LocalPath implements Path {
     }
 
     @Override
-    public Path getParent() {
+    public String getParent() {
         File file=mFile;
-        file=null!=file?file.getParentFile():null;
-        return null!=file?new LocalPath().apply(file):null;
+        return null!=file?file.getParent():null;
     }
 
     @Override

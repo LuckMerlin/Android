@@ -7,6 +7,24 @@ public class Page<T>{
     private long mFrom;
     private long mTotal;
 
+    public Page(){
+        this(0);
+    }
+
+    public Page(long total){
+        this(0,total);
+    }
+
+    public Page(long from,long total){
+        this(from,total,null);
+    }
+
+    public Page(long from,long total,Collection<T> data){
+        mFrom=from;
+        mTotal=total;
+        mData=data;
+    }
+
     public final long getFrom() {
         return mFrom;
     }
@@ -15,7 +33,7 @@ public class Page<T>{
         return mData;
     }
 
-    public final long getToal() {
+    public final long getTotal() {
         return mTotal;
     }
 

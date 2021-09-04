@@ -8,10 +8,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
 import com.merlin.file.Client;
 import com.merlin.file.Folder;
+import com.merlin.file.Label;
 import com.merlin.file.LocalClient;
 import com.merlin.file.Mode;
 import com.merlin.file.NasClient;
 import com.merlin.file.Path;
+
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -19,9 +23,11 @@ import luckmerlin.core.Code;
 import luckmerlin.core.data.Page;
 import luckmerlin.core.data.Pager;
 import luckmerlin.core.debug.Debug;
+import luckmerlin.core.json.Json;
 import luckmerlin.databinding.touch.Click;
 import luckmerlin.databinding.touch.OnViewClick;
 import merlin.file.adapter.ClientBrowseAdapter;
+import merlin.file.adapter.Query;
 
 public class FileBrowserModel extends BaseModel implements OnViewClick {
     private final ObservableField<Client> mCurrentClient=new ObservableField<>();
@@ -31,7 +37,7 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
     private final ObservableField<RecyclerView.Adapter> mContentAdapter=new ObservableField<>();
     private final ClientBrowseAdapter mBrowserAdapter=new ClientBrowseAdapter(){
         @Override
-        protected void onPageLoadFinish(int code, String note, Page<Path> data, Path arg, Path anchor, int limit) {
+        protected void onPageLoadFinish(int code, String note, Page<Path> data, Query arg, Path anchor, int limit) {
             super.onPageLoadFinish(code, note, data, arg, anchor, limit);
             if (code==Code.CODE_SUCCEED&&null!=data&&data instanceof Folder){
                 mCurrentFolder.set((Folder)data);
@@ -73,19 +79,21 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
     }
 
     private boolean backward(){
-        ClientBrowseAdapter adapter=mBrowserAdapter;
-        Path path=adapter.getArg();
-        Path parent=null!=path?path.getParent():null;
-        return null!=parent&&null!=adapter.reset(parent);
+        Folder folder=mCurrentFolder.get();
+        String parent=null!=folder?folder.getParent():null;
+        return null!=parent&&browsePath(parent);
+    }
+
+    private boolean browsePath(String path){
+        ClientBrowseAdapter adapter=null!=path?mBrowserAdapter:null;
+        return null!=adapter&&adapter.browse(path);
     }
 
     private boolean openPath(Path path){
         if (null==path){
             return false;
         }else if (path.isDirectory()){
-            Debug.TD("To browse directory.",path);
-            ClientBrowseAdapter adapter=mBrowserAdapter;
-            return null!=adapter&&null!=adapter.reset(path);
+            return browsePath(path.getPath());
         }
         Client client=mCurrentClient.get();
         return null!=client&&client.open(getContext(),path)==Code.CODE_SUCCEED;

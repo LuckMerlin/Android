@@ -8,6 +8,10 @@ public interface Path {
 
     public long getLength();
 
+    public long getTotalSpace();
+
+    public long getFreeSpace() ;
+
     public default boolean isDirectory(){
         return getSize()>=0;
     }
@@ -46,15 +50,14 @@ public interface Path {
         return index>=0&&index<length?fileName.substring(index):null;
     }
 
-    public Path getParent();
+    public String getParent();
 
     public String getSep();
 
     public String getName();
 
     public default String getPath(){
-        Path parentPath=getParent();
-        String parent=null!=parentPath?parentPath.getPath():null;
+        String parent=getParent();
         String sep=getSep();
         if (null==sep){
             return null;
