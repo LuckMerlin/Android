@@ -3,6 +3,7 @@ package com.merlin.file;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Environment;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -14,13 +15,14 @@ import luckmerlin.core.data.OnPageLoadFinish;
 import luckmerlin.core.debug.Debug;
 
 public class LocalClient extends Client<Path,Path> {
+    private Path mHome;
 
     public LocalClient(String name) {
         super(name);
     }
 
     @Override
-    public boolean open(Context context, Path path) {
+    public int open(Context context, Path path) {
         String filePath=null!=context&&null!=path?path.getPath():null;
         if (null!=filePath&&filePath.length()>0){
             try {
@@ -28,18 +30,29 @@ public class LocalClient extends Client<Path,Path> {
                         setAction(Intent.ACTION_VIEW).setDataAndType(Uri.
                         fromFile(new File(filePath)), path.getMimeType());
                 context.startActivity(intent);
-                return true;
+                return Code.CODE_SUCCEED;
             }catch (Exception e){
                 Debug.E("Exception open path.e="+e);
                 e.printStackTrace();
             }
         }
-        return false;
+        return Code.CODE_FAIL;
+    }
+
+    @Override
+    public int setHome(Context context, Path path) {
+        mHome=path;
+        return Code.CODE_SUCCEED;
+    }
+
+    public final Path getHome(Context context) {
+        Path path=mHome;
+        return null!=path?path:new LocalPath().apply(Environment.getRootDirectory());
     }
 
     @Override
     public Canceler onLoad(Path folder, Path anchor, int limit, OnPageLoadFinish<Path> callback) {
-        if (null==(folder=null!=folder?folder:getHome())){
+        if (null==folder){
             Debug.W("Can't load local folder while folder invalid.");
             notifyFinish(Code.CODE_ARGS,"Args invalid",null,callback);
             return null;
@@ -67,7 +80,8 @@ public class LocalClient extends Client<Path,Path> {
         final File[] files=file.listFiles();
         final int length=null!=files?files.length:0;
         final Folder browseFolder=new Folder(new LocalPath().apply(file));
-        browseFolder.setFreeSpace(file.getFreeSpace()).setTotalSpace(file.getTotalSpace()).setTotal(length);
+        browseFolder.setFreeSpace(file.getFreeSpace()).
+                setTotalSpace(file.getTotalSpace()).setTotal(length);
         if (length<=0){
             notifyFinish(Code.CODE_SUCCEED,"Directory empty",browseFolder,callback);
             return null;
@@ -94,7 +108,7 @@ public class LocalClient extends Client<Path,Path> {
             notifyFinish(Code.CODE_FAIL,"Anchor index invalid",browseFolder,callback);
             return null;
         }
-        Debug.D("Browse local folder from "+anchorIndex+" with size "+limit);
+
         int size=Math.abs(limit);
         final LinkedList<Path> list=new LinkedList<>();
         File child=null;Path childPath=null;

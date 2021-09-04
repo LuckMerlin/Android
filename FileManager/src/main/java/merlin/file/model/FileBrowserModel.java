@@ -10,6 +10,7 @@ import com.merlin.file.Client;
 import com.merlin.file.Folder;
 import com.merlin.file.LocalClient;
 import com.merlin.file.Mode;
+import com.merlin.file.NasClient;
 import com.merlin.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,8 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
     @Override
     protected void onRootAttached() {
         super.onRootAttached();
-        addClient(new LocalClient(getText(R.string.local)));
+//        addClient(new LocalClient(getText(R.string.local)));
+        addClient(new NasClient(getText(R.string.nas),"http://192.168.0.4:5000"));
         selectAny();
         mContentAdapter.set(mBrowserAdapter);
     }
@@ -86,7 +88,7 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
             return null!=adapter&&null!=adapter.reset(path);
         }
         Client client=mCurrentClient.get();
-        return null!=client&&client.open(getContext(),path);
+        return null!=client&&client.open(getContext(),path)==Code.CODE_SUCCEED;
     }
 
     public boolean removeClient(Client client){

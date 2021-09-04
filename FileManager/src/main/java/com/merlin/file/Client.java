@@ -6,28 +6,20 @@ import luckmerlin.core.OnFinish;
 import luckmerlin.core.data.Pager;
 
 public abstract class Client<A,T extends Path> implements Pager<A,T> {
-    private Path mHome;
     private final String mName;
 
     public Client(String name){
         mName=name;
     }
 
-    public final Client setHome(Path path){
-        mHome=path;
-        return this;
-    }
+    public abstract int setHome(Context context,Path path);
 
-    public abstract boolean open(Context context,Path path);
+    public abstract int open(Context context,Path path);
 
     public final String getName() {
         return mName;
     }
-
-    public final Path getHome() {
-        Path path=mHome;
-        return null!=path?path:new LocalPath().apply(Environment.getRootDirectory());
-    }
+    public abstract Path getHome(Context context) ;
 
     protected final<G> boolean notifyFinish(int code, String note, G data, OnFinish<G> callback){
         if (null!=callback){

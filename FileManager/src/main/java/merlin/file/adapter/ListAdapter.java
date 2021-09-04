@@ -286,11 +286,10 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
             }
             list.clear();
             list.addAll(data);
-//            notifyDataSetChanged();
-            notifyItemRangeChanged(0,size,"Set");
-//            if (currentSize<size){
-//                notifyItemRangeInserted(currentSize,size-currentSize);
-//            }
+            if (currentSize<size){
+                notifyItemRangeInserted(currentSize,size-currentSize);
+            }
+            notifyItemRangeChanged(0,currentSize,"Set");
         }else if(null!=list){
             list.clear();
             mData=null;

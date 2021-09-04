@@ -132,7 +132,7 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
     }
 
     public final Canceler reset(A arg,int limit){
-        return pending(()->loadPage(arg, null,limit,(int code, String note, Page<T> data)-> {
+        return pending(()->loadPage(onPreResetLoad(arg), null,limit,(int code, String note, Page<T> data)-> {
             if (code==Code.CODE_SUCCEED&&null!=data){
                 super.set(data.getData(),null);
             } }));
@@ -152,6 +152,10 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
             }
         }
         return false;
+    }
+
+    protected A onPreResetLoad(A arg){
+        return arg;
     }
 
     private final Canceler loadPage(A arg,T anchor,int limit,OnPageLoadFinish<T> callback){
