@@ -18,4 +18,5 @@ public interface Label {
     String LABEL_SEP = "sep";
     String LABEL_NAME= "name";
     String LABEL_HOST= "host";
+    String LABEL_MD5= "md5";
 }

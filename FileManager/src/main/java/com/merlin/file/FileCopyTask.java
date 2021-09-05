@@ -1,13 +1,19 @@
 package com.merlin.file;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.file.Files;
+
 import luckmerlin.core.debug.Debug;
 import luckmerlin.task.Progress;
 import luckmerlin.task.Result;
@@ -112,22 +118,79 @@ public class FileCopyTask extends StreamTask {
             Debug.W("Can't open remote output stream while to host invalid.");
             return null;
         }
-        HttpURLConnection connection=openHttpConnection(host,"POST");
-        if (null==connection){
-            Debug.W("Fail open remote output stream while connect invalid.");
-            return null;
-        }
         try {
-            Debug.TD("To open remote output stream.",host);
-            inflateHeader(connection,Label.LABEL_PATH,toPath);
-            connection.connect();
-            String contentType=connection.getContentType();
-            String connHeaderLength = connection.getHeaderField("content-length");
-            Debug.D("DDDDDDDDD "+contentType);
-        } catch (IOException e) {
-            Debug.E("Exception open remote output stream.e="+e);
+            fetchNasFile(host,toPath);
+        } catch (Exception e) {
             e.printStackTrace();
         }
+//        final HttpURLConnection connection=openHttpConnection(host,"HEAD");
+//        if (null==connection){
+//            Debug.W("Fail open remote output stream while connect invalid.");
+//            return null;
+//        }
+//        inflateHeader(connection,Label.LABEL_PATH,toPath);
+        //
+
+//        updater.finishCleaner(true, (TaskResult result)-> connection.disconnect());
+
+//        try {
+//            Debug.TD("To open remote output stream.",host);
+//            inflateHeader(connection,Label.LABEL_PATH,toPath);
+//            inflateHeader(connection,Label.LABEL_FROM,toPath);
+////            inflateHeader(connection,Label.LABEL_TOTAL,);
+//            inflateHeader(connection,Label.LABEL_MD5,"");
+//            inflateHeader(connection,"Content-Type","LuckMerlinStream");
+//            connection.connect();
+//            String contentType=connection.getContentType();
+//            String connHeaderLength = connection.getHeaderField("content-length");
+//            Debug.D("DDDDDDDDD "+contentType);
+//        } catch (IOException e) {
+//            Debug.E("Exception open remote output stream.e="+e);
+//            e.printStackTrace();
+//        }
+        return null;
+    }
+
+    private NasPath fetchNasFile(String host,String path) throws Exception{
+        if (null==host||host.length()<=0){
+            Debug.W("Fail fetch nas path while host invalid.");
+            return null;
+        }else if (null==path||path.length()<=0){
+            Debug.W("Fail fetch nas path while path invalid.");
+            return null;
+        }
+        final HttpURLConnection connection=openHttpConnection(host,"HEAD");
+        if (null==connection){
+            Debug.W("Fail fetch nas path while connect invalid.");
+            return null;
+        }
+        inflateHeader(connection,Label.LABEL_PATH,path);
+        inflateHeader(connection,"Content-Type","LuckMerlinStream");
+        connection.setDoInput(true);
+        connection.setUseCaches(false);
+        connection.setDoOutput(false);
+        connection.connect();
+        String contentType=connection.getContentType();
+        Debug.D("DDDDDcontentTypeDDDD  "+contentType);
+        InputStream inputStream=connection.getInputStream();
+        String encoding=connection.getContentEncoding();
+        InputStreamReader streamReader=null!=inputStream?new InputStreamReader(inputStream,
+                null!=encoding&&encoding.length()>0?encoding:"UTF-8"):null;
+        BufferedReader inputStreamReader = null!=streamReader?new BufferedReader(streamReader):null;
+        String contentText=null;
+        if (null!=inputStreamReader){
+            StringBuffer stringBuffer = new StringBuffer();
+            String line;
+            while ((line = inputStreamReader.readLine()) != null) {
+                Debug.D("DDDDDDD "+line
+                );
+                stringBuffer.append(line);
+            }
+            contentText=stringBuffer.length()>0?stringBuffer.toString():null;
+        }
+        close(inputStreamReader,streamReader);
+        Debug.D("DDD contentText DDDD  "+contentText);
+        connection.disconnect();
         return null;
     }
 
@@ -161,5 +224,4 @@ public class FileCopyTask extends StreamTask {
         }
         return false;
     }
-
 }
