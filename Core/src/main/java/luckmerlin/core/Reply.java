@@ -10,4 +10,20 @@ public class Reply<T> {
         mNote=note;
         mData=data;
     }
+
+    public final boolean isSucceed(){
+        return getCode()==Code.CODE_SUCCEED;
+    }
+
+    public final int getCode() {
+        return mCode;
+    }
+
+    public final String getNote() {
+        return mNote;
+    }
+
+    public final T getData() {
+        return mData;
+    }
 }

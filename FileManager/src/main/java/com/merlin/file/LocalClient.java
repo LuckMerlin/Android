@@ -21,7 +21,7 @@ public class LocalClient extends Client<Query,Path> {
     private Path mHome;
 
     public LocalClient(String name) {
-        super(name);
+        super(null,name);
     }
 
     @Override

@@ -10,6 +10,8 @@ public interface Path {
 
     public long getTotalSpace();
 
+    public String getHost();
+
     public long getFreeSpace() ;
 
     public default boolean isDirectory(){
@@ -34,7 +36,8 @@ public interface Path {
 
     public default boolean isLocal(){
         String path=getPath();
-        return null!=path&&path.trim().startsWith(File.separator);
+        String host=getHost();
+        return null==host&&null!=path&&path.trim().startsWith(File.separator);
     }
 
     public default String getTitle(){

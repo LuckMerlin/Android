@@ -281,14 +281,10 @@ public abstract class Model {
     }
 
     protected final boolean post(Runnable runnable){
-        return post(runnable,null);
+        return post(runnable, -1);
     }
 
-    protected final boolean post(Runnable runnable,String debug){
-        return post(runnable, -1,debug);
-    }
-
-    protected final boolean post(Runnable runnable,int delay,String debug){
+    protected final boolean post(Runnable runnable,int delay){
         if (null!=runnable){
             delay=delay<=0?0:delay;
             Handler handler=mHandler;

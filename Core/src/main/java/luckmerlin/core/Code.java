@@ -15,7 +15,6 @@ public interface Code {
     int CODE_OUT_OF_BOUNDS=CODE_NONE_ACCESS<<1;
     int CODE_CANCEL=CODE_OUT_OF_BOUNDS<<1;
     int CODE_ALREADY_DONE=CODE_SUCCEED&CODE_ALREADY;
-    int CODE_ALREADY_DOING=CODE_FAIL&CODE_ALREADY;
 
     static boolean isSucceed(int code){
         return (code&CODE_SUCCEED)>0;

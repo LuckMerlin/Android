@@ -17,4 +17,5 @@ public interface Label {
     String LABEL_MODIFY_TIME = "modifyTime";
     String LABEL_SEP = "sep";
     String LABEL_NAME= "name";
+    String LABEL_HOST= "host";
 }

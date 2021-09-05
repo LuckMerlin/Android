@@ -6,12 +6,18 @@ import luckmerlin.core.data.Pager;
 
 public abstract class Client<A,T extends Path> implements Pager<A,T> {
     private final String mName;
+    private final String mHost;
 
-    public Client(String name){
+    public Client(String host,String name){
         mName=name;
+        mHost=host;
     }
 
-    public abstract int setHome(Context context,Path path);
+    public final String getHost() {
+        return mHost;
+    }
+
+    public abstract int setHome(Context context, Path path);
 
     public abstract int open(Context context,Path path);
 

@@ -24,6 +24,11 @@ public class LocalPath implements Path {
     }
 
     @Override
+    public String getHost() {
+        return null;
+    }
+
+    @Override
     public long getFreeSpace() {
         File file=mFile;
         return null!=file?file.getFreeSpace():-1;

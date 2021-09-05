@@ -27,11 +27,9 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class NasClient extends Client<Query,Path>{
-    private final String mServerUrl;
 
-    public NasClient(String name,String serverUrl) {
-        super(name);
-        mServerUrl=serverUrl;
+    public NasClient(String host,String name) {
+        super(host,name);
     }
 
     @Override
@@ -52,7 +50,7 @@ public class NasClient extends Client<Query,Path>{
     @Override
     public Canceler onLoad(Query folder, Path anchor, int limit, OnPageLoadFinish<Path> callback) {
         final String folderPath=null!=folder?folder.getPath():null;
-        final String serverUrl=mServerUrl;
+        final String serverUrl=getHost();
         Debug.D("Browse nas folder."+folderPath);
         Request.Builder builder=requestBuilder(serverUrl,"/file/browse");
         if (null==builder){

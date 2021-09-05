@@ -1,31 +1,29 @@
 package merlin.file.model;
 
 import android.view.View;
-import android.widget.ImageView;
 
 import androidx.databinding.ObservableField;
 import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
 import com.merlin.file.Client;
+import com.merlin.file.FileCopyTask;
 import com.merlin.file.Folder;
-import com.merlin.file.Label;
 import com.merlin.file.LocalClient;
+import com.merlin.file.LocalPath;
 import com.merlin.file.Mode;
 import com.merlin.file.NasClient;
+import com.merlin.file.NasPath;
 import com.merlin.file.Path;
 
-import org.json.JSONObject;
-
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import luckmerlin.core.Code;
 import luckmerlin.core.data.Page;
-import luckmerlin.core.data.Pager;
 import luckmerlin.core.debug.Debug;
-import luckmerlin.core.json.Json;
-import luckmerlin.databinding.touch.Click;
 import luckmerlin.databinding.touch.OnViewClick;
+import luckmerlin.task.TaskExecutor;
 import merlin.file.adapter.ClientBrowseAdapter;
 import merlin.file.adapter.Query;
 
@@ -49,10 +47,78 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
     @Override
     protected void onRootAttached(View view) {
         super.onRootAttached(view);
-        addClient(new LocalClient(getText(R.string.local)));
-        addClient(new NasClient(getText(R.string.nas),"http://192.168.0.4:5000"));
+//        addClient(new LocalClient(getText(R.string.local)));
+        addClient(new NasClient("http://192.168.0.4:5000",getText(R.string.nas)));
         selectAny();
         mContentAdapter.set(mBrowserAdapter);
+        //
+        TaskExecutor executor=new TaskExecutor();
+//        executor.append(new FileCopyTask(new LocalPath().apply(new File("/sdcard/dddd.pdf")),
+//                new LocalPath().apply(new File("/sdcard/lin.pdf"))));
+//        executor.start();
+        post(new Runnable() {
+            @Override
+            public void run() {
+                Folder folder=mCurrentFolder.get();
+//                null!=folder?folder.getpa
+                if (null!=folder){
+//                    folder.setna();
+                }
+                executor.append(new FileCopyTask(new LocalPath().apply(new File("/sdcard/dddd.pdf")),
+                        new Path() {
+                            @Override
+                            public long getSize() {
+                                return 0;
+                            }
+
+                            @Override
+                            public long getLength() {
+                                return 0;
+                            }
+
+                            @Override
+                            public long getTotalSpace() {
+                                return 0;
+                            }
+
+                            @Override
+                            public String getHost() {
+                                return "http://192.168.0.4:5000";
+                            }
+
+                            @Override
+                            public long getFreeSpace() {
+                                return 0;
+                            }
+
+                            @Override
+                            public String getMimeType() {
+                                return null;
+                            }
+
+                            @Override
+                            public long getModifyTime() {
+                                return 0;
+                            }
+
+                            @Override
+                            public String getParent() {
+                                return "/Volumes/Work/Workspace/FileBrowser";
+                            }
+
+                            @Override
+                            public String getSep() {
+                                return "/";
+                            }
+
+                            @Override
+                            public String getName() {
+                                return "dddd的说法发.mp3";
+                            }
+                        }));
+                executor.start();
+            }
+        },4000);
     }
 
     public boolean addClient(Client client){

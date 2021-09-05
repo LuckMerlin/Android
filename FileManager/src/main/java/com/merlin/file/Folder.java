@@ -11,6 +11,12 @@ public class Folder<T extends Path> extends Page<T> implements Path {
     }
 
     @Override
+    public String getHost() {
+        Path path=mPath;
+        return null!=path?path.getHost():null;
+    }
+
+    @Override
     public long getFreeSpace() {
         Path path=mPath;
         return null!=path?path.getFreeSpace():-1;

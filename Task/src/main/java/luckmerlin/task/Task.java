@@ -1,9 +1,7 @@
 package luckmerlin.task;
 
-import luckmerlin.core.Call;
-
-public interface Task<A> extends Status{
-    Call execute(A arg,Executor executor,OnTaskUpdate update);
+public interface Task<T extends TaskResult> extends Status{
+    T execute(OnTaskUpdate update);
     Progress getProgress();
     Result getResult();
 
@@ -15,7 +13,7 @@ public interface Task<A> extends Status{
     }
 
     default boolean isExecuting(){
-        return isStatus(STATUS_DOING,STATUS_PAUSE,STATUS_PREPARE,STATUS_START);
+        return isStatus(STATUS_DOING,STATUS_PREPARE,STATUS_START);
     }
 
     default boolean isStatus(int ...statuses){

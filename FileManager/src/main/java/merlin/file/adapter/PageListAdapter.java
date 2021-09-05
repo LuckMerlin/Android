@@ -178,7 +178,7 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
 
     private final Canceler loadPage(A arg,T anchor,int limit,OnPageLoadFinish<T> callback){
         if (null!=mLoading){
-            notifyFinish(Code.CODE_ALREADY_DOING,"Already doing.",null,callback);
+            notifyFinish(Code.CODE_ALREADY|Code.CODE_FAIL,"Already doing.",null,callback);
             return null;
         }
         Loading<T> loading=mLoading=new Loading<T>() {
