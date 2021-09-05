@@ -8,8 +8,8 @@ import luckmerlin.databinding.Model;
 public class BaseModel extends Model {
 
     @Override
-    protected void onRootAttached() {
-        super.onRootAttached();
+    protected void onRootAttached(View view) {
+        super.onRootAttached(view);
         enableNavigation(true);
     }
 

@@ -47,8 +47,8 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
     private List<Client> mClients;
 
     @Override
-    protected void onRootAttached() {
-        super.onRootAttached();
+    protected void onRootAttached(View view) {
+        super.onRootAttached(view);
         addClient(new LocalClient(getText(R.string.local)));
         addClient(new NasClient(getText(R.string.nas),"http://192.168.0.4:5000"));
         selectAny();

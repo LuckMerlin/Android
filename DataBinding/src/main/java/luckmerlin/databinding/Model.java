@@ -1,13 +1,17 @@
 package luckmerlin.databinding;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.view.ContextThemeWrapper;
 import android.view.View;
@@ -15,7 +19,6 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.Window;
 import android.widget.TextView;
-import androidx.annotation.RequiresApi;
 import androidx.databinding.ViewDataBinding;
 import java.lang.ref.WeakReference;
 import luckmerlin.core.debug.Debug;
@@ -30,7 +33,7 @@ public abstract class Model {
     private WeakReference<View> mRoot;
     private static final int TAG_ID=(2<<24);
 
-    protected void onRootAttached(){
+    protected void onRootAttached(View view){
         //Do nothing
     }
 
@@ -73,7 +76,7 @@ public abstract class Model {
                         Debug.TD(null,"Attached model view."+this);
                         v.setTag(TAG_ID,Model.this);
                         mRoot=new WeakReference<View>(v);
-                        onRootAttached();
+                        onRootAttached(v);
                     }
                 }
 
@@ -96,7 +99,7 @@ public abstract class Model {
         return false;
     }
 
-    protected void onRootDetached(){
+    protected void onRootDetached(View view){
         //Do nothing
     }
 
@@ -112,7 +115,7 @@ public abstract class Model {
             mRoot=null;
             if (null!=view){
                 Debug.TD(null,"On detached root."+this);
-                onRootDetached();
+                onRootDetached(v);
                 reference.clear();
             }
             return null!=view;
