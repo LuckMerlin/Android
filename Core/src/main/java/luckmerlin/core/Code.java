@@ -1,8 +1,9 @@
 package luckmerlin.core;
 
 public interface Code {
-    int CODE_FAIL=0b00;
-    int CODE_SUCCEED=0b01;
+    int CODE_NONE=0b00;
+    int CODE_FAIL=0b01;
+    int CODE_SUCCEED=CODE_FAIL<<1;
     int CODE_ALREADY=CODE_SUCCEED<<1;
     int CODE_ARGS=CODE_ALREADY<<1;
     int CODE_ERROR=CODE_ARGS<<1;

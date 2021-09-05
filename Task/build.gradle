@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application'
+    id 'com.android.library'
 }
 
 android {
@@ -7,7 +7,6 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        applicationId "luckmerlin.file.manager"
         minSdkVersion 14
         targetSdkVersion 30
         versionCode 1
@@ -20,11 +19,6 @@ android {
             proguardFiles 'proguard-rules.pro'
         }
     }
-
-    dataBinding {
-        enabled = true
-    }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -32,10 +26,5 @@ android {
 }
 
 dependencies {
-    implementation project(path: ':Core')
-    implementation project(path: ':DataBinding')
-    implementation project(path: ':Task')
-    implementation 'androidx.core:core:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.0.0'
-    implementation "com.squareup.okhttp3:okhttp:4.9.0"
+    compileOnly project(path: ':Core')
 }

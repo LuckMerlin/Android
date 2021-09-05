@@ -5,14 +5,14 @@ import java.util.Collection;
 public class Page<T>{
     private Collection<T> mData;
     private long mFrom;
-    private long mTotal;
+    private long mTotal=-1;
 
     public Page(){
-        this(0);
+        this(-1);
     }
 
     public Page(long total){
-        this(0,total);
+        this(-1,total);
     }
 
     public Page(long from,long total){

@@ -3,7 +3,7 @@ include ':app'
 include ':Core'
 include ':DataBinding'
 include ':FileManager'
-
+include ':Task'
 //include ':database'
 //include ':Media'
 //include ':Widgets'
