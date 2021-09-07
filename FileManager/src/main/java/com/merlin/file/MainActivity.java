@@ -46,5 +46,32 @@ public class MainActivity extends Activity {
         } else {
             Toast.makeText(context, "授权成功！", Toast.LENGTH_SHORT).show();
         }
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.INTERNET)
+                != PackageManager.PERMISSION_GRANTED) {
+            //用户已经拒绝过一次，再次弹出权限申请对话框需要给用户一个解释
+            if (ActivityCompat.shouldShowRequestPermissionRationale(context, Manifest.permission
+                    .WRITE_EXTERNAL_STORAGE)) {
+                Toast.makeText(context, "请开通相关权限，否则无法正常使用本应用！", Toast.LENGTH_SHORT).show();
+            }
+            //申请权限
+            ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.INTERNET}, 0);
+        } else {
+            Toast.makeText(context, "授权成功！", Toast.LENGTH_SHORT).show();
+        }
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_NETWORK_STATE)
+                != PackageManager.PERMISSION_GRANTED) {
+            //用户已经拒绝过一次，再次弹出权限申请对话框需要给用户一个解释
+            if (ActivityCompat.shouldShowRequestPermissionRationale(context, Manifest.permission
+                    .WRITE_EXTERNAL_STORAGE)) {
+                Toast.makeText(context, "请开通相关权限，否则无法正常使用本应用！", Toast.LENGTH_SHORT).show();
+            }
+            //申请权限
+            ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.ACCESS_NETWORK_STATE
+            }, 0);
+        } else {
+            Toast.makeText(context, "授权成功！", Toast.LENGTH_SHORT).show();
+        }
     }
 }
