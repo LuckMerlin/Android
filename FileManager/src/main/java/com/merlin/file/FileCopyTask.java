@@ -38,100 +38,94 @@ public class FileCopyTask extends StreamTask {
     }
 
     @Override
-    protected Input onOpenInput(boolean checkMd5, Updater<TaskResult> updater) {
+    protected Input onOpenInput(boolean checkMd5, Updater<TaskResult> updater)  throws Exception{
         Path from=mFrom;
         String fromPath=null!=from?from.getPath():null;
         if (null==fromPath||fromPath.length()<=0){
             Debug.W("Can't open input stream while to path invalid.");
             return null;
-        }else if(from.isLocal()){
+        }else if(from.isLocal()){//Open local input file
             File file=new File(fromPath);
-            try {
-                if (!file.exists()){
-                    Debug.TW("Fail open local file input stream while file not exist.",file);
-                    return null;
-                }else if (!file.canRead()){
-                    Debug.TW("Fail open file input stream while file none permission.",file);
-                    return null;
-                }
-                FileInputStream inputStream=new FileInputStream(file);
-                updater.finishCleaner(true,(TaskResult result)-> {
-                    close(inputStream);
-                    Debug.TD("Closed local file input stream.",file);
-                });
-                Debug.TD("Opened local file input stream.",file);
-                return new Input(file.length(),null) {
-                    @Override
-                    protected InputStream openStream(long skip) throws IOException {
-                        if (skip>0){
-                            inputStream.skip(skip);
-                        }
-                        return inputStream;
-                    }
-                };
-            } catch (Exception e) {
-                Debug.E("Fail local file task input stream while exception."+e,e);
-                e.printStackTrace();
+            if (!file.exists()){
+                Debug.TW("Fail open local file input stream while file not exist.",file);
+                return null;
+            }else if (!file.canRead()){
+                Debug.TW("Fail open file input stream while file none permission.",file);
                 return null;
             }
+            Debug.TD("Opened local file input stream.",file);
+            return new Input(file.length(),null) {
+                @Override
+                protected InputStream openStream(long skip) throws IOException {
+                    long length=file.length();
+                    if (skip>length){
+                        Debug.W("Fail open local input stream while skip large than total length.length="+length+" "+skip);
+                        return null;
+                    }
+                    FileInputStream inputStream=new FileInputStream(file);
+                    updater.finishCleaner(true,(TaskResult result)-> {
+                        close(inputStream);
+                        Debug.TD("Closed local file input stream.",file);
+                    });
+                    inputStream.skip(skip);
+                    return inputStream;
+                }
+            };
+        }else if (from instanceof NasPath){//Open nas input file
+
         }
         return null;
     }
 
     @Override
-    protected Output onOpenOutput(long checkMd5, Updater<TaskResult> updater) {
+    protected Output onOpenOutput(long checkMd5, Updater<TaskResult> updater) throws Exception{
         Path to=mTo;
         String toPath=null!=to?to.getPath():null;
         if (null==toPath||toPath.length()<=0){
             Debug.W("Can't open local output stream while to path invalid.");
             return null;
-        }else if(to.isLocal()){
+        }else if(to.isLocal()){//Open local output file
             File file=new File(toPath);
-            try {
-                if (!file.exists()){
-                    File parent=file.getParentFile();
-                    if (null!=parent&&!parent.exists()){
-                        Debug.TW("Created local file parent while open task stream.",file);
-                        parent.mkdirs();
-                    }
-                    if (file.createNewFile()){
-                        Debug.TW("Created local file while open task stream.",file);
-                        updater.finishCleaner(true,(result)-> {
-                            if (null==result||!result.isSucceed()){
-                                Debug.W("Deleting created local file after task fail.");
-                                file.delete();
-                            }
-                        });
-                    }
+            if (!file.exists()){
+                File parent=file.getParentFile();
+                if (null!=parent&&!parent.exists()){
+                    Debug.TW("Created local file parent while open task stream.",file);
+                    parent.mkdirs();
                 }
-                if (!file.exists()){
-                    Debug.TW("Fail open local file output stream while file not exist.",file);
-                    return null;
-                }else if (!file.canWrite()){
-                    Debug.TW("Fail open local file output stream while file none permission.",file);
-                    return null;
-                }
-                updater.finishCleaner(true,(TaskResult result)-> {
-                    close(outputStream);
-                    Debug.TD("Closed local file output stream.",file);
-                });
-                Debug.TD("Opened local file output stream.",file);
-                return new Output(file.length(),null) {
-                    @Override
-                    protected OutputStream openStream(long skip) throws FileNotFoundException {
-                        FileOutputStream outputStream=null;
-                        if (skip==0){
-                            outputStream=new FileOutputStream(file,true);
+                if (file.createNewFile()){
+                    Debug.TW("Created local file while open task stream.",file);
+                    updater.finishCleaner(true,(result)-> {
+                        if (null==result||!result.isSucceed()){
+                            Debug.W("Deleting created local file after task fail.");
+                            file.delete();
                         }
+                    });
+                }
+            }
+            if (!file.exists()){
+                Debug.TW("Fail open local file output stream while file not exist.",file);
+                return null;
+            }else if (!file.canWrite()){
+                Debug.TW("Fail open local file output stream while file none permission.",file);
+                return null;
+            }
+            Debug.TD("Opened local file output stream.",file);
+            return new Output(file.length(),null) {
+                @Override
+                protected OutputStream openStream(long skip) throws Exception {
+                    final long length=file.length();
+                    if (skip==length){
+                        FileOutputStream outputStream=new FileOutputStream(file,true);
+                        updater.finishCleaner(true,(result)->{close(outputStream);
+                            Debug.TD("Closed local file output stream.",file);});
                         return outputStream;
                     }
-                };
-                re;turn new TaskOutputStream(outputStream,file.length());
-            } catch (Exception e) {
-                Debug.E("Fail open local file output stream while exception."+e,e);
-                e.printStackTrace();
-            }
-            return null;
+                    Debug.W("Fail open local output stream while length NOT match skip.length="+length+" "+skip);
+                    return null;
+                }
+            };
+        }else if (to instanceof NasPath){//Open nas output file
+
         }
         return null;
     }

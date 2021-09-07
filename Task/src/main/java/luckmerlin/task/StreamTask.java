@@ -43,60 +43,59 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
         return mBufferSize;
     }
 
-    protected abstract Input onOpenInput(boolean checkMd5,Updater<TaskResult> updater);
-    protected abstract Output onOpenOutput(long checkMd5,Updater<TaskResult> updater);
+    protected abstract Input onOpenInput(boolean checkMd5,Updater<TaskResult> updater) throws Exception;
+    protected abstract Output onOpenOutput(long checkMd5,Updater<TaskResult> updater) throws Exception;
 
     @Override
     protected final TaskResult onExecute(Updater<TaskResult> updater) {
-        update(Status.STATUS_PREPARE,this,null,updater);
-        final boolean checkMd5=isCheckMd5();
-        final Input input=onOpenInput(checkMd5,updater);
-        if (null==input){
-            Debug.TD("Fail resolve input stream.",this);
-            return new TaskResult(Code.CODE_FAIL,"Fail resolve input stream.",null);
-        }
-        final long inputStreamLength=input.mLength;
-        if (checkMd5&&inputStreamLength>0&&input.mMd5==null){//Check input md5 valid
-            Debug.TD("Fail execute stream task while input stream md5 invalid.",this);
-            return new TaskResult(Code.CODE_FAIL,"Input stream md5 invalid.",null);
-        }
-        final Output output=onOpenOutput(checkMd5?inputStreamLength:-1,updater);
-        if (null==output){
-            Debug.TD("Fail resolve output stream.",this);
-            return new TaskResult(Code.CODE_FAIL,"Fail resolve output stream.",null);
-        }
-        final long[] outputStreamLength=new long[]{output.mLength};
-        if (outputStreamLength[0]<0){
-            Debug.TD("Fail execute stream while output stream length invalid.",this);
-            return new TaskResult(Code.CODE_FAIL,"Output stream length invalid.",null);
-        }
-        final int cover=mCover;
-        if (cover!=Cover.REPLACE){
-            if (outputStreamLength[0]==inputStreamLength){
-                if (checkMd5){
-                    String inputMd5=input.mMd5;
-                    String outputMd5=output.mMd5;
-                    if (null==inputMd5||null==outputMd5||!inputMd5.equals(outputMd5)){
-                        Debug.TD("Fail execute stream task while already done but md5 not match.",outputMd5);
-                        return new TaskResult(Code.CODE_ALREADY|Code.CODE_FAIL,"Already done but md5 not match.",null);
-                    }
-                    Debug.TD("Stream task md5 matched.",this);
-                }
-                Debug.TD("Already done stream task.",inputStreamLength);
-                return new TaskResult(Code.CODE_ALREADY_DONE,"Stream task already done.",null);
-            }else if (outputStreamLength[0]>0&&Cover.IGNORE==cover){
-                Debug.TD("Ignore execute stream task while output stream already exist.",this);
-                return new TaskResult(Code.CODE_ALREADY|Code.CODE_FAIL,"Output already exist.",null);
-            }else if (outputStreamLength[0]>inputStreamLength){
-                Debug.TD("Fail execute stream task while output length large than input length.",this);
-                return new TaskResult(Code.CODE_FAIL,"Output length large than input length.",null);
-            }
-        }else{
-            outputStreamLength[0]=0;//Make output stream keep 0 to replace
-        }
-        update(Status.STATUS_PREPARE,this,null,updater);
-        //
         try {
+            update(Status.STATUS_PREPARE,this,null,updater);
+            final boolean checkMd5=isCheckMd5();
+            final Input input=onOpenInput(checkMd5,updater);
+            if (null==input){
+                Debug.TD("Fail resolve input stream.",this);
+                return new TaskResult(Code.CODE_FAIL,"Fail resolve input stream.",null);
+            }
+            final long inputStreamLength=input.mLength;
+            if (checkMd5&&inputStreamLength>0&&input.mMd5==null){//Check input md5 valid
+                Debug.TD("Fail execute stream task while input stream md5 invalid.",this);
+                return new TaskResult(Code.CODE_FAIL,"Input stream md5 invalid.",null);
+            }
+            final Output output=onOpenOutput(checkMd5?inputStreamLength:-1,updater);
+            if (null==output){
+                Debug.TD("Fail resolve output stream.",this);
+                return new TaskResult(Code.CODE_FAIL,"Fail resolve output stream.",null);
+            }
+            final long[] outputStreamLength=new long[]{output.mLength};
+            if (outputStreamLength[0]<0){
+                Debug.TD("Fail execute stream while output stream length invalid.",this);
+                return new TaskResult(Code.CODE_FAIL,"Output stream length invalid.",null);
+            }
+            final int cover=mCover;
+            if (cover!=Cover.REPLACE){
+                if (outputStreamLength[0]==inputStreamLength){
+                    if (checkMd5){
+                        String inputMd5=input.mMd5;
+                        String outputMd5=output.mMd5;
+                        if (null==inputMd5||null==outputMd5||!inputMd5.equals(outputMd5)){
+                            Debug.TD("Fail execute stream task while already done but md5 not match.",outputMd5);
+                            return new TaskResult(Code.CODE_ALREADY|Code.CODE_FAIL,"Already done but md5 not match.",null);
+                        }
+                        Debug.TD("Stream task md5 matched.",this);
+                    }
+                    Debug.TD("Already done stream task.",inputStreamLength);
+                    return new TaskResult(Code.CODE_ALREADY_DONE,"Stream task already done.",null);
+                }else if (outputStreamLength[0]>0&&Cover.IGNORE==cover){
+                    Debug.TD("Ignore execute stream task while output stream already exist.",this);
+                    return new TaskResult(Code.CODE_ALREADY|Code.CODE_FAIL,"Output already exist.",null);
+                }else if (outputStreamLength[0]>inputStreamLength){
+                    Debug.TD("Fail execute stream task while output length large than input length.",this);
+                    return new TaskResult(Code.CODE_FAIL,"Output length large than input length.",null);
+                }
+            }else{
+                outputStreamLength[0]=0;//Make output stream keep 0 to replace
+            }
+            update(Status.STATUS_PREPARE,this,null,updater);
             //To open input stream
             InputStream taskInputStream=input.openStream(outputStreamLength[0]);
             if (null==taskInputStream){
