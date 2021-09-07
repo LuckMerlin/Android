@@ -4,9 +4,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -54,33 +52,31 @@ public class FileCopyTask extends StreamTask {
                 return null;
             }
             Debug.TD("Opened local file input stream.",file);
-            return new Input(file.length(),null) {
-                @Override
-                protected InputStream openStream(long skip) throws IOException {
-                    long length=file.length();
-                    if (skip>length){
-                        Debug.W("Fail open local input stream while skip large than total length.length="+length+" "+skip);
-                        return null;
-                    }
-                    FileInputStream inputStream=new FileInputStream(file);
-                    updater.finishCleaner(true,(TaskResult result)-> {
-                        close(inputStream);
-                        Debug.TD("Closed local file input stream.",file);
-                    });
-                    inputStream.skip(skip);
-                    return inputStream;
+            return new Input(file.length(),null,(long skip)-> {
+                long length=file.length();
+                if (skip>length){
+                    Debug.W("Fail open local input stream while skip large than total length.length="+length+" "+skip);
+                    return null;
                 }
-            };
-        }else if (from instanceof NasPath){//Open nas input file
-
+                FileInputStream inputStream=new FileInputStream(file);
+                addFinishClose(updater,inputStream);
+                inputStream.skip(skip);
+                return inputStream;
+            });
         }
+        final String host=from.getHost();
+        if (null==host||host.length()<=0){
+            Debug.W("Can't open input stream while host invalid.");
+            return null;
+        }
+        Debug.W("Can't open input while NOT support.");
         return null;
     }
 
     @Override
-    protected Output onOpenOutput(long checkMd5, Updater<TaskResult> updater) throws Exception{
+    protected Output onOpenOutput(long inputLength, Updater<TaskResult> updater) throws Exception{
         Path to=mTo;
-        String toPath=null!=to?to.getPath():null;
+        final String toPath=null!=to?to.getPath():null;
         if (null==toPath||toPath.length()<=0){
             Debug.W("Can't open local output stream while to path invalid.");
             return null;
@@ -110,88 +106,55 @@ public class FileCopyTask extends StreamTask {
                 return null;
             }
             Debug.TD("Opened local file output stream.",file);
-            return new Output(file.length(),null) {
-                @Override
-                protected OutputStream openStream(long skip) throws Exception {
-                    final long length=file.length();
-                    if (skip==length){
-                        FileOutputStream outputStream=new FileOutputStream(file,true);
-                        updater.finishCleaner(true,(result)->{close(outputStream);
-                            Debug.TD("Closed local file output stream.",file);});
-                        return outputStream;
-                    }
-                    Debug.W("Fail open local output stream while length NOT match skip.length="+length+" "+skip);
-                    return null;
+            return new Output(file.length(),null,(skip)->{
+                final long length=file.length();
+                if (skip==length){
+                    FileOutputStream outputStream=new FileOutputStream(file,true);
+                    addFinishClose(updater,outputStream);
+                    return outputStream;
                 }
-            };
-        }else if (to instanceof NasPath){//Open nas output file
-
+                Debug.W("Fail open local output stream while length NOT match skip.length="+length+" "+skip);
+                return null;
+            });
         }
-        return null;
+        final String host=to.getHost();
+        if (null==host||host.length()<=0){
+            Debug.W("Can't open output stream while host invalid.");
+            return null;
+        }
+        Reply<NasPath> nasReply=fetchNasFile(host,toPath);
+        int code=null!=nasReply?nasReply.getCode():Code.CODE_FAIL;
+        if ((code&Code.CODE_NOT_EXIST)<=0&&(code&Code.CODE_SUCCEED)<=0){//If not exist
+            Debug.W("Can't open output stream while fetch reply fail.");
+            return null;
+        }
+        final NasPath nasPath=null!=nasReply?nasReply.getData():null;
+        long length=null!=nasPath?nasPath.getLength():0;
+        Debug.D("AAAlength AAAAAa  "+length);
+        return new Output(length,null,(long skip)-> {
+                if (skip==length){
+                    HttpURLConnection connection=openHttpConnection(host,"POST");
+                    if (null==connection){
+                        return null;
+                    }
+                    Debug.D("DDDDDDDDDd  "+host);
+                    inflateHeader(connection,Label.LABEL_PATH,toPath);
+                    inflateHeader(connection,Label.LABEL_FROM,""+length);
+                    inflateHeader(connection,Label.LABEL_TOTAL,""+inputLength);
+                    inflateHeader(connection,"Content-Type", "application/octet-stream");
+                    connection.setDoInput(true);
+                    connection.setDoOutput(true);
+                    connection.setChunkedStreamingMode(0);
+                    connection.setRequestProperty("Accept", "application/json");
+                    updater.finishCleaner(true,(result)->connection.disconnect());
+                    connection.connect();
+                    OutputStream outputStream=connection.getOutputStream();
+                    return outputStream;
+                }
+                Debug.W("Fail open nas output stream while length NOT match skip.length="+length+" "+skip);
+                return null;
+        });
     }
-
-//    @Override
-//    protected TaskOutputStream openOutputSteam(Updater<TaskResult> updater) {
-//        Path to=mTo;
-//        String toPath=null!=to?to.getPath():null;
-//        if (null==toPath||toPath.length()<=0){
-//            Debug.W("Can't open local output stream while to path invalid.");
-//            return null;
-//        }else if(to.isLocal()){
-//            File file=new File(toPath);
-//            try {
-//                if (!file.exists()){
-//                    File parent=file.getParentFile();
-//                    if (null!=parent&&!parent.exists()){
-//                        Debug.TW("Created local file parent while open task stream.",file);
-//                        parent.mkdirs();
-//                    }
-//                    if (file.createNewFile()){
-//                        Debug.TW("Created local file while open task stream.",file);
-//                        updater.finishCleaner(true,(result)-> {
-//                            if (null==result||!result.isSucceed()){
-//                                Debug.W("Deleting created local file after task fail.");
-//                                file.delete();
-//                            }
-//                        });
-//                    }
-//                }
-//                if (!file.exists()){
-//                    Debug.TW("Fail open local file output stream while file not exist.",file);
-//                    return null;
-//                }else if (!file.canWrite()){
-//                    Debug.TW("Fail open local file output stream while file none permission.",file);
-//                    return null;
-//                }
-//                FileOutputStream outputStream=new FileOutputStream(file,true);
-//                updater.finishCleaner(true,(TaskResult result)-> {
-//                    close(outputStream);
-//                    Debug.TD("Closed local file output stream.",file);
-//                });
-//                Debug.TD("Opened local file output stream.",file);
-//                return new TaskOutputStream(outputStream,file.length());
-//            } catch (Exception e) {
-//                Debug.E("Fail open local file output stream while exception."+e,e);
-//                e.printStackTrace();
-//            }
-//            return null;
-//        }
-//        String host=to.getHost();
-//        if (null==host||host.length()<=0){
-//            Debug.W("Can't open remote output stream while to host invalid.");
-//            return null;
-//        }
-//        Reply<NasPath> reply=fetchNasFile(host,toPath);
-//        int code=null!=reply?reply.getCode():Code.CODE_FAIL;
-//        switch (code){
-//            case Code.CODE_NOT_EXIST:
-//                return new TaskOutputStream(null,0);
-//            case Code.CODE_SUCCEED:
-//                return new TaskOutputStream(null,0);
-//        }
-//        Debug.D("EEEEEEEEEEEEEEE "+code);
-//        return null;
-//    }
 
     private Reply<NasPath> fetchNasFile(String host,String path){
         if (null==host||host.length()<=0){
@@ -208,9 +171,6 @@ public class FileCopyTask extends StreamTask {
         }
         inflateHeader(connection,Label.LABEL_PATH,path);
         connection.setDoInput(true);
-        connection.setConnectTimeout(8000);
-        connection.setReadTimeout(5000);
-        connection.setUseCaches(false);
         connection.setRequestProperty("Accept", "application/json");
         connection.setDoOutput(false);
         InputStreamReader streamReader=null;BufferedReader inputStreamReader=null;
@@ -258,6 +218,8 @@ public class FileCopyTask extends StreamTask {
                 conn.setRequestMethod(null!=method&&method.length()>0?method:"GET");
                 conn.setRequestProperty("Charset", "UTF-8");
                 conn.setUseCaches(false);
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(5000);
                 return conn;
             }
         } catch (Exception e) {

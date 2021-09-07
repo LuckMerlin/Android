@@ -44,7 +44,12 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
     }
 
     protected abstract Input onOpenInput(boolean checkMd5,Updater<TaskResult> updater) throws Exception;
-    protected abstract Output onOpenOutput(long checkMd5,Updater<TaskResult> updater) throws Exception;
+    protected abstract Output onOpenOutput(long inputLength,Updater<TaskResult> updater) throws Exception;
+
+    protected final Updater<TaskResult> addFinishClose(Updater<TaskResult> updater,Closeable ...closeables){
+        return null!=updater&&null!=closeables&&closeables.length>0?updater.finishCleaner
+                (true,(result)->close(closeables)):updater;
+    }
 
     @Override
     protected final TaskResult onExecute(Updater<TaskResult> updater) {
@@ -53,18 +58,18 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
             final boolean checkMd5=isCheckMd5();
             final Input input=onOpenInput(checkMd5,updater);
             if (null==input){
-                Debug.TD("Fail resolve input stream.",this);
-                return new TaskResult(Code.CODE_FAIL,"Fail resolve input stream.",null);
+                Debug.TD("Fail open input.",this);
+                return new TaskResult(Code.CODE_FAIL,"Fail open input.",null);
             }
             final long inputStreamLength=input.mLength;
             if (checkMd5&&inputStreamLength>0&&input.mMd5==null){//Check input md5 valid
                 Debug.TD("Fail execute stream task while input stream md5 invalid.",this);
                 return new TaskResult(Code.CODE_FAIL,"Input stream md5 invalid.",null);
             }
-            final Output output=onOpenOutput(checkMd5?inputStreamLength:-1,updater);
+            final Output output=onOpenOutput(inputStreamLength,updater);
             if (null==output){
-                Debug.TD("Fail resolve output stream.",this);
-                return new TaskResult(Code.CODE_FAIL,"Fail resolve output stream.",null);
+                Debug.TD("Fail open output.",this);
+                return new TaskResult(Code.CODE_FAIL,"Fail open output.",null);
             }
             final long[] outputStreamLength=new long[]{output.mLength};
             if (outputStreamLength[0]<0){
@@ -161,27 +166,42 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
         int IGNORE=4;
     }
 
-    protected static abstract class Input{
+    protected static class Input implements StreamOpener<InputStream>{
         private final long mLength;
         private final String mMd5;
-        public Input(long length,String md5){
+        private StreamOpener<InputStream> mOpener;
+
+        public Input(long length,String md5,StreamOpener<InputStream> opener){
             mLength=length;
             mMd5=md5;
+            mOpener=opener;
         }
 
-        protected abstract InputStream openStream(long skip) throws Exception;
+        public InputStream openStream(long skip) throws Exception{
+            StreamOpener<InputStream> opener=mOpener;
+            return null!=opener?opener.openStream(skip):null;
+        }
     }
 
-    protected static abstract class Output{
+    protected static class Output implements StreamOpener<OutputStream>{
         private final long mLength;
         private final String mMd5;
+        private StreamOpener<OutputStream> mOpener;
 
-        public Output(long length,String md5){
+        public Output(long length,String md5,StreamOpener<OutputStream> opener){
             mLength=length;
             mMd5=md5;
+            mOpener=opener;
         }
 
-        protected abstract OutputStream openStream(long skip) throws Exception;
+        public OutputStream openStream(long skip) throws Exception {
+            StreamOpener<OutputStream> opener=mOpener;
+            return null!=opener?opener.openStream(skip):null;
+        }
+    }
+
+    protected interface StreamOpener<T>{
+        T openStream(long skip) throws Exception;
     }
 
 //
