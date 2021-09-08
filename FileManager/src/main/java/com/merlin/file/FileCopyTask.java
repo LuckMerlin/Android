@@ -130,22 +130,19 @@ public class FileCopyTask extends StreamTask {
         }
         final NasPath nasPath=null!=nasReply?nasReply.getData():null;
         long length=null!=nasPath?nasPath.getLength():0;
-        Debug.D("AAAlength AAAAAa  "+length);
         return new Output(length,null,(long skip)-> {
                 if (skip==length){
                     HttpURLConnection connection=openHttpConnection(host,"POST");
                     if (null==connection){
                         return null;
                     }
-                    Debug.D("DDDDDDDDDd  "+host);
                     inflateHeader(connection,Label.LABEL_PATH,toPath);
                     inflateHeader(connection,Label.LABEL_FROM,""+length);
                     inflateHeader(connection,Label.LABEL_TOTAL,""+inputLength);
-                    inflateHeader(connection,"Content-Type", "application/octet-stream");
+                    inflateHeader(connection,"Content-Type", "binary/octet-stream");
                     connection.setDoInput(true);
                     connection.setDoOutput(true);
                     connection.setChunkedStreamingMode(0);
-                    connection.setRequestProperty("Accept", "application/json");
                     updater.finishCleaner(true,(result)->connection.disconnect());
                     connection.connect();
                     OutputStream outputStream=connection.getOutputStream();

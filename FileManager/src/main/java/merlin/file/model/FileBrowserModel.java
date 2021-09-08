@@ -26,6 +26,7 @@ import luckmerlin.databinding.touch.OnViewClick;
 import luckmerlin.task.TaskExecutor;
 import merlin.file.adapter.ClientBrowseAdapter;
 import merlin.file.adapter.Query;
+import merlin.file.test.TestNasFilePath;
 
 public class FileBrowserModel extends BaseModel implements OnViewClick {
     private final ObservableField<Client> mCurrentClient=new ObservableField<>();
@@ -61,61 +62,13 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
             public void run() {
                 Folder folder=mCurrentFolder.get();
 //                null!=folder?folder.getpa
-                if (null!=folder){
-//                    folder.setna();
-                }
-                executor.append(new FileCopyTask(new LocalPath().apply(new File("/sdcard/dddd.pdf")),
-                        new Path() {
-                            @Override
-                            public long getSize() {
-                                return 0;
-                            }
-
-                            @Override
-                            public long getLength() {
-                                return 0;
-                            }
-
-                            @Override
-                            public long getTotalSpace() {
-                                return 0;
-                            }
-
-                            @Override
-                            public String getHost() {
-                                return "http://192.168.0.4:5000";
-                            }
-
-                            @Override
-                            public long getFreeSpace() {
-                                return 0;
-                            }
-
-                            @Override
-                            public String getMimeType() {
-                                return null;
-                            }
-
-                            @Override
-                            public long getModifyTime() {
-                                return 0;
-                            }
-
-                            @Override
-                            public String getParent() {
-                                return "/Volumes/Work/Workspace/FileBrowser";
-                            }
-
-                            @Override
-                            public String getSep() {
-                                return "/";
-                            }
-
-                            @Override
-                            public String getName() {
-                                return "dddd的说法发.mp3";
-                            }
-                        }));
+                executor.append(new FileCopyTask(
+//                        new LocalPath().apply(
+//                        new File("/sdcard/dddd.pdf")),
+//                        new File("/sdcard/独家记忆.mp3")),
+                        new TestNasFilePath(),
+                        new LocalPath().apply(new File("/sdcard/test.mp3"))
+                        ));
                 executor.start();
             }
         },4000);
