@@ -2,7 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:binding="http://schemas.android.com/apk/res-auto">
     <data>
-        <import type="luckmerlin.databinding.touch.Image"/>
+        <import type="luckmerlin.databinding.view.Image"/>
         <variable name="visibility" type="int" />
         <variable name="src" type="Object" />
     </data>

@@ -5,7 +5,7 @@
         <variable name="multiChoose" type="boolean" />
         <variable name="choosed" type="boolean" />
         <variable name="path" type="com.merlin.file.Path" />
-        <variable name="thumb" type="luckmerlin.databinding.touch.Image" />
+        <variable name="thumb" type="luckmerlin.databinding.view.Image" />
         <variable name="position" type="int" />
         <import type="android.view.View"/>
         <import type="luckmerlin.databinding.touch.Click"/>
@@ -15,7 +15,7 @@
         <import type="merlin.file.util.Time"/>
     </data>
     <LinearLayout android:clickable="true" android:layout_marginBottom="4dp" android:orientation="horizontal"
-        binding:m="@{Click.c().dither(true).id(R.layout.item_browse_path).tag(path)}"
+        binding:m="@{Click.c().longClick().dither(true).id(R.layout.item_browse_path).tag(path)}"
         android:backgroundResource="@{path.access?R.drawable.selector_round_dark_corner_small:R.drawable.round_dark_corner_small_disable}"
         android:layout_width="match_parent" android:layout_height="@dimen/listItemNormal">
 

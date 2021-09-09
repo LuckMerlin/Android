@@ -1,15 +1,14 @@
-package luckmerlin.databinding.touch;
+package luckmerlin.databinding.view;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.widget.ImageView;
 
+import luckmerlin.databinding.BS;
 import luckmerlin.databinding.Binding;
 
-public final class Image implements Binding {
+public class Image extends BS implements Binding {
     private Object mSrc;
 
     public Image src(Object src){
@@ -23,6 +22,7 @@ public final class Image implements Binding {
 
     @Override
     public void onBind(View view) {
+        super.onBind(view);
         if (null!=view){
             Object src=mSrc;
             if (view instanceof ImageView){

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:binding="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable name="folder" type="com.merlin.file.Folder" />
+        <variable name="mode" type="Integer" />
+        <import type="luckmerlin.databinding.touch.Click"/>
+        <import type="luckmerlin.databinding.view.Text"/>
+        <import type="com.file.manager.R"/>
+        <import type="android.view.View"/>
+    </data>
+    <LinearLayout android:orientation="vertical" android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <include binding:menu="@{Click.c().tag(folder).add(Text.text(R.string.transporter))}"
+            layout="@layout/item_context_menu"/>
+
+        <include android:visibility="@{folder.length>0?View.VISIBLE:View.GONE}"
+            binding:menu="@{Click.c().tag(folder).add(Text.text(R.string.multiChoose))}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(folder).add(Text.text(R.string.goTo))}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(folder).add(Text.text(R.string.terminal))}"
+            layout="@layout/item_context_menu"/>
+<!--        <include layout="@layout/item_context_menu"-->
+<!--            android:visibility="@{null!=folder&amp;&amp;!(folder instanceof LocalFolder)?View.VISIBLE:View.GONE}"-->
+<!--            binding:menu="@{ContextMenu.create(R.string.upload,folder)}"/>-->
+<!--        <include layout="@layout/item_context_menu"-->
+<!--            android:visibility="@{folder instanceof LocalFolder&amp;&amp;((LocalFolder)folder).file.?View.VISIBLE:View.GONE}"-->
+<!--            binding:menu="@{ContextMenu.create(R.string.setAsHome,folder)}"/>-->
+        <include binding:menu="@{Click.c().tag(folder).add(Text.text(R.string.setAsHome))}"
+            android:visibility="@{null!=folder?View.VISIBLE:View.GONE}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(folder).add(Text.text(R.string.createFolder))}"
+            android:visibility="@{null!=folder?View.VISIBLE:View.GONE}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(folder).add(Text.text(R.string.createFile))}"
+            android:visibility="@{null!=folder?View.VISIBLE:View.GONE}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(folder).add(Text.text(R.string.exit))}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(folder).add(Text.text(R.string.reboot))}"
+            layout="@layout/item_context_menu"/>
+    </LinearLayout>
+</layout>

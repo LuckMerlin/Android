@@ -6,6 +6,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewParent;
 import luckmerlin.core.match.Matchable;
+import luckmerlin.databinding.BS;
 import luckmerlin.databinding.Binding;
 import luckmerlin.databinding.Model;
 
@@ -14,7 +15,7 @@ import luckmerlin.databinding.Model;
  * Date 18:50 2021/2/1
  * TODO
  */
-public final class Click implements Binding {
+public final class Click extends BS implements Binding {
     public final static int NONE=0;
     public final static int CLICK=1;//01
     public final static int LONG_CLICK=2;//10
@@ -97,6 +98,7 @@ public final class Click implements Binding {
 
     @Override
     public final void onBind(final View view) {
+        super.onBind(view);
         if (null==view){
             return;
         }

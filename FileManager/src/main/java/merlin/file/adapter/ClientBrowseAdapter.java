@@ -5,17 +5,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
 import com.file.manager.databinding.ItemBrowsePathBinding;
 import com.merlin.file.Client;
-import com.merlin.file.Label;
 import com.merlin.file.Path;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.List;
 
 import luckmerlin.core.data.Pager;
-import luckmerlin.core.json.Json;
-import luckmerlin.databinding.touch.Image;
+import luckmerlin.databinding.view.Image;
 import merlin.file.util.ThumbResources;
 
 public class ClientBrowseAdapter extends PageListAdapter<Query, Path>{

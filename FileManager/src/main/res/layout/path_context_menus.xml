@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:binding="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable name="path" type="com.merlin.file.Path" />
+        <variable name="mode" type="int" />
+        <import type="com.merlin.file.Mode"/>
+        <import type="luckmerlin.databinding.touch.Click"/>
+        <import type="luckmerlin.databinding.view.Text"/>
+        <import type="com.file.manager.R"/>
+        <import type="android.view.View"/>
+    </data>
+    <LinearLayout android:orientation="vertical"
+        android:background="@drawable/round_corner_gray"
+        android:layout_width="wrap_content" android:layout_height="wrap_content">
+
+        <include android:visibility="@{path.local&amp;&amp;mode!=Mode.MODE_MULTI_CHOOSE?View.VISIBLE:View.GONE}"
+            binding:menu="@{Click.c().tag(path).add(Text.text(R.string.upload))}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.download))}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.move))}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.copy))}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.delete))}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.rename))}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.scan))}"
+            android:visibility="@{path.local?View.GONE:View.VISIBLE}"
+            layout="@layout/item_context_menu"/>
+
+        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.detail))}"
+            layout="@layout/item_context_menu"/>
+    </LinearLayout>
+</layout>

@@ -1,34 +1,35 @@
 package merlin.file.model;
 
+import android.os.Build;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.PopupWindow;
 
 import androidx.databinding.ObservableField;
+import androidx.databinding.ViewDataBinding;
 import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
+import com.file.manager.databinding.PathContextMenusBinding;
 import com.merlin.file.Client;
-import com.merlin.file.FileCopyTask;
 import com.merlin.file.Folder;
-import com.merlin.file.LocalClient;
-import com.merlin.file.LocalPath;
 import com.merlin.file.Mode;
 import com.merlin.file.NasClient;
-import com.merlin.file.NasPath;
 import com.merlin.file.Path;
-
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import luckmerlin.core.Code;
 import luckmerlin.core.data.Page;
 import luckmerlin.core.debug.Debug;
+import luckmerlin.databinding.M;
 import luckmerlin.databinding.touch.OnViewClick;
+import luckmerlin.databinding.touch.OnViewLongClick;
 import luckmerlin.task.TaskExecutor;
 import merlin.file.adapter.ClientBrowseAdapter;
 import merlin.file.adapter.Query;
-import merlin.file.test.TestNasFilePath;
 
-public class FileBrowserModel extends BaseModel implements OnViewClick {
+public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLongClick {
     private final ObservableField<Client> mCurrentClient=new ObservableField<>();
     private final ObservableField<Mode> mCurrentMode=new ObservableField<>();
     private final ObservableField<Folder> mCurrentFolder=new ObservableField<>();
@@ -57,21 +58,53 @@ public class FileBrowserModel extends BaseModel implements OnViewClick {
 //        executor.append(new FileCopyTask(new LocalPath().apply(new File("/sdcard/dddd.pdf")),
 //                new LocalPath().apply(new File("/sdcard/lin.pdf"))));
 //        executor.start();
-        post(new Runnable() {
-            @Override
-            public void run() {
-                Folder folder=mCurrentFolder.get();
-//                null!=folder?folder.getpa
-                executor.append(new FileCopyTask(
-//                        new LocalPath().apply(
-//                        new File("/sdcard/dddd.pdf")),
-//                        new File("/sdcard/独家记忆.mp3")),
-                        new TestNasFilePath(),
-                        new LocalPath().apply(new File("/sdcard/test.mp3"))
-                        ));
-                executor.start();
+//        post(new Runnable() {
+//            @Override
+//            public void run() {
+//                Folder folder=mCurrentFolder.get();
+////                null!=folder?folder.getpa
+//                executor.append(new FileCopyTask(
+////                        new LocalPath().apply(
+////                        new File("/sdcard/dddd.pdf")),
+////                        new File("/sdcard/独家记忆.mp3")),
+//                        new TestNasFilePath(),
+//                        new LocalPath().apply(new File("/sdcard/test.mp3"))
+//                        ));
+//                executor.start();
+//            }
+//        },4000);
+    }
+
+    @Override
+    public boolean onLongClicked(int viewId, View view, Object tag) {
+        switch (viewId){
+            case R.layout.item_browse_path:
+                return showPathContextMenu(view,null!=tag&&tag instanceof Path?(Path)tag:null)||true;
+        }
+        return false;
+    }
+
+    private boolean showPathContextMenu(View view,Path path){
+        if (null!=view&&null!=path){
+            PopupWindow popupWindow=new PopupWindow();
+            ViewDataBinding binding=M.setContentView(view.getContext(),
+                    popupWindow,R.layout.path_context_menus,null);
+            popupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+            popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+            popupWindow.setOutsideTouchable(true);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                popupWindow.showAsDropDown(view,0,0,Gravity.CENTER_HORIZONTAL);
+            }else{
+                popupWindow.showAsDropDown(view,0,0);
             }
-        },4000);
+            if (null==binding||!(binding instanceof PathContextMenusBinding)){
+                popupWindow.dismiss();
+                return false;
+            }
+            ((PathContextMenusBinding)binding).setPath(path);
+            return true;
+        }
+        return false;
     }
 
     public boolean addClient(Client client){

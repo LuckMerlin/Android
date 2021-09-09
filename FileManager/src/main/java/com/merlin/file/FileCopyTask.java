@@ -21,7 +21,7 @@ import luckmerlin.task.Result;
 import luckmerlin.task.StreamTask;
 import luckmerlin.task.TaskResult;
 
-public class FileCopyTask extends StreamTask {
+public final class FileCopyTask extends StreamTask {
     private final Path mFrom;
     private final Path mTo;
 
@@ -69,8 +69,32 @@ public class FileCopyTask extends StreamTask {
             Debug.W("Can't open input stream while host invalid.");
             return null;
         }
-        Debug.W("Can't open input while NOT support.");
-        return null;
+        Debug.TD("Opened nas file input stream.",fromPath);
+        Reply<NasPath> nasReply=fetchNasFile(host,fromPath);
+        int code=null!=nasReply?nasReply.getCode():Code.CODE_FAIL;
+        if ((code&Code.CODE_NOT_EXIST)<=0&&(code&Code.CODE_SUCCEED)<=0){//If not exist
+            Debug.W("Can't open input stream while fetch reply fail.");
+            return null;
+        }
+        final NasPath nasPath=null!=nasReply?nasReply.getData():null;
+        long length=null!=nasPath?nasPath.getLength():0;
+        return new Input(length, null,(long skip)-> {
+            HttpURLConnection connection=openHttpConnection(host,"GET");
+            if (null==connection){
+                return null;
+            }
+            inflateHeader(connection,Label.LABEL_PATH,fromPath);
+            inflateHeader(connection,Label.LABEL_FROM,""+skip);
+            inflateHeader(connection,Label.LABEL_TOTAL,""+length);
+            inflateHeader(connection,"Content-Type", "binary/octet-stream");
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
+            connection.setChunkedStreamingMode(0);
+            updater.finishCleaner(true,(result)->connection.disconnect());
+            connection.connect();
+            InputStream inputStream=connection.getInputStream();
+            return inputStream;
+        });
     }
 
     @Override
