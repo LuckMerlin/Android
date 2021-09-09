@@ -2,20 +2,22 @@ package merlin.file.model;
 
 import android.os.Build;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupWindow;
-
 import androidx.databinding.ObservableField;
 import androidx.databinding.ViewDataBinding;
 import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
+import com.file.manager.databinding.BrowserMenusBinding;
 import com.file.manager.databinding.PathContextMenusBinding;
 import com.merlin.file.Client;
 import com.merlin.file.Folder;
 import com.merlin.file.Mode;
 import com.merlin.file.NasClient;
 import com.merlin.file.Path;
+import com.merlin.file.TaskActivity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -31,9 +33,10 @@ import merlin.file.adapter.Query;
 
 public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLongClick {
     private final ObservableField<Client> mCurrentClient=new ObservableField<>();
-    private final ObservableField<Mode> mCurrentMode=new ObservableField<>();
+    private final ObservableField<Mode> mCurrentMode=new ObservableField<>(new Mode(Mode.MODE_NORMAL));
     private final ObservableField<Folder> mCurrentFolder=new ObservableField<>();
     private final ObservableField<Integer> mClientCount=new ObservableField<>();
+    private final PopupWindow mPopupWindow=new PopupWindow();
     private final ObservableField<RecyclerView.Adapter> mContentAdapter=new ObservableField<>();
     private final ClientBrowseAdapter mBrowserAdapter=new ClientBrowseAdapter(){
         @Override
@@ -84,21 +87,41 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
         return false;
     }
 
+    private boolean showBrowserContextMenu(View view){
+        if (null!=view){
+            mPopupWindow.dismiss();
+            ViewDataBinding binding=M.setContentView(view.getContext(),
+                    mPopupWindow,R.layout.browser_menus,null);
+            mPopupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+            mPopupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+            mPopupWindow.setOutsideTouchable(true);
+            mPopupWindow.showAtLocation(view,Gravity.CENTER,0,0);
+            if (null==binding||!(binding instanceof BrowserMenusBinding)){
+                mPopupWindow.dismiss();
+                return false;
+            }
+            BrowserMenusBinding menusBinding=(BrowserMenusBinding)binding;
+            menusBinding.setFolder(mCurrentFolder.get());
+            return true;
+        }
+        return false;
+    }
+
     private boolean showPathContextMenu(View view,Path path){
         if (null!=view&&null!=path){
-            PopupWindow popupWindow=new PopupWindow();
+            mPopupWindow.dismiss();
             ViewDataBinding binding=M.setContentView(view.getContext(),
-                    popupWindow,R.layout.path_context_menus,null);
-            popupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
-            popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
-            popupWindow.setOutsideTouchable(true);
+                    mPopupWindow,R.layout.path_context_menus,null);
+            mPopupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+            mPopupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+            mPopupWindow.setOutsideTouchable(true);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                popupWindow.showAsDropDown(view,0,0,Gravity.CENTER_HORIZONTAL);
+                mPopupWindow.showAsDropDown(view,0,0,Gravity.CENTER_HORIZONTAL);
             }else{
-                popupWindow.showAsDropDown(view,0,0);
+                mPopupWindow.showAsDropDown(view,0,0);
             }
             if (null==binding||!(binding instanceof PathContextMenusBinding)){
-                popupWindow.dismiss();
+                mPopupWindow.dismiss();
                 return false;
             }
             ((PathContextMenusBinding)binding).setPath(path);
@@ -131,6 +154,7 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
 
     @Override
     public boolean onClicked(View view, int id, int count, Object tag) {
+        mPopupWindow.dismiss();
         switch (id){
             case R.layout.item_browse_path:
                 return openPath(null!=tag&&tag instanceof Path?(Path)tag:null)||true;
@@ -144,8 +168,26 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
                     }
                 }
                 return true;
+            case R.drawable.selector_menu:
+                return showBrowserContextMenu(view)||true;
+            case R.string.multiChoose:
+                return entryMode(new Mode(Mode.MODE_MULTI_CHOOSE))||true;
+            case R.string.transporter:
+                return startActivity(TaskActivity.class)||true;
+            case R.drawable.selector_cancel:
+                return entryMode(null)||true;
         }
         return false;
+    }
+
+    private boolean entryMode(Mode mode){
+        Mode current=mCurrentMode.get();
+        if ((null==current&&null==mode)||(null!=current&&null!=mode&&current.getMode()==mode.getMode())){
+            return false;
+        }
+        mCurrentMode.set(mode=null!=mode?mode:new Mode(Mode.MODE_NORMAL));
+        mBrowserAdapter.setMode(mode);
+        return true;
     }
 
     private boolean backward(){

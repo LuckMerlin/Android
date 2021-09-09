@@ -33,4 +33,11 @@ public class Text extends BS implements Binding {
             }
         }
     }
+
+    @Override
+    public String toString() {
+        return "Text{" +
+                "mText=" + mText +
+                '}';
+    }
 }

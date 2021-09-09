@@ -9,8 +9,24 @@ public final class Mode {
     public final static int MODE_MOVE=0x006;
     public final static int MODE_SELECT=0x008;
     public final static int MODE_DELETE=0x009;
+    private final int mMode;
+
+    public Mode(int mode){
+        mMode=mode;
+    }
 
     public final boolean is(int ...modes){
+        if (null!=modes&&modes.length>0){
+            for (int mode:modes) {
+                if (mode==mMode){
+                    return true;
+                }
+            }
+        }
         return false;
+    }
+
+    public final int getMode() {
+        return mMode;
     }
 }

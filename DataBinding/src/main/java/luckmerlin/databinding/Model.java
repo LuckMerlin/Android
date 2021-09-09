@@ -62,6 +62,34 @@ public abstract class Model {
         return null;
     }
 
+    protected final <T extends Activity> boolean startActivity(Class<T> cls){
+        return startActivity(cls,null);
+    }
+
+    protected final <T extends Activity> boolean startActivity(Class<T> cls,Integer requestCode){
+        Context context=null!=cls?getContext():null;
+        return null!=context&&startActivity(new Intent(context,cls),requestCode);
+    }
+
+    protected final boolean startActivity(Intent intent,Integer requestCode){
+        Context context=null!=intent?getContext():null;
+        if (null==context){
+            return false;
+        }
+        try {
+            if (null!=requestCode&&context instanceof Activity){
+                ((Activity)context).startActivityForResult(intent,requestCode);
+            }else{
+                context.startActivity(intent);
+            }
+            return true;
+        }catch (Exception e){
+            Debug.E("Exception start activity.e="+e,e);
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public final boolean attachRoot(ViewDataBinding binding){
         return null!=binding&&attachRoot(binding.getRoot());
     }

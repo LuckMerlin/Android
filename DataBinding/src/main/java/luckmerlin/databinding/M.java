@@ -162,7 +162,6 @@ public final class M {
                 ViewDataBinding binding=bind(getBinding(((View)root)),binder);
                 View rootView=null!=binding?binding.getRoot():null;
                 if (null!=rootView){
-                    Debug.D("SSSSSSSSSSSSs  "+rootView);
                     popupWindow.setContentView(rootView);
                 }
                 return binding;

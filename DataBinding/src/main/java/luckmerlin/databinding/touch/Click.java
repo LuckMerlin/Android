@@ -1,10 +1,13 @@
 package luckmerlin.databinding.touch;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.Window;
 import luckmerlin.core.match.Matchable;
 import luckmerlin.databinding.BS;
 import luckmerlin.databinding.Binding;
@@ -88,12 +91,8 @@ public final class Click extends BS implements Binding {
         return this;
     }
 
-    public static Click c(int click){
-        return new Click(click);
-    }
-
-    public static Click c(){
-        return c(Click.CLICK);
+    public static Click c(Object id){
+        return new Click(Click.CLICK).id(id);
     }
 
     @Override
@@ -172,6 +171,10 @@ public final class Click extends BS implements Binding {
         }:null);
     }
 
+    private <T extends Model> T findModel(View view,boolean iterate,Class<T> cls){
+        return Model.findModel(view,iterate,cls);
+    }
+
     private boolean iterateInvoke(Matchable matchable,Object ...objects){
         if (null!=objects&&objects.length>0&&null!=matchable){
             for (Object child:objects) {
@@ -187,9 +190,10 @@ public final class Click extends BS implements Binding {
         if (null==view||null==matchable){
             return false;
         }else if (isMatched(view,matchable)){
+            return true;
         }else if (!(view instanceof View)){
             return false;
-        }else if (isMatched(Model.findModel((View) view,false,null),matchable)) {
+        }else if (isMatched(findModel((View) view,false,null),matchable)) {
             return true;
         }else if (((View)view).getId()==android.R.id.content){
             return false;
@@ -201,6 +205,10 @@ public final class Click extends BS implements Binding {
         Context context=((View)view).getContext();
         if (null==context){
             return false;
+        }else if (context instanceof Activity){
+            Window window=((Activity)context).getWindow();
+            View decorView=null!=window?window.getDecorView():null;
+            return null!=decorView&&iterateViewChildren(decorView,matchable);
         }else if (isMatched(context,matchable)){
             return true;
         }else if (context instanceof ContextWrapper&&
@@ -208,6 +216,27 @@ public final class Click extends BS implements Binding {
             return true;
         }else if(isMatched(context.getApplicationContext(),matchable)){
             return true;
+        }
+        return false;
+    }
+
+    private boolean iterateViewChildren(View view,Matchable matchable){
+        if (null!=view&&null!=matchable){
+            Model model=findModel(view,false,null);
+            if (null!=model&&isMatched(model,matchable)){
+                return true;
+            }else if (isMatched(view,matchable)){
+                return true;
+            }else if (view instanceof ViewGroup){
+                ViewGroup vg=(ViewGroup)view;
+                int count=null!=vg?vg.getChildCount():0;
+                for (int i = 0; i < count; i++) {
+                    if (iterateViewChildren(vg.getChildAt(i),matchable)){
+                        return true;
+                    }
+                }
+                return false;
+            }
         }
         return false;
     }

@@ -22,7 +22,7 @@
                 android:layout_width="wrap_content" android:layout_height="wrap_content">
                 <ImageView android:layout_width="@dimen/titleIconSize" android:layout_height="@dimen/titleIconSize" android:layout_marginLeft="5dp"
                     android:imageResource="@{R.drawable.selector_back}"
-                    android:layout_marginRight="15dp" binding:m="@{Click.c().id(R.drawable.selector_back)}"/>
+                    android:layout_marginRight="15dp" binding:m="@{Click.c(R.drawable.selector_back)}"/>
                     <LinearLayout android:orientation="vertical"
                         android:layout_width="wrap_content" android:layout_height="wrap_content">
                         <LinearLayout android:orientation="horizontal"
@@ -58,11 +58,13 @@
                     binding:visibility="@{(vm.mode.is(Mode.MODE_MULTI_CHOOSE)||vm.currentFolder.size&lt;0)?View.VISIBLE:View.GONE}"/>
 <!--                binding:src="@{(vm.currentMultiChooseCount&lt;vm.currentAdapter.dataCount)?R.drawable.selector_choose_all:R.drawable.selector_choose_none}" />-->
 
-                <include binding:src="@{R.drawable.selector_cancel}" layout="@layout/operate_image"
-                    binding:visibility="@{vm.mode.is(Mode.MODE_SELECT,Mode.MODE_DOWNLOAD,Mode.MODE_UPLOAD,Mode.MODE_MULTI_CHOOSE,Mode.MODE_COPY,Mode.MODE_MOVE)?View.VISIBLE:View.GONE}" />
+                <include binding:operate="@{Image.image(R.drawable.selector_cancel).add(Click.c(R.drawable.selector_cancel))}"
+                    binding:visibility="@{vm.mode.is(Mode.MODE_SELECT,Mode.MODE_DOWNLOAD,Mode.MODE_UPLOAD,Mode.MODE_MULTI_CHOOSE,Mode.MODE_COPY,Mode.MODE_MOVE)?View.VISIBLE:View.GONE}"
+                    layout="@layout/operate_image"/>
 
-                <include binding:src="@{R.drawable.selector_menu}" layout="@layout/operate_image"
-                    binding:visibility="@{vm.mode.is(Mode.MODE_NORMAL,Mode.MODE_DOWNLOAD,Mode.MODE_UPLOAD,Mode.MODE_COPY,Mode.MODE_MOVE)?View.VISIBLE:View.GONE}" />
+                <include binding:operate="@{Image.image(R.drawable.selector_menu).add(Click.c(R.drawable.selector_menu))}"
+                    binding:visibility="@{vm.mode.is(Mode.MODE_NORMAL,Mode.MODE_DOWNLOAD,Mode.MODE_UPLOAD,Mode.MODE_COPY,Mode.MODE_MOVE)?View.VISIBLE:View.GONE}"
+                    layout="@layout/operate_image"/>
             </LinearLayout>
         </RelativeLayout>
 

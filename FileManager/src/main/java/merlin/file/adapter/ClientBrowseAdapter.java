@@ -5,16 +5,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
 import com.file.manager.databinding.ItemBrowsePathBinding;
 import com.merlin.file.Client;
+import com.merlin.file.Mode;
 import com.merlin.file.Path;
-
 import java.util.List;
-
 import luckmerlin.core.data.Pager;
 import luckmerlin.databinding.view.Image;
 import merlin.file.util.ThumbResources;
 
 public class ClientBrowseAdapter extends PageListAdapter<Query, Path>{
     private final ThumbResources mThumbs=new ThumbResources();
+    private int mMode=Mode.MODE_NORMAL;
 
     @Override
     protected final Integer onResolveViewTypeLayoutId(int viewType) {
@@ -25,6 +25,16 @@ public class ClientBrowseAdapter extends PageListAdapter<Query, Path>{
                 return R.layout.list_empty;
         }
         return null;
+    }
+
+    public final boolean setMode(Mode mode){
+        int modeValue=null!=mode?mode.getMode():Mode.MODE_NORMAL;
+        if (modeValue!=mMode){
+            mMode=modeValue;
+            notifyVisibleDataChanged();
+            return true;
+        }
+        return false;
     }
 
     public final boolean browse(String path){
@@ -54,6 +64,7 @@ public class ClientBrowseAdapter extends PageListAdapter<Query, Path>{
             Object thumbObject=null!=data?data.isDirectory()?R.drawable.icon_folder:mThumbs.getThumb(data.getPath()):null;
             thumbObject=null!=thumbObject||null==data?thumbObject:mThumbs.getMimeTypeThumb(data.getMimeType());
             itemBinding.setThumb(null!=thumbObject?Image.image(thumbObject):null);
+            itemBinding.setMultiChoose(mMode==Mode.MODE_MULTI_CHOOSE);
             itemBinding.setPath(data);
         }
     }

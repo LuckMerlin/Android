@@ -51,6 +51,20 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         return size>=0?data.get(size-1):null;
     }
 
+    protected final void notifyVisibleDataChanged(){
+        RecyclerView recyclerView=getRecyclerView();
+        if (null!=recyclerView){
+            int count=recyclerView.getChildCount();
+            View child=null;int position=-1;
+            for (int i = 0; i < count; i++) {
+                if (null!=(child=recyclerView.getChildAt(i))&&
+                        0<=(position=recyclerView.getChildAdapterPosition(child))){
+                    notifyItemChanged(position,"Change");
+                }
+            }
+        }
+    }
+
     protected Integer onResolveViewTypeLayoutId(int viewType){
         return null;
     }

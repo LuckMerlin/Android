@@ -10,34 +10,33 @@
         <import type="com.file.manager.R"/>
         <import type="android.view.View"/>
     </data>
-    <LinearLayout android:orientation="vertical"
-        android:background="@drawable/round_corner_gray"
+    <LinearLayout android:orientation="vertical" android:background="@drawable/round_corner_gray"
         android:layout_width="wrap_content" android:layout_height="wrap_content">
 
         <include android:visibility="@{path.local&amp;&amp;mode!=Mode.MODE_MULTI_CHOOSE?View.VISIBLE:View.GONE}"
-            binding:menu="@{Click.c().tag(path).add(Text.text(R.string.upload))}"
+            binding:menu="@{Text.text(R.string.upload).add(Click.c(R.string.upload).tag(path))}"
             layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.download))}"
+        <include binding:menu="@{Text.text(R.string.download).add(Click.c(R.string.download).tag(path))}"
             layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.move))}"
+        <include binding:menu="@{Text.text(R.string.move).add(Click.c(R.string.move).tag(path))}"
             layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.copy))}"
+        <include binding:menu="@{Text.text(R.string.copy).add(Click.c(R.string.copy).tag(path))}"
             layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.delete))}"
+        <include binding:menu="@{Text.text(R.string.delete).add(Click.c(R.string.delete).tag(path))}"
             layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.rename))}"
+        <include binding:menu="@{Text.text(R.string.rename).add(Click.c(R.string.rename).tag(path))}"
             layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.scan))}"
+        <include binding:menu="@{Text.text(R.string.scan).add(Click.c(R.string.scan).tag(path))}"
             android:visibility="@{path.local?View.GONE:View.VISIBLE}"
             layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Click.c().tag(path).add(Text.text(R.string.detail))}"
+        <include binding:menu="@{Text.text(R.string.detail).add(Click.c(R.string.detail).tag(path))}"
             layout="@layout/item_context_menu"/>
     </LinearLayout>
 </layout>
