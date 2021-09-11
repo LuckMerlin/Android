@@ -7,12 +7,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import luckmerlin.core.Canceler;
+import luckmerlin.core.Code;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.match.Matchable;
 import luckmerlin.core.match.MatchIterator;
@@ -67,8 +66,7 @@ public class TaskExecutor implements TaskRunner {
         if (null!=maps){
             result=new ArrayList<>();
             for (Task child:tasks) {
-                if (null!=child&&!maps.containsKey(child)&&null==maps.
-                        put(child, new Running(Status.STATUS_WAIT))){
+                if (null!=child&&!maps.containsKey(child)&&null==maps.put(child, null)){
                     result.add(child);
                 }
             }
@@ -90,21 +88,19 @@ public class TaskExecutor implements TaskRunner {
             return false;
         }
         //Check if need auto add into
-        final Running running=new Running(Status.STATUS_WAIT);
+        final Running running=new Running(mTaskUpdate);
         tasksMap.put(task,running);
+        running.update(Status.STATUS_WAIT,task,null);
         Debug.TD("Wait to start task.",task);
         return null!=running.setCanceler(executor.submit(()->{
             long time= SystemClock.elapsedRealtime();
             Debug.TD("Start task.",task);
-            task.execute((int status1, Task task1, Object arg1)-> {
-                if (null!=task1&&task1==task){
-                    tasksMap.put(task,running.setStatus(status1));
-                }
-                mTaskUpdate.onTaskUpdate(status1,task1,arg1);
-            });
+            TaskResult result=task.execute(running);
+            running.setResult(null!=result?result:new TaskResult(Code.CODE_FAIL,"Unknown",null));
             long duration=SystemClock.elapsedRealtime()-time;
             Debug.TD("Finish task."+duration,task);
-            tasksMap.put(task,null);//Clean status
+            running.update(Status.STATUS_IDLE,task,null);
+            running.cleanFinisher(true);
         }))||true;
     }
 
@@ -133,7 +129,7 @@ public class TaskExecutor implements TaskRunner {
             if (null==child||null==(running=tasksMap.get(child))||null!=child.getResult()){
                 return Matchable.CONTINUE;
             }
-            Canceler canceler=running.mCanceler;
+            Canceler canceler=running.getCanceler();
             return null!=canceler&&canceler.cancel(interrupt)?Matchable.MATCHED:Matchable.CONTINUE;
         }):null;
     }
@@ -166,23 +162,4 @@ public class TaskExecutor implements TaskRunner {
         return null!=collection&&null!=matchable?mMatcher.iterate(collection,matchable):null;
     }
 
-    private static final class Running{
-        private int mStatus;
-        private Canceler mCanceler;
-
-        protected Running(int status){
-            mStatus=status;
-        }
-
-        public Running setCanceler(Future future) {
-            this.mCanceler = null!=future?(interrupt)->!future.isDone()&&
-                    !future.isCancelled()&&future.cancel(interrupt):null;
-            return this;
-        }
-
-        public Running setStatus(int status) {
-            this.mStatus = mStatus;
-            return this;
-        }
-    }
 }

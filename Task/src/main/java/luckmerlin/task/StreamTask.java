@@ -1,7 +1,5 @@
 package luckmerlin.task;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import luckmerlin.core.Code;
@@ -11,10 +9,6 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
     private int mBufferSize;
     private int mCover=Cover.NONE;
     private boolean mCheckMd5=false;
-
-    public StreamTask(Execute execute){
-        super(execute);
-    }
 
     public final StreamTask setCover(int cover){
         mCover=cover;
@@ -43,18 +37,13 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
         return mBufferSize;
     }
 
-    protected abstract Input onOpenInput(boolean checkMd5,Updater<TaskResult> updater) throws Exception;
-    protected abstract Output onOpenOutput(long inputLength,Updater<TaskResult> updater) throws Exception;
-
-    protected final Updater<TaskResult> addFinishClose(Updater<TaskResult> updater,Closeable ...closeables){
-        return null!=updater&&null!=closeables&&closeables.length>0?updater.finishCleaner
-                (true,(result)->close(closeables)):updater;
-    }
+    protected abstract Input onOpenInput(boolean checkMd5,Updater updater) throws Exception;
+    protected abstract Output onOpenOutput(long inputLength,Updater updater) throws Exception;
 
     @Override
-    protected final TaskResult onExecute(Updater<TaskResult> updater) {
+    protected final TaskResult onExecute(Running updater) {
         try {
-            update(Status.STATUS_PREPARE,this,null,updater);
+            update(Status.STATUS_PREPARE,null);
             final boolean checkMd5=isCheckMd5();
             final Input input=onOpenInput(checkMd5,updater);
             if (null==input){
@@ -100,7 +89,7 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
             }else{
                 outputStreamLength[0]=0;//Make output stream keep 0 to replace
             }
-            update(Status.STATUS_PREPARE,this,null,updater);
+            update(Status.STATUS_PREPARE,null);
             //To open input stream
             InputStream taskInputStream=input.openStream(outputStreamLength[0]);
             if (null==taskInputStream){
@@ -123,8 +112,13 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
                 public long getTotal() {
                     return inputStreamLength;
                 }
+
+                @Override
+                public long getSpeed() {
+                    return 0;
+                }
             };
-            update(Status.STATUS_DOING,this,progress,updater);
+            update(Status.STATUS_DOING,progress);
             int bufferSize=mBufferSize;int read=0;
             bufferSize=bufferSize<=0?1024*1024:bufferSize;
             byte[] buffer=new byte[bufferSize];
@@ -132,7 +126,7 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
                 if (read>0){
                     outputSteam.write(buffer,0,read);
                     doneLength[0]+=read;
-                    update(Status.STATUS_DOING,this,progress,updater);
+                    update(Status.STATUS_DOING,progress);
                 }
             }
             outputSteam.flush();
@@ -143,22 +137,6 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
             e.printStackTrace();
         }
         return null;
-    }
-
-    protected final boolean close(Closeable ...closeables){
-        if (null!=closeables&&closeables.length>0){
-            for (Closeable child:closeables) {
-                try {
-                    if (null!=child){
-                        child.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            return true;
-        }
-        return false;
     }
 
     public interface Cover{

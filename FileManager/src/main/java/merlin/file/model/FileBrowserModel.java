@@ -87,6 +87,7 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
 //        mBrowserAdapter.setFixHolder(ListAdapter.TYPE_TAIL,view1);
         //
         TaskExecutor executor=new TaskExecutor();
+        startActivity(TaskActivity.class);
 //        executor.append(new FileCopyTask(new LocalPath().apply(new File("/sdcard/dddd.pdf")),
 //                new LocalPath().apply(new File("/sdcard/lin.pdf"))));
 //        executor.start();

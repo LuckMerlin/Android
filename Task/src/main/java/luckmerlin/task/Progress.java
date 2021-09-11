@@ -3,6 +3,7 @@ package luckmerlin.task;
 public interface Progress {
     long getDone();
     long getTotal();
+    long getSpeed();
 
     default float getProgress(){
         long total=getTotal();

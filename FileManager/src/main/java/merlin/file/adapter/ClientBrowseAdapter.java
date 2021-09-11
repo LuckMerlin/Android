@@ -1,5 +1,7 @@
 package merlin.file.adapter;
 
+import android.view.ViewGroup;
+
 import androidx.databinding.ViewDataBinding;
 import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
@@ -17,7 +19,7 @@ public class ClientBrowseAdapter extends PageListAdapter<Query, Path>{
     private Mode mMode;
 
     @Override
-    protected final Integer onResolveViewTypeLayoutId(int viewType) {
+    protected final Integer onResolveViewTypeLayoutId(ViewGroup parent,int viewType) {
         switch (viewType){
             case TYPE_DATA:
                 return R.layout.item_browse_path;

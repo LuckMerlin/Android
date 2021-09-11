@@ -1,97 +1,96 @@
 package luckmerlin.task;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Closeable;
+import java.io.IOException;
+import luckmerlin.core.Result;
 import luckmerlin.core.debug.Debug;
 
 public abstract class AbstractTask<T extends TaskResult> implements Task<T> {
-    private Execute mExecute;
+    private transient String mName;
+    private transient Running mRunning;
 
-    public AbstractTask(Execute execute){
-        mExecute=execute;
-    }
-
-    public final Execute setExecute(Execute execute){
-        mExecute=execute;
+    public final AbstractTask setRunning(Running running){
+        if (null!=mRunning){
+            mRunning=running;
+        }
         return this;
     }
 
-    @Override
-    public int getStatus() {
-        Execute execute=mExecute;
-        return null!=execute?execute.getStatus():Status.STATUS_WAIT;
+    public final AbstractTask<T> setName(String name){
+        mName=name;
+        return this;
     }
 
-    @Override
-    public Result getResult() {
-        Execute execute=mExecute;
-        return null!=execute?execute.getResult():null;
+    public final Running getRunning() {
+        return mRunning;
     }
 
-    @Override
-    public Progress getProgress() {
-        Execute execute=mExecute;
-        return null!=execute?execute.getProgress():null;
+    protected final boolean closeOnFinish(Closeable...closeables){
+        return null!=closeables&&closeables.length>0&&finisher(true,(Result result)->close(closeables));
     }
 
-    public final Execute getExecute() {
-        return mExecute;
+    protected final boolean finisher(boolean add,Finisher finisher){
+        Running running=null!=finisher?mRunning:null;
+        return null!=finisher&&null!=running.finisher(add,finisher);
     }
 
-    protected abstract T onExecute(Updater<T> updater);
-
-    @Override
-    public final T execute(final OnTaskUpdate update) {
-        if (isExecuting()){
-            Debug.W("Can't execute task while already executing.");
-            return null;
-        }
-        final List<FinishCleaner<T>> endingRunnables=new ArrayList<>();
-        final Updater<T> updater=new Updater<T>() {
-            @Override
-            public Updater update(int status, Task task, Progress arg) {
-                AbstractTask.this.update(status,task,arg,update);
-                return this;
-            }
-
-            @Override
-            public Updater finishCleaner(boolean add, FinishCleaner<T> runnable) {
-                if (null!=runnable){
-                    if (add){
-                        if (!endingRunnables.contains(runnable)&&endingRunnables.add(runnable)){
-
-                        }
-                    }else if (endingRunnables.remove(runnable)){
-                        //Do noting
-                    }
-                }
-                return this;
-            }
-        };
-        T result=onExecute(updater);
-        for (FinishCleaner<T> child:endingRunnables) {
-            if (null!=child){
-                child.onFinishClean(result);
-            }
-        }
-        endingRunnables.clear();
-        return result;
-    }
-
-    protected final boolean update(int status, Task task,Progress arg,Updater<TaskResult> updater){
-        if (null!=updater){
-            updater.update(status,task,arg);
+    protected final boolean update(int status, Progress arg){
+        Running running=mRunning;
+        if (null!=running){
+            running.update(status,this,arg);
             return true;
         }
         return false;
     }
 
-    protected interface Updater<T>{
-        Updater update(int status, Task task,Progress arg);
-        Updater finishCleaner(boolean add,FinishCleaner<T> runnable);
+    @Override
+    public final String getName() {
+        return mName;
     }
 
-    protected interface FinishCleaner<T>{
-        void onFinishClean(T result);
+    @Override
+    public final int getStatus() {
+        Running running=mRunning;
+        return null!=running?running.getStatus():Status.STATUS_IDLE;
     }
+
+    @Override
+    public final Result getResult() {
+        Running running=mRunning;
+        return null!=running?running.getResult():null;
+    }
+
+    @Override
+    public final Progress getProgress() {
+        Running running=mRunning;
+        return null!=running?running.getProgress():null;
+    }
+
+    protected abstract T onExecute(Running running);
+
+    @Override
+    public final T execute(Running running) {
+        if (isExecuting()){
+            Debug.W("Can't execute task while already executing.");
+            return null;
+        }
+        return onExecute(mRunning=running);
+    }
+
+    protected final boolean close(Closeable ...closeables){
+        if (null!=closeables&&closeables.length>0){
+            for (Closeable child:closeables) {
+                try {
+                    if (null!=child){
+                        child.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
 }

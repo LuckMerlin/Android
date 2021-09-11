@@ -1,6 +1,6 @@
 package luckmerlin.core;
 
-public class Reply<T> {
+public class Reply<T> implements Result{
     private int mCode;
     private String mNote;
     private T mData;

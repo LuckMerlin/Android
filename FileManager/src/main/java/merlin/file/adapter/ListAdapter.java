@@ -81,7 +81,11 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         }
     }
 
-    protected Integer onResolveViewTypeLayoutId(int viewType){
+    protected Integer onResolveDataTypeLayoutId(ViewGroup parent){
+        return null;
+    }
+
+    protected Integer onResolveViewTypeLayoutId(ViewGroup parent,int viewType){
         return null;
     }
 
@@ -113,10 +117,11 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
       final LayoutInflater in=LayoutInflater.from(context);
         RecyclerView.ViewHolder viewHolder=onCreateViewHolder(in,viewType,parent);
         if (viewHolder ==null){
-           Integer integer= onResolveViewTypeLayoutId(viewType);
+           Integer integer= onResolveViewTypeLayoutId(parent,viewType);
+           integer=null==integer&&viewType==TYPE_DATA?onResolveDataTypeLayoutId(parent):integer;
            ViewDataBinding binding=null!=integer&&integer!= Resources.ID_NULL?
                    DataBindingUtil.inflate(in,integer,parent,false):null;
-           viewHolder= null!=binding?new ViewHolder(binding):null;
+            viewHolder= null!=binding?new ViewHolder(binding):null;
         }
         if (null==viewHolder){
             switch (viewType){

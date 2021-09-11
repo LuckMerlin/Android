@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:binding="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable name="task" type="luckmerlin.task.Task" />
+        <variable name="statusText" type="String" />
+        <import type="luckmerlin.databinding.touch.Click"/>
+        <import type="merlin.file.util.FileSize"/>
+        <import type="com.file.manager.R"/>
+    </data>
+    <LinearLayout android:paddingRight="@dimen/contentGap" android:paddingLeft="@dimen/contentGap"
+        android:paddingTop="3dp" android:paddingBottom="3dp" android:clickable="true"
+        android:background="@drawable/selector_task_item_background"
+        android:gravity="center_vertical" android:layout_width="match_parent"
+        android:layout_marginBottom="1dp" android:layout_height="@dimen/listItemNormal">
+        <ImageView android:src="@drawable/hidisk_icon_ppt" android:paddingTop="7dp"
+            android:paddingBottom="7dp" android:layout_width="60dp" android:layout_height="60dp"/>
+        <LinearLayout android:orientation="vertical" android:layout_weight="1"
+            android:layout_width="0dp" android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp" android:layout_height="wrap_content">
+            <TextView android:text="@{task.name}" android:textSize="16sp" android:ellipsize="middle"
+                android:singleLine="true" android:textColor="@color/textTitle"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            <ProgressBar style="@android:style/Widget.ProgressBar.Horizontal"
+                android:progress="@{(int)task.progress.progress}" android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp" android:layout_width="match_parent"
+                android:layout_height="4dp"/>
+            <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView android:layout_weight="1" android:gravity="left" android:singleLine="true"
+                    android:textSize="@dimen/textTitleSmall" android:textColor="@color/textTitleSub"
+                    android:text="@{FileSize.formatSizeText(task.progress.done)}"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                <TextView android:layout_weight="1" android:singleLine="true" android:gravity="right"
+                    android:textColor="@color/textTitleSub" android:textSize="@dimen/textTitleSmall"
+                    android:text="@{FileSize.formatSizeText(task.progress.speed)+`/s`}"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            </LinearLayout>
+        </LinearLayout>
+        <TextView binding:m="@{Click.c(R.drawable.selector_button).tag(task)}"
+            android:textColor="@color/textTitle" android:background="@drawable/selector_button"
+            android:paddingLeft="15dp" android:paddingRight="15dp" android:paddingBottom="7dp"
+            android:paddingTop="7dp" android:text="@{statusText}" android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+</layout>

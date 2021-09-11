@@ -1,8 +1,12 @@
 package luckmerlin.task;
 
+import luckmerlin.core.Result;
+
 public interface Task<T extends TaskResult> extends Execute,  Status{
 
-    T execute(OnTaskUpdate update);
+    T execute(Running running);
+
+    String getName();
 
     default float progress(){
         Progress progress=getProgress();
@@ -10,7 +14,7 @@ public interface Task<T extends TaskResult> extends Execute,  Status{
     }
 
     default boolean isExecuting(){
-        return isStatus(STATUS_DOING,STATUS_PREPARE);
+        return !isStatus(STATUS_IDLE);
     }
 
     default boolean isStatus(int ...statuses){
@@ -29,13 +33,5 @@ public interface Task<T extends TaskResult> extends Execute,  Status{
     default boolean isSucceed(){
         Result result=getResult();
         return null!=result&&result.isSucceed();
-    }
-
-    default boolean update(int status, Task task,Object arg,OnTaskUpdate update){
-        if (null!=update){
-            update.onTaskUpdate(status,task,arg);
-            return true;
-        }
-        return false;
     }
 }

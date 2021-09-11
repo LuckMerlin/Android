@@ -41,7 +41,7 @@ public class MatchIterator {
         int length=null!=values&&null!=matchable?values.size():0;
         if (length>0){
             int max=matchable.getMax();
-            List<T> list=new ArrayList<>(length>=max?max:length);
+            List<T> list=new ArrayList<>(length>=max?length:Math.max(0,max));
             synchronized (values){
                 for (T child:values) {
                     if (list.size()>=max){
