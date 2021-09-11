@@ -1,179 +1,188 @@
 package luckmerlin.task;
 
 import android.os.SystemClock;
-
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import luckmerlin.core.Call;
-import luckmerlin.core.Code;
-import luckmerlin.core.data.Page;
-import luckmerlin.core.data.PageFetcher;
+import luckmerlin.core.Canceler;
 import luckmerlin.core.debug.Debug;
+import luckmerlin.core.match.Matchable;
+import luckmerlin.core.match.MatchIterator;
 
-public class TaskExecutor implements Executor,TaskGroup {
-    private List<Task> mTasks;
+public class TaskExecutor implements TaskRunner {
     private ExecutorService mExecutor;
-    private Task mExecuting;
-    private boolean mExecuteDoing=false;
+    private final MatchIterator mMatcher=new MatchIterator();
+    private Map<OnTaskUpdate,Matchable<Task>> mMaps;
+    private final Map<Task, Running> mTasksMap=new ConcurrentHashMap<>();
+    private final OnTaskUpdate mTaskUpdate=(int status, Task task, Object arg)-> {
+        Map<OnTaskUpdate,Matchable<Task>> maps=mMaps;
+        if (null!=(null!=maps?mMatcher.iterate(maps.keySet(), (arg1)-> {
+            Matchable<Task> matchable=null!=arg1?maps.get(arg1):null;
+            Integer matched=null!=matchable?matchable.onMatch(task):Matchable.MATCHED;
+            if (null!=matched&&matched==Matchable.MATCHED){
+                arg1.onTaskUpdate(status,task,arg);
+            }
+            return Matchable.CONTINUE;
+        }):null)){
+            //Do nothing
+        }
+    };
 
     @Override
-    public TaskGroup append(Task task, boolean skipEqual) {
-        if (null!=task){
-            List<Task> tasks=mTasks;
-            synchronized (tasks=null!=tasks?tasks:(mTasks=new ArrayList<>())){
-                if ((!skipEqual||!tasks.contains(task))&&tasks.add(task)){
-                    //Added
-                }
+    public boolean put(OnTaskUpdate callback, Matchable<Task> matchable) {
+        if (null!=callback){
+            Map<OnTaskUpdate,Matchable<Task>> maps=mMaps;
+            synchronized ((null!=maps?maps:(maps=mMaps=new HashMap<>()))){
+                maps.put(callback,matchable);
             }
-        }
-        return this;
-    }
-
-    @Override
-    public TaskGroup insert(int index, Task task, boolean skipEqual) {
-        if (null!=task&&index>=0){
-            List<Task> tasks=mTasks;
-            synchronized (tasks=null!=tasks?tasks:(mTasks=new ArrayList<>())){
-                if ((!skipEqual||!tasks.contains(task))&&index<tasks.size()){
-                    tasks.add(index,task);
-                }
-            }
-        }
-        return this;
-    }
-
-    public final int getSize(){
-        List<Task> tasks=mTasks;
-        return null!=tasks?tasks.size():-1;
-    }
-
-    public final boolean isExist(Object task){
-        return null!=task&&indexFirst(task)>=0;
-    }
-
-    public final Task findFirst(Object task){
-        List<Task> tasks=null!=task?mTasks:null;
-        if (null!=tasks){
-            synchronized (tasks){
-                int index=tasks.indexOf(task);
-                return index>=0?tasks.get(index):null;
-            }
-        }
-        return null;
-    }
-
-    public final int indexFirst(Object task){
-        List<Task> tasks=null!=task?mTasks:null;
-        if (null!=tasks){
-            synchronized (tasks){
-                return tasks.indexOf(task);
-            }
-        }
-        return -1;
-    }
-
-    public final boolean removeFirst(Object task){
-        List<Task> tasks=null!=task?mTasks:null;
-        if (null!=tasks){
-            synchronized (tasks){
-                if (tasks.remove(task)){
-                    if (tasks.size()<=0){
-                        mTasks=null;
-                    }
-                    return true;
-                }
-            }
+            return true;
         }
         return false;
     }
 
-    public final Task getExecuting() {
-        return mExecuting;
+    @Override
+    public boolean remove(OnTaskUpdate callback) {
+        Map<OnTaskUpdate,Matchable<Task>> maps=null!=callback?mMaps:null;
+        if (null==maps){
+            return false;
+        }
+        synchronized (maps){
+            maps.remove(callback);
+        }
+        return true;
     }
 
     @Override
-    public Page<Task> getTasks(Task anchor, int limit) {
-        List<Task> tasks=mTasks;
-        if (null!=tasks){
-            synchronized (tasks){
-                return new PageFetcher().fromList(anchor, limit, tasks, null,(Task from)-> from);
+    public List<Task> add(Task... tasks) {
+        Map<Task, Running> maps=null!=tasks&&tasks.length>0?mTasksMap:null;
+        List<Task> result=null;
+        if (null!=maps){
+            result=new ArrayList<>();
+            for (Task child:tasks) {
+                if (null!=child&&!maps.containsKey(child)&&null==maps.
+                        put(child, new Running(Status.STATUS_WAIT))){
+                    result.add(child);
+                }
             }
         }
-        return new Page<>().setTotal(0);
+        return result;
+    }
+
+    private boolean startTask(Task task){
+        Map<Task, Running> tasksMap=mTasksMap;
+        if (null==task||null==tasksMap){
+            return false;
+        }else if (null==task||null!=tasksMap.get(task)||null!=task.getResult()){
+            return false;
+        }
+        ExecutorService executor= mExecutor;
+        if (null==(executor=(null!=executor?executor:(null!=(mExecutor=onCreateExecutorService())?
+                mExecutor: Executors.newSingleThreadExecutor())))){
+            Debug.W("Can't start task while executor invalid.");
+            return false;
+        }
+        //Check if need auto add into
+        final Running running=new Running(Status.STATUS_WAIT);
+        tasksMap.put(task,running);
+        Debug.TD("Wait to start task.",task);
+        return null!=running.setCanceler(executor.submit(()->{
+            long time= SystemClock.elapsedRealtime();
+            Debug.TD("Start task.",task);
+            task.execute((int status1, Task task1, Object arg1)-> {
+                if (null!=task1&&task1==task){
+                    tasksMap.put(task,running.setStatus(status1));
+                }
+                mTaskUpdate.onTaskUpdate(status1,task1,arg1);
+            });
+            long duration=SystemClock.elapsedRealtime()-time;
+            Debug.TD("Finish task."+duration,task);
+            tasksMap.put(task,null);//Clean status
+        }))||true;
+    }
+
+    @Override
+    public List<Task> start(Object taskObject) {
+        if (null==taskObject){
+            return null;
+        }else if (taskObject instanceof Task){
+            Task task=(Task)taskObject;
+            return startTask(task)? Arrays.asList((new Task[]{task})):null;
+        }else if (taskObject instanceof Matchable){
+            Matchable matchable=(Matchable)taskObject;
+            Map<Task, Running> tasksMap=mTasksMap;
+            final List<Task> tasks=iterateKeys(tasksMap.keySet(),matchable);
+            return iterateKeys(tasks,(Task child)->startTask(child)?Matchable.MATCHED:Matchable.CONTINUE);
+        }
+        return null;
+    }
+
+    @Override
+    public List<Task> cancel(boolean interrupt,Matchable matchable) {
+        Map<Task, Running> tasksMap=mTasksMap;
+        final List<Task> tasks=null!=tasksMap?iterateKeys(tasksMap.keySet(),matchable):null;
+        return null!=tasks?iterateKeys(tasks, (Task child)-> {
+            Running running=null;
+            if (null==child||null==(running=tasksMap.get(child))||null!=child.getResult()){
+                return Matchable.CONTINUE;
+            }
+            Canceler canceler=running.mCanceler;
+            return null!=canceler&&canceler.cancel(interrupt)?Matchable.MATCHED:Matchable.CONTINUE;
+        }):null;
+    }
+
+    @Override
+    public List<Task> delete(Matchable matchable) {
+        Map<Task, Running> maps=null!=matchable?mTasksMap:null;
+        List<Task> tasks=null!=maps?iterateKeys(maps.keySet(),matchable):null;
+        return null!=tasks?iterateKeys(tasks, (Task arg)-> (null==arg||maps.get(arg)!=null)?
+                Matchable.CONTINUE:null== maps.remove(arg)?Matchable.MATCHED:Matchable.CONTINUE):null;
+    }
+
+    @Override
+    public int getSize() {
+        Map<Task, Running> tasksMap=mTasksMap;
+        return null!=tasksMap?tasksMap.size():-1;
+    }
+
+    @Override
+    public List<Task> getTasks(Matchable matchable) {
+        Map<Task, Running> maps=null!=matchable?mTasksMap:null;
+        return null!=maps?iterateKeys(maps.keySet(),matchable):null;
     }
 
     protected ExecutorService onCreateExecutorService(){
         return null;
     }
 
-    @Override
-    public final Call execute(Runnable runnable) {
-        if (null==runnable){
-            return new Call(Code.CODE_ARGS,null,null);
-        }
-        ExecutorService executor= mExecutor;
-        Future future=(null!=executor?executor:(null!=(mExecutor=onCreateExecutorService())?
-                mExecutor:Executors.newSingleThreadExecutor())).submit(runnable);
-        return new Call(Code.CODE_SUCCEED,null,null).setCanceler(null!=future?(boolean cancel)->
-                !future.isDone()&&!future.isCancelled()?future.cancel(true):false:null);
+    private List<Task> iterateKeys(Collection<Task> collection, Matchable<Task> matchable){
+        return null!=collection&&null!=matchable?mMatcher.iterate(collection,matchable):null;
     }
 
-    public synchronized Call start(){
-        if (mExecuteDoing){
-            Debug.W("Can't start while already started.");
-            return null;
-        }else if (null==mTasks){
-            Debug.W("Not need start while task list EMPTY.");
-            return null;
+    private static final class Running{
+        private int mStatus;
+        private Canceler mCanceler;
+
+        protected Running(int status){
+            mStatus=status;
         }
-        mExecuteDoing=true;
-        return execute(()->{
-            long time= SystemClock.elapsedRealtime();
-            Debug.D("Start task executor.");
-            final OnTaskUpdate callback=(int status, Task task, Object arg)-> {
-                Progress progress=null!=task?task.getProgress():null;
-                Debug.D("DDDD "+status+" "+(null!=progress?progress.getProgress():-1));
-            };
-            final Map<Task,TaskResult> doneMap=new HashMap<>();
-            while (true){
-                Object nextTask=null;
-                final List<Task> tasks=mTasks;
-                int size=0;
-                if (null!=tasks){
-                    synchronized (tasks){
-                        size=tasks.size();
-                        for (Task child:tasks) {
-                            if (null==child){
-                                tasks.remove(null);
-                                nextTask=false;
-                                Debug.D("Remove null task from executor.");
-                                break;
-                            }else if (child.isStatus(Status.STATUS_IDLE)&& !doneMap.containsKey(child)){
-                                nextTask=child;
-                                Debug.TD("Found next executable task.",child);
-                            }
-                        }
-                    }
-                }
-                if (null==nextTask){
-                    Debug.TD("All task executed."+size,null);
-                    break;
-                }else if (nextTask instanceof Task){
-                    Task executing=mExecuting=((Task)nextTask);
-                    Debug.TD("Start execute task.",executing);
-                    TaskResult result=executing.execute(callback);
-                    mExecuting=null;
-                    doneMap.put(executing,null!=result?result:new TaskResult(Code.CODE_FAIL,null,null));
-                    Debug.TD("Stop execute task.",executing);
-                }
-            }
-            mExecuteDoing=false;
-            Debug.D("Stop task executor.elapsedTime="+(SystemClock.elapsedRealtime()-time));
-        });
+
+        public Running setCanceler(Future future) {
+            this.mCanceler = null!=future?(interrupt)->!future.isDone()&&
+                    !future.isCancelled()&&future.cancel(interrupt):null;
+            return this;
+        }
+
+        public Running setStatus(int status) {
+            this.mStatus = mStatus;
+            return this;
+        }
     }
 }

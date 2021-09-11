@@ -22,6 +22,7 @@
             </intent-filter>
         </activity>
         <activity android:name="com.merlin.file.TaskActivity"/>
+        <service android:name="com.merlin.file.TaskService"/>
     </application>
 
 </manifest>

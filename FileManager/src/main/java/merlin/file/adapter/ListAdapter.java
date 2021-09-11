@@ -45,6 +45,18 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         return null!=data&&data.size()>0?data.get(0):null;
     }
 
+    public final int notifyChildChanged(Object object){
+        if (null==object){
+            return -1;
+        }
+        int index=index(object);
+        if (index>=0){
+            notifyItemChanged(index);
+        }
+        return index;
+    }
+
+
     public final T getLatest(){
         ArrayList<T> data=mData;
         int size=null!=data?data.size():-1;
@@ -52,6 +64,10 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
     }
 
     protected final void notifyVisibleDataChanged(){
+        notifyVisibleDataChanged(null);
+    }
+
+    protected final void notifyVisibleDataChanged(Object payload){
         RecyclerView recyclerView=getRecyclerView();
         if (null!=recyclerView){
             int count=recyclerView.getChildCount();
@@ -59,7 +75,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
             for (int i = 0; i < count; i++) {
                 if (null!=(child=recyclerView.getChildAt(i))&&
                         0<=(position=recyclerView.getChildAdapterPosition(child))){
-                    notifyItemChanged(position,"Change");
+                    notifyItemChanged(position,null!=payload?payload:"payload");
                 }
             }
         }

@@ -1,64 +1,61 @@
 package luckmerlin.task;
 
 import android.os.Binder;
-import luckmerlin.core.data.Page;
+import java.util.List;
+import luckmerlin.core.match.Matchable;
 
-public class TaskBinder extends Binder implements TaskGroup {
-    private TaskGroup mTaskGroup;
+public class TaskBinder extends Binder implements TaskRunner {
+    private final TaskRunner mTaskRunner;
 
-    public final TaskBinder setGroup(TaskGroup group){
-        mTaskGroup=group;
-        return this;
+    public TaskBinder(TaskRunner runner){
+        mTaskRunner=runner;
     }
 
     @Override
-    public Page<Task> getTasks(Task anchor, int limit) {
-        TaskGroup taskGroup=mTaskGroup;
-        if (null==taskGroup){
-            return new Page<>().setTotal(0);
-        }
-        return taskGroup.getTasks(anchor,limit);
+    public boolean put(OnTaskUpdate callback, Matchable<Task> matchable) {
+        TaskRunner runner=mTaskRunner;
+        return null!=runner&&runner.put(callback,matchable);
     }
 
     @Override
-    public final TaskGroup append(Task task, boolean skipEqual) {
-        TaskGroup taskGroup=mTaskGroup;
-        if (null!=taskGroup){
-            taskGroup.append(task,skipEqual);
-        }
-        return this;
+    public boolean remove(OnTaskUpdate callback) {
+        TaskRunner runner=mTaskRunner;
+        return null!=runner&&runner.remove(callback);
     }
 
     @Override
-    public final TaskGroup insert(int index, Task task, boolean skipEqual) {
-        TaskGroup taskGroup=mTaskGroup;
-        if (null!=taskGroup){
-            taskGroup.insert(index,task,skipEqual);
-        }
-        return this;
+    public List<Task> delete(Matchable matchable) {
+        TaskRunner runner=mTaskRunner;
+        return null!=runner?runner.delete(matchable):null;
+    }
+
+    @Override
+    public List<Task> add(Task... tasks) {
+        TaskRunner runner=mTaskRunner;
+        return null!=runner?runner.add(tasks):null;
+    }
+
+    @Override
+    public List<Task> getTasks(Matchable matchable) {
+        TaskRunner runner=mTaskRunner;
+        return null!=runner?runner.getTasks(matchable):null;
     }
 
     @Override
     public final int getSize() {
-        TaskGroup taskGroup=mTaskGroup;
+        TaskGroup taskGroup=mTaskRunner;
         return null!=taskGroup?taskGroup.getSize():-1;
     }
 
     @Override
-    public final Task findFirst(Object task) {
-        TaskGroup taskGroup=mTaskGroup;
-        return null!=taskGroup?taskGroup.findFirst(task):null;
+    public List<Task> start(Object matchable ) {
+        TaskRunner runner=mTaskRunner;
+        return null!=runner?runner.start(matchable):null;
     }
 
     @Override
-    public final int indexFirst(Object task) {
-        TaskGroup taskGroup=mTaskGroup;
-        return null!=taskGroup?taskGroup.indexFirst(task):-1;
-    }
-
-    @Override
-    public final boolean removeFirst(Object task) {
-        TaskGroup taskGroup=mTaskGroup;
-        return null!=taskGroup?taskGroup.removeFirst(task):null;
+    public List<Task> cancel(boolean interrupt, Matchable matchable) {
+        TaskRunner runner=mTaskRunner;
+        return null!=runner?runner.cancel(interrupt,matchable):null;
     }
 }

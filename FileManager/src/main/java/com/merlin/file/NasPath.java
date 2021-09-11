@@ -58,4 +58,5 @@ public class NasPath extends Json implements Path {
     public String getName() {
         return optString(Label.LABEL_NAME,null);
     }
+
 }

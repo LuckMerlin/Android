@@ -9,7 +9,7 @@ import luckmerlin.task.TaskBinder;
 import luckmerlin.task.TaskExecutor;
 
 public class TaskService extends Service {
-    private final TaskBinder mBinder=new TaskBinder().setGroup(new TaskExecutor() {
+    private final TaskBinder mBinder=new TaskBinder(new TaskExecutor() {
         @Override
         protected ExecutorService onCreateExecutorService() {
             return Executors.newCachedThreadPool();

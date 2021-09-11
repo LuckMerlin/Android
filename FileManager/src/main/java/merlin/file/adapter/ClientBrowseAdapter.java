@@ -14,7 +14,7 @@ import merlin.file.util.ThumbResources;
 
 public class ClientBrowseAdapter extends PageListAdapter<Query, Path>{
     private final ThumbResources mThumbs=new ThumbResources();
-    private int mMode=Mode.MODE_NORMAL;
+    private Mode mMode;
 
     @Override
     protected final Integer onResolveViewTypeLayoutId(int viewType) {
@@ -28,12 +28,12 @@ public class ClientBrowseAdapter extends PageListAdapter<Query, Path>{
     }
 
     public final boolean setMode(Mode mode){
-        int modeValue=null!=mode?mode.getMode():Mode.MODE_NORMAL;
-        if (modeValue!=mMode){
-            mMode=modeValue;
-            notifyVisibleDataChanged();
-            return true;
+        Mode current=mMode;
+        if ((null==current&&null==mode)||(null!=mode&&null!=current&&current==mode)){
+            return false;
         }
+        mMode=mode;
+        notifyVisibleDataChanged();
         return false;
     }
 
@@ -64,7 +64,12 @@ public class ClientBrowseAdapter extends PageListAdapter<Query, Path>{
             Object thumbObject=null!=data?data.isDirectory()?R.drawable.icon_folder:mThumbs.getThumb(data.getPath()):null;
             thumbObject=null!=thumbObject||null==data?thumbObject:mThumbs.getMimeTypeThumb(data.getMimeType());
             itemBinding.setThumb(null!=thumbObject?Image.image(thumbObject):null);
-            itemBinding.setMultiChoose(mMode==Mode.MODE_MULTI_CHOOSE);
+            Mode mode=mMode;boolean multiChoose=false;boolean chosen=false;
+            if (null!=mode&&mode.getMode()==Mode.MODE_MULTI_CHOOSE){
+                multiChoose=true;chosen=mode.contains(data);
+            }
+            itemBinding.setChoosed(chosen);
+            itemBinding.setMultiChoose(multiChoose);
             itemBinding.setPath(data);
         }
     }

@@ -16,8 +16,7 @@ import luckmerlin.core.Code;
 import luckmerlin.core.Reply;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.json.Json;
-import luckmerlin.task.Progress;
-import luckmerlin.task.Result;
+import luckmerlin.task.Execute;
 import luckmerlin.task.StreamTask;
 import luckmerlin.task.TaskResult;
 
@@ -26,11 +25,11 @@ public final class FileCopyTask extends StreamTask {
     private final Path mTo;
 
     public FileCopyTask(Path from, Path to) {
-        this(from,to,STATUS_IDLE,null,null);
+        this(from,to,null);
     }
 
-    public FileCopyTask(Path from, Path to, int status, Result result, Progress progress) {
-        super(status, result, progress);
+    public FileCopyTask(Path from, Path to, Execute execute) {
+        super(execute);
         mFrom=from;
         mTo=to;
     }

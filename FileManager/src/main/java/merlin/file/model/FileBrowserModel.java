@@ -1,8 +1,12 @@
 package merlin.file.model;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Build;
+import android.os.IBinder;
 import android.view.Gravity;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupWindow;
@@ -14,29 +18,45 @@ import com.file.manager.databinding.BrowserMenusBinding;
 import com.file.manager.databinding.PathContextMenusBinding;
 import com.merlin.file.Client;
 import com.merlin.file.Folder;
+import com.merlin.file.LocalClient;
 import com.merlin.file.Mode;
 import com.merlin.file.NasClient;
 import com.merlin.file.Path;
 import com.merlin.file.TaskActivity;
+import com.merlin.file.TaskService;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import luckmerlin.core.Code;
 import luckmerlin.core.data.Page;
 import luckmerlin.core.debug.Debug;
+import luckmerlin.core.match.Matchable;
+import luckmerlin.core.service.ServiceConnector;
 import luckmerlin.databinding.M;
 import luckmerlin.databinding.touch.OnViewClick;
 import luckmerlin.databinding.touch.OnViewLongClick;
+import luckmerlin.task.OnTaskUpdate;
+import luckmerlin.task.Task;
+import luckmerlin.task.TaskBinder;
 import luckmerlin.task.TaskExecutor;
 import merlin.file.adapter.ClientBrowseAdapter;
 import merlin.file.adapter.Query;
+import merlin.file.task.ChooseTask;
+import merlin.file.task.CopyTask;
+import merlin.file.task.DeleteTask;
+import merlin.file.task.DownloadTask;
+import merlin.file.task.MoveTask;
+import merlin.file.task.PathTaskCreator;
+import merlin.file.task.UploadTask;
 
-public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLongClick {
+public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLongClick, OnTaskUpdate {
     private final ObservableField<Client> mCurrentClient=new ObservableField<>();
     private final ObservableField<Mode> mCurrentMode=new ObservableField<>(new Mode(Mode.MODE_NORMAL));
     private final ObservableField<Folder> mCurrentFolder=new ObservableField<>();
     private final ObservableField<Integer> mClientCount=new ObservableField<>();
     private final PopupWindow mPopupWindow=new PopupWindow();
+    private final ServiceConnector mConnector=new ServiceConnector();
     private final ObservableField<RecyclerView.Adapter> mContentAdapter=new ObservableField<>();
     private final ClientBrowseAdapter mBrowserAdapter=new ClientBrowseAdapter(){
         @Override
@@ -52,10 +72,19 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
     @Override
     protected void onRootAttached(View view) {
         super.onRootAttached(view);
-//        addClient(new LocalClient(getText(R.string.local)));
+        addClient(new LocalClient(getText(R.string.local)));
         addClient(new NasClient("http://192.168.0.4:5000",getText(R.string.nas)));
         selectAny();
         mContentAdapter.set(mBrowserAdapter);
+        entryMode(new Mode(Mode.MODE_NORMAL));
+        bindService(TaskService.class,mConnector.setConnect((ComponentName name, IBinder service)-> {
+            if (null!=service&&service instanceof TaskBinder){
+                TaskBinder binder=((TaskBinder)service);
+                binder.put(FileBrowserModel.this,null);
+            }
+        }), Context.BIND_AUTO_CREATE);
+
+//        mBrowserAdapter.setFixHolder(ListAdapter.TYPE_TAIL,view1);
         //
         TaskExecutor executor=new TaskExecutor();
 //        executor.append(new FileCopyTask(new LocalPath().apply(new File("/sdcard/dddd.pdf")),
@@ -76,6 +105,11 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
 //                executor.start();
 //            }
 //        },4000);
+    }
+
+    @Override
+    public void onTaskUpdate(int status, Task task, Object arg) {
+        Debug.D("AAAAAAAAAA  "+status+" "+task+" "+arg);
     }
 
     @Override
@@ -157,9 +191,16 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
         mPopupWindow.dismiss();
         switch (id){
             case R.layout.item_browse_path:
-                return openPath(null!=tag&&tag instanceof Path?(Path)tag:null)||true;
-            case R.drawable.selector_back:
-                return backward()||true;
+                if (null!=tag&&tag instanceof Path){
+                    Path path=(Path)tag;
+                    Mode mode=mCurrentMode.get();//Check fot multi choose
+                    if (null!=mode&&mode.getMode()==Mode.MODE_MULTI_CHOOSE){
+                        return (mode.toggle(path)&&mBrowserAdapter.notifyChildChanged(path)>=0)||true;
+                    }
+                    return openPath(path)||true;
+                }
+                return true;
+            case R.drawable.selector_back: return backward()||true;
             case R.layout.device_text:
                 if (null!=tag&&tag instanceof Client){
                     Client client=nextClient((Client)tag);
@@ -168,16 +209,38 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
                     }
                 }
                 return true;
-            case R.drawable.selector_menu:
-                return showBrowserContextMenu(view)||true;
-            case R.string.multiChoose:
-                return entryMode(new Mode(Mode.MODE_MULTI_CHOOSE))||true;
-            case R.string.transporter:
-                return startActivity(TaskActivity.class)||true;
-            case R.drawable.selector_cancel:
-                return entryMode(null)||true;
+            case R.drawable.selector_menu: return showBrowserContextMenu(view)||true;
+            case R.string.multiChoose: return entryMode(new Mode(Mode.MODE_MULTI_CHOOSE))||true;
+            case R.string.transporter: return startActivity(TaskActivity.class)||true;
+            case R.drawable.selector_cancel: return entryMode(null)||true;
+            case R.string.sure: executeIfNotEmpty((paths)->new ChooseTask(paths),true);break;
+            case R.string.upload: executeIfNotEmpty((paths)->new UploadTask(paths),true);break;
+            case R.string.download: executeIfNotEmpty((paths)->new DownloadTask(paths),true);break;
+            case R.string.move: executeIfNotEmpty((paths)->new MoveTask(paths),true);break;
+            case R.string.copy: executeIfNotEmpty((paths)->new CopyTask(paths),true);break;
+            case R.string.delete: executeIfNotEmpty((paths)->new DeleteTask(paths),true);break;
         }
         return false;
+    }
+
+    private boolean executeIfNotEmpty(PathTaskCreator creator, boolean emptyNotify){
+        Mode currentMode=mCurrentMode.get();
+        List<Path> paths=null!=currentMode?currentMode.getList():null;
+        if (null==paths||paths.size()<=0){
+            return emptyNotify?toast(getText(R.string.whichEmpty,getText(R.string.choose)))||true:true;
+        }
+        Task task=null!=creator?creator.create(paths):null;
+        return null!=task&&startTask(task)&&entryMode(null);
+    }
+
+    private boolean startTask(Task task) {
+        ServiceConnector connector=null!=task?mConnector:null;
+        TaskBinder taskBinder=null!=connector?connector.getBinder(TaskBinder.class):null;
+        if (null==taskBinder){
+            Debug.W("Can't start task while binder invalid.");
+            return false;
+        }
+        return taskBinder.start(task)!=null;
     }
 
     private boolean entryMode(Mode mode){
@@ -283,5 +346,15 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
 
     public ObservableField<RecyclerView.Adapter> getContentAdapter() {
         return mContentAdapter;
+    }
+
+    @Override
+    protected void onRootDetached(View view) {
+        super.onRootDetached(view);
+        TaskBinder binder=mConnector.getBinder(TaskBinder.class);
+        if (null!=binder){
+            binder.remove(this);
+        }
+        unbindService(mConnector);
     }
 }

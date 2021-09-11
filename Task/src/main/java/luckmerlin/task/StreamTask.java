@@ -12,8 +12,8 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
     private int mCover=Cover.NONE;
     private boolean mCheckMd5=false;
 
-    public StreamTask(int status,Result result,Progress progress){
-        super(status,result,progress);
+    public StreamTask(Execute execute){
+        super(execute);
     }
 
     public final StreamTask setCover(int cover){

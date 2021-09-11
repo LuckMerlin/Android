@@ -2,48 +2,52 @@ package merlin.file.model;
 
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.view.View;
 import com.merlin.file.TaskService;
-import luckmerlin.core.debug.Debug;
 
-public class TaskActivityModel extends BaseModel {
-    private ServiceConnection mConnection;
+import luckmerlin.core.debug.Debug;
+import luckmerlin.core.match.Matchable;
+import luckmerlin.core.service.ServiceConnector;
+import luckmerlin.task.OnTaskUpdate;
+import luckmerlin.task.Task;
+import luckmerlin.task.TaskBinder;
+import merlin.file.adapter.TaskListAdapter;
+import merlin.file.task.BackgroundTask;
+
+public class TaskActivityModel extends BaseModel implements OnTaskUpdate {
+    private final ServiceConnector mConnector=new ServiceConnector();
+    private final TaskListAdapter mTaskListAdapter=new TaskListAdapter();
 
     @Override
     protected void onRootAttached(View view) {
         super.onRootAttached(view);
-        Context context=getContext();
-        if (null!=context){
-            unBind(context);
-            context.bindService(new Intent(context, TaskService.class), mConnection=new ServiceConnection() {
-                        @Override
-                        public void onServiceConnected(ComponentName name, IBinder service) {
-                            Debug.D("DDD onServiceConnected DDDDDDDDD  "+service);
-                        }
+        bindService(TaskService.class,mConnector.setConnect((ComponentName name, IBinder service)-> {
+            if (null!=service&&service instanceof TaskBinder){
+                TaskBinder binder=((TaskBinder)service);
+                binder.put(TaskActivityModel.this);
+                mTaskListAdapter.set(binder.getTasks((task)->null!=task&&!(task instanceof BackgroundTask)?
+                        Matchable.MATCHED:Matchable.CONTINUE),"After service bind.");
+            }
+        }), Context.BIND_AUTO_CREATE);
+    }
 
-                        @Override
-                        public void onServiceDisconnected(ComponentName name) {
-                            mConnection=null;
-                        }},Context.BIND_AUTO_CREATE);
-        }
+    @Override
+    public void onTaskUpdate(int status, Task task, Object arg) {
+
     }
 
     @Override
     protected void onRootDetached(View view) {
         super.onRootDetached(view);
-        unBind(null!=view?view.getContext():null);
+        TaskBinder binder=mConnector.getBinder(TaskBinder.class);
+        if (null!=binder){
+            binder.remove(this);
+        }
+        unbindService(mConnector);
     }
 
-    private boolean unBind(Context context){
-        ServiceConnection connection=mConnection;
-        if (null!=context&&null!=connection){
-            mConnection=null;
-            context.unbindService(connection);
-            return true;
-        }
-        return false;
+    public final TaskListAdapter getTaskListAdapter() {
+        return mTaskListAdapter;
     }
 }

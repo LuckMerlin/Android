@@ -4,25 +4,38 @@ import java.util.ArrayList;
 import java.util.List;
 import luckmerlin.core.debug.Debug;
 
-public abstract class AbstractTask<T extends TaskResult> implements Task<T>, Status {
-    private int mStatus=STATUS_IDLE;
-    private Result mResult;
-    private Progress mProgress;
+public abstract class AbstractTask<T extends TaskResult> implements Task<T> {
+    private Execute mExecute;
 
-    public AbstractTask(int status,Result result,Progress progress){
-        mStatus=status;
-        mResult=result;
-        mProgress=progress;
+    public AbstractTask(Execute execute){
+        mExecute=execute;
+    }
+
+    public final Execute setExecute(Execute execute){
+        mExecute=execute;
+        return this;
     }
 
     @Override
-    public final Result getResult() {
-        return mResult;
+    public int getStatus() {
+        Execute execute=mExecute;
+        return null!=execute?execute.getStatus():Status.STATUS_WAIT;
     }
 
     @Override
-    public final Progress getProgress() {
-        return mProgress;
+    public Result getResult() {
+        Execute execute=mExecute;
+        return null!=execute?execute.getResult():null;
+    }
+
+    @Override
+    public Progress getProgress() {
+        Execute execute=mExecute;
+        return null!=execute?execute.getProgress():null;
+    }
+
+    public final Execute getExecute() {
+        return mExecute;
     }
 
     protected abstract T onExecute(Updater<T> updater);
@@ -37,12 +50,6 @@ public abstract class AbstractTask<T extends TaskResult> implements Task<T>, Sta
         final Updater<T> updater=new Updater<T>() {
             @Override
             public Updater update(int status, Task task, Progress arg) {
-                if ((null==task? AbstractTask.this:task)== AbstractTask.this){
-                    mStatus=status;
-                    if (null!=arg){
-                        mProgress=arg;
-                    }
-                }
                 AbstractTask.this.update(status,task,arg,update);
                 return this;
             }
@@ -61,7 +68,6 @@ public abstract class AbstractTask<T extends TaskResult> implements Task<T>, Sta
                 return this;
             }
         };
-        updater.update(Status.STATUS_START,this,null);
         T result=onExecute(updater);
         for (FinishCleaner<T> child:endingRunnables) {
             if (null!=child){
@@ -69,12 +75,7 @@ public abstract class AbstractTask<T extends TaskResult> implements Task<T>, Sta
             }
         }
         endingRunnables.clear();
-        updater.update(Status.STATUS_FINISH,this,null);
         return result;
-    }
-
-    public final int getStatus(){
-        return mStatus;
     }
 
     protected final boolean update(int status, Task task,Progress arg,Updater<TaskResult> updater){

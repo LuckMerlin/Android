@@ -78,39 +78,33 @@
 
         <View android:paddingLeft="5dp" android:paddingRight="5dp" style="@style/horizontalDividerLine"/>
 
-        <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
-            <HorizontalScrollView android:id="@+id/activityFileBrowser_bottomHSV"
-                android:visibility="@{vm.mode.is(Mode.MODE_SELECT,Mode.MODE_MOVE,Mode.MODE_COPY,Mode.MODE_UPLOAD,Mode.MODE_DOWNLOAD,Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}"
-                android:layout_alignParentBottom="true" android:scrollbars="none" android:layout_marginLeft="5dp"
-                android:layout_centerHorizontal="true" android:layout_marginRight="5dp" android:paddingTop="5dp"
-                android:paddingBottom="5dp" android:layout_width="wrap_content" android:layout_height="wrap_content">
-                <LinearLayout android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content">
-                    <include layout="@layout/item_browser_bottom_menu"
-                        android:visibility="@{vm.mode.is(Mode.MODE_SELECT)?View.VISIBLE:View.GONE}"
-                        binding:menuText="@{R.string.sure}"/>
-                    <include layout="@layout/item_browser_bottom_menu"
-                        android:visibility="@{vm.mode.is(Mode.MODE_UPLOAD)?View.VISIBLE:View.GONE}"
-                        binding:menuText="@{R.string.upload}"/>
-                    <include layout="@layout/item_browser_bottom_menu"
-                        android:visibility="@{vm.mode.is(Mode.MODE_DOWNLOAD,Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}"
-                        binding:menuText="@{R.string.download}"/>
-                    <include layout="@layout/item_browser_bottom_menu"
-                        android:visibility="@{vm.mode.is(Mode.MODE_MOVE,Mode.MODE_MULTI_CHOOSE)?View.GONE:View.GONE}"
-                        binding:menuText="@{R.string.move}"/>
-                    <include layout="@layout/item_browser_bottom_menu"
-                        android:visibility="@{vm.mode.is(Mode.MODE_COPY,Mode.MODE_MULTI_CHOOSE)?View.GONE:View.GONE}"
-                        binding:menuText="@{R.string.copy}"/>
-                    <include layout="@layout/item_browser_bottom_menu"
-                        android:visibility="@{vm.mode.is(Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}"
-                        binding:menuText="@{R.string.delete}"/>
-                </LinearLayout>
-            </HorizontalScrollView>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+            android:orientation="vertical">
             <merlin.file.view.SwipeRefreshLayout android:paddingLeft="5dp" android:paddingRight="5dp"
-                android:layout_above="@id/activityFileBrowser_bottomHSV"
-                android:layout_width="match_parent" android:layout_height="match_parent">
+                android:layout_weight="1" android:layout_width="match_parent" android:layout_height="match_parent">
                 <androidx.recyclerview.widget.RecyclerView android:layout_width="match_parent"
                     android:adapter="@{vm.contentAdapter}" android:layout_height="match_parent"/>
             </merlin.file.view.SwipeRefreshLayout>
-        </RelativeLayout>
+            <HorizontalScrollView android:scrollbars="none" android:layout_marginLeft="5dp"
+                android:layout_centerHorizontal="true" android:layout_gravity="center"
+                android:layout_marginRight="5dp" android:paddingTop="5dp" android:paddingBottom="5dp"
+                android:layout_width="wrap_content" android:layout_height="wrap_content">
+                <LinearLayout android:orientation="horizontal" android:layout_gravity="center"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content">
+                    <include binding:menuText="@{R.string.sure}" layout="@layout/item_browser_bottom_menu"
+                        android:visibility="@{vm.mode.is(Mode.MODE_SELECT)?View.VISIBLE:View.GONE}" />
+                    <include binding:menuText="@{R.string.upload}" layout="@layout/item_browser_bottom_menu"
+                        android:visibility="@{vm.mode.is(Mode.MODE_UPLOAD,Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}" />
+                    <include binding:menuText="@{R.string.download}" layout="@layout/item_browser_bottom_menu"
+                        android:visibility="@{vm.mode.is(Mode.MODE_DOWNLOAD,Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}" />
+                    <include binding:menuText="@{R.string.move}" layout="@layout/item_browser_bottom_menu"
+                        android:visibility="@{vm.mode.is(Mode.MODE_MOVE,Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}" />
+                    <include binding:menuText="@{R.string.copy}" layout="@layout/item_browser_bottom_menu"
+                        android:visibility="@{vm.mode.is(Mode.MODE_COPY,Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}" />
+                    <include binding:menuText="@{R.string.delete}" layout="@layout/item_browser_bottom_menu"
+                        android:visibility="@{vm.mode.is(Mode.MODE_DELETE,Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}" />
+                </LinearLayout>
+            </HorizontalScrollView>
+        </LinearLayout>
         </LinearLayout>
 </layout>

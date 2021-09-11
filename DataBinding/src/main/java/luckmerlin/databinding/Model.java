@@ -1,6 +1,7 @@
 package luckmerlin.databinding;
 
 import android.app.Activity;
+import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -19,9 +20,12 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.Window;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.databinding.ViewDataBinding;
 import java.lang.ref.WeakReference;
 import luckmerlin.core.debug.Debug;
+import luckmerlin.databinding.touch.Click;
 
 /**
  * Create LuckMerlin
@@ -86,6 +90,25 @@ public abstract class Model {
         }catch (Exception e){
             Debug.E("Exception start activity.e="+e,e);
             e.printStackTrace();
+        }
+        return false;
+    }
+
+    protected final boolean bindService(Class<?extends Service> service, ServiceConnection conn, int flags){
+        Context context=null!=service?getContext():null;
+        return null!=context&&bindService(new Intent(context,service),conn,flags);
+    }
+
+    protected final boolean bindService(Intent service,ServiceConnection conn,int flags){
+        Context context=null!=service&&null!=conn?getContext():null;
+        return null!=context&&context.bindService(service,conn,flags);
+    }
+
+    protected final boolean unbindService(ServiceConnection conn){
+        Context context=null!=conn?getContext():null;
+        if (null!=context){
+            context.unbindService(conn);
+            return true;
         }
         return false;
     }
@@ -232,10 +255,12 @@ public abstract class Model {
     }
 
     protected final boolean toast(Context context,final CharSequence text,int duration){
-        context=null!=context?context:getContext();
-//        Api api=getApi();
-//        UiManager manager=null!=api?api.getUiManager():null;
-//        return null!=manager&&manager.toast(context,new Toast().setMessage(null!=text?text.toString():null).setDuration(duration))==Code.CODE_SUCCEED;
+        if (null!=text&&null!=(context=null!=context?context:getContext())){
+            Toast toast=Toast.makeText(context,text,Toast.LENGTH_SHORT);
+            toast.setDuration(duration);
+            toast.show();
+            return true;
+        }
         return false;
     }
 

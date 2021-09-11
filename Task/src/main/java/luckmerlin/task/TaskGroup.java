@@ -1,32 +1,12 @@
 package luckmerlin.task;
 
-import luckmerlin.core.data.Page;
+import java.util.List;
+
+import luckmerlin.core.match.Matchable;
 
 public interface TaskGroup {
-
-    public default TaskGroup append(Task task){
-        return append(task,false);
-    }
-
-    public TaskGroup append(Task task,boolean skipEqual);
-
-    public default TaskGroup insert(int index,Task task){
-        return insert(index,task,false);
-    }
-
-    public Page<Task> getTasks(Task anchor,int limit);
-
-    public TaskGroup insert(int index,Task task,boolean skipEqual);
-
+    List<Task> delete(Matchable matchable);
+    public List<Task> add(Task... tasks);
+    public List<Task> getTasks(Matchable matchable);
     public int getSize();
-
-    public default boolean isExist(Object task){
-        return null!=task&&indexFirst(task)>=0;
-    }
-
-    public Task findFirst(Object task);
-
-    public int indexFirst(Object task);
-
-    public boolean removeFirst(Object task);
 }

@@ -11,6 +11,8 @@
     <string name="nas">Nas</string>
     <string name="rename">重命名</string>
     <string name="scan">扫描</string>
+    <string name="choose">选择</string>
+    <string name="whichEmpty">%1s为空</string>
     <string name="detail">详情</string>
     <string name="transporter">传输器</string>
     <string name="multiChoose">多选</string>
