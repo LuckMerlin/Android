@@ -25,7 +25,7 @@ public class TaskActivityModel extends BaseModel implements OnTaskUpdate {
         bindService(TaskService.class,mConnector.setConnect((ComponentName name, IBinder service)-> {
             if (null!=service&&service instanceof TaskBinder){
                 TaskBinder binder=((TaskBinder)service);
-                binder.put(TaskActivityModel.this);
+                binder.put(TaskActivityModel.this,null);
                 mTaskListAdapter.set(binder.getTasks((task)->null!=task&&!(task instanceof BackgroundTask)?
                         Matchable.MATCHED:Matchable.CONTINUE),"After service bind.");
             }
