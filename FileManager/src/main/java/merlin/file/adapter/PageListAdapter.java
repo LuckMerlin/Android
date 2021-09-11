@@ -125,7 +125,7 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
     public final Canceler pre(int limit,OnPageLoadFinish<T> callback){
         return pending(()-> loadPage(mArg, getFirst(),-Math.abs(limit),(int code, String note, Page<T> data)-> {
             if (code==Code.CODE_SUCCEED&&null!=data){
-                insert(0,data.getData(),null);
+                insert(0,data.getData());
             }
             notifyFinish(code,note,data,callback);
         }));
@@ -139,7 +139,7 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
         final int count=getDataCount();
         return pending(()->loadPage(mArg, getLatest(),Math.abs(limit),(int code, String note, Page<T> data)-> {
             if (code==Code.CODE_SUCCEED&&null!=data){
-                insert(count,data.getData(),null);
+                insert(count,data.getData());
             }
             notifyFinish(code,note,data,callback);
         }));
@@ -152,7 +152,7 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
     public final Canceler reset(A arg,int limit){
         return pending(()->loadPage(onPreResetLoad(arg), null,limit,(int code, String note, Page<T> data)-> {
             if ((code&Code.CODE_CANCEL)<=0){
-                super.set(null!=data?data.getData():null,null);
+                super.set(null!=data?data.getData():null);
             } }));
     }
 

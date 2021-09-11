@@ -35,5 +35,6 @@
     <dimen name="listIconNormal">40dp</dimen>
     <dimen name="contentGap">5dp</dimen>
     <dimen name="textTitleSmall">12sp</dimen>
+    <dimen name="textTitleTiny">9sp</dimen>
 
 </resources>

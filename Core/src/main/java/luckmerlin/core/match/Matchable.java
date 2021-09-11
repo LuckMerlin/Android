@@ -6,8 +6,4 @@ public interface Matchable<T>{
     int BREAK=-2012;
 
     Integer onMatch(T arg);
-
-    default int getMax(){
-        return -1;
-    }
 }

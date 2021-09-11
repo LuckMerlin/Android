@@ -25,6 +25,8 @@ import merlin.file.test.TestNasFilePath;
 public class TaskActivityModel extends BaseModel implements OnTaskUpdate {
     private final ServiceConnector mConnector=new ServiceConnector();
     private final TaskListAdapter mTaskListAdapter=new TaskListAdapter();
+    private final Matchable mVisibleMatchable=(task)->null!=task&&!(task instanceof BackgroundTask)?
+            Matchable.MATCHED:Matchable.CONTINUE;
 
     @Override
     protected void onRootAttached(View view) {
@@ -32,20 +34,24 @@ public class TaskActivityModel extends BaseModel implements OnTaskUpdate {
         bindService(TaskService.class,mConnector.setConnect((ComponentName name, IBinder service)-> {
             if (null!=service&&service instanceof TaskBinder){
                 TaskBinder binder=((TaskBinder)service);
-                binder.put(TaskActivityModel.this,null);
-                mTaskListAdapter.set(binder.getTasks((task)->null!=task&&!(task instanceof BackgroundTask)?
-                        Matchable.MATCHED:Matchable.CONTINUE),"After service bind.");
+                binder.put(TaskActivityModel.this,mVisibleMatchable);
+                mTaskListAdapter.set(binder.getTasks(mVisibleMatchable));
                //Test
                 List<Path> paths=new ArrayList<>();
                 paths.add(new TestNasFilePath());
-                binder.start(new DownloadTask(paths));
+                DownloadTask downloadTask=new DownloadTask(paths);
+                binder.start(downloadTask.setName("下载文件"));
+                mTaskListAdapter.add(downloadTask,false);
             }
         }), Context.BIND_AUTO_CREATE);
     }
 
     @Override
     public void onTaskUpdate(int status, Task task, Object arg) {
-
+        Integer match=null!=task?mVisibleMatchable.onMatch(task):null;
+        if (null!=match&&match==Matchable.MATCHED){
+            post(()->mTaskListAdapter.notifyChildChanged(task));
+        }
     }
 
     @Override

@@ -34,6 +34,10 @@ public abstract class AbstractTask<T extends TaskResult> implements Task<T> {
         return null!=finisher&&null!=running.finisher(add,finisher);
     }
 
+    protected final boolean update(int status){
+        return update(status,null);
+    }
+
     protected final boolean update(int status, Progress arg){
         Running running=mRunning;
         if (null!=running){

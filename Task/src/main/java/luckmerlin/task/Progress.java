@@ -4,6 +4,7 @@ public interface Progress {
     long getDone();
     long getTotal();
     long getSpeed();
+    String getTitle();
 
     default float getProgress(){
         long total=getTotal();

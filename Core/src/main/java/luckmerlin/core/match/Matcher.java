@@ -2,6 +2,7 @@ package luckmerlin.core.match;
 
 public class Matcher<T> implements Matchable<T>{
     private Matchable<T> mMatchable;
+    private int mMax;
 
     public Matcher(){
         this(null);
@@ -22,10 +23,13 @@ public class Matcher<T> implements Matchable<T>{
         return null!=matchable?matchable.onMatch(arg):null;
     }
 
-    @Override
-    public int getMax() {
-        Matchable<T> matchable=mMatchable;
-        return null!=matchable?matchable.getMax():-1;
+    public final Matcher<T> setMax(int max) {
+        this.mMax = max;
+        return this;
+    }
+
+    public final int getMax() {
+        return mMax;
     }
 
     public final Matchable<T> getMatchable() {

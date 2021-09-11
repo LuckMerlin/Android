@@ -36,7 +36,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
 
     public ListAdapter(ArrayList<T>  list){
         if (null!=list&&list.size()>0) {
-            add(list,true,null);
+            add(list,true);
         }
     }
 
@@ -256,21 +256,21 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
     }
 }
 
-  public final ArrayList<T> remove(T data,String debug){
+  public final ArrayList<T> remove(T data){
         if (null!=data){
             List list=new ArrayList<>(1);
             list.add(data);
-            return remove(list,debug);
+            return remove(list);
         }
         return null;
     }
 
-  public final ArrayList<T> remove(List<?> list,String debug){
+  public final ArrayList<T> remove(List<?> list){
         if (null!=list&&list.size()>0){
             ArrayList<T> removed=new ArrayList<>(list.size());
             T data=null;
             for (Object obj:list) {
-                if (null!=(data=null!=obj?removeData(obj,debug):null)){
+                if (null!=(data=null!=obj?removeData(obj):null)){
                     removed.add(data);
                 }
             }
@@ -279,7 +279,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         return null;
     }
 
-  public final T removeData(Object data,String debug){
+  public final T removeData(Object data){
         List<T> list=null!=data?mData:null;
         if (null!=list){
             synchronized (list){
@@ -313,7 +313,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         return null;
     }
 
-  public boolean set(Collection<T> data,String debug) {
+  public boolean set(Collection<T> data) {
         List<T> list=mData;
         final int size=null!=data?data.size():0;
         if (size>0){
@@ -331,6 +331,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
             }else{
                 notifyItemRangeChanged(0,currentSize,"Set");
             }
+            return true;
         }else if(null!=list){
             list.clear();
             mData=null;
@@ -340,72 +341,71 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
       return false;
   }
 
-  public final boolean add(T data,boolean exceptExist,String debug){
-     List<T> list=null!=data?new ArrayList<>():null;
-    return null!=list&&list.add(data)&&add(-1,list,exceptExist,debug);
+  public final boolean add(T data,boolean exceptExist){
+     List<T> list=null!=data?new ArrayList<>(1):null;
+    return null!=list&&list.add(data)&&add(0,list,exceptExist);
    }
 
-   public final boolean add(Collection<T> data,boolean exceptExist,String debug) {
-    return add(-1,data,exceptExist,debug);
+   public final boolean add(Collection<T> data,boolean exceptExist) {
+    return add(-1,data,exceptExist);
   }
 
-  public final boolean add(int index,T data,boolean exceptExist,String debug) {
+  public final boolean add(int index,T data,boolean exceptExist) {
         if (null!=data){
             List<T> list=new ArrayList<T>(1);
             list.add(data);
-            return add(index,list,exceptExist,debug);
+            return add(index,list,exceptExist);
         }
         return false;
   }
 
-  public final boolean add(int index,Collection<T> data,boolean exceptExist,String debug) {
+  public final boolean add(int index,Collection<T> data,boolean exceptExist) {
         if (null!=data&&data.size()>0){
             List<T> list=mData;
-            list=null!=list?list:(mData=new ArrayList<>());
-            synchronized (list){
+            synchronized (list=null!=list?list:(mData=new ArrayList<>())){
                 index=index<0||index>list.size()?list.size():index;
                 for (T child:data) {
                     if (null==child||(list.contains(child)&&exceptExist)){
                         continue;
                     }
                     list.add(index,child);
-                    notifyItemInserted(index++);
+                    notifyItemInserted(++index);
                 }
+                return true;
             }
-            return true;
         }
         return false;
     }
 
-  public final boolean replace(T data,String debug){
+  public final boolean replace(T data){
        List<T> list= null!=data?mData:null;
        int index=null!=list?list.indexOf(data):-1;
-       return index>=0&&replace(index,data,debug);
+       return index>=0&&replace(index,data);
    }
 
-  public final boolean insert(int index,T data,String debug) {
+  public final boolean insert(int index,T data) {
         if (null!=data){
             List list=new ArrayList(1);
             list.add(data);
-            return insert(index,list,debug);
+            return insert(index,list);
         }
         return false;
     }
 
-  public final boolean insert(int index, Collection<T> data, String debug) {
-        return add(index, data, true,debug);
+  public final boolean insert(int index, Collection<T> data) {
+        return add(index, data, true);
     }
 
-  public final boolean replace(int index,T data,String debug) {
+  public final boolean replace(int index,T data) {
         if (null!=data&&index>=0){
             ArrayList<T> list= new ArrayList<>(1);
             list.add(data);
-            return replace(index,list,debug);
+            return replace(index,list);
         }
         return false;
     }
 
-  public final boolean replace(int from,ArrayList<T> data,String debug){
+  public final boolean replace(int from,ArrayList<T> data){
         int length=null!=data?data.size():-1;
         if (length>0){
             ArrayList<T> list=mData;
@@ -433,7 +433,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         return false;
     }
 
-  public final boolean remove(int from,int to,String debug){
+  public final boolean remove(int from,int to){
         ArrayList<T> list=from>=0&&to>from?mData:null;
         if (null!=list){
             synchronized (list){
@@ -442,7 +442,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
                     to=to>size?size:to;
                     list.removeAll(list.subList(from,to));
                     notifyItemRangeRemoved(from,to-from);
-                    Debug.D("Remove items from "+from+" to "+to+" "+(null!=debug?debug:"."));
+                    Debug.D("Remove items from "+from+" to "+to);
                     return true;
                 }
             }

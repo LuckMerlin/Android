@@ -117,6 +117,11 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
                 public long getSpeed() {
                     return 0;
                 }
+
+                @Override
+                public String getTitle() {
+                    return null;
+                }
             };
             update(Status.STATUS_DOING,progress);
             int bufferSize=mBufferSize;int read=0;

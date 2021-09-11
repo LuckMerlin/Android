@@ -9,25 +9,21 @@ public class MatchIterator {
     public final<T> List<T> iterate(T[] values, Matchable<T> matchable){
         int length=null!=values&&null!=matchable?values.length:0;
         if (length>0){
-            int max=matchable.getMax();
+            int max=matchable instanceof Matcher?((Matcher)matchable).getMax():-1;
             List<T> list=new ArrayList<>(length>=max?length:Math.max(0,max));
             synchronized (values) {
                 for (T child : values) {
-                    if (list.size() >= max) {
+                    if (null==child){
+                        continue;
+                    }else if (max>=0&&list.size()>=max){
                         break;
                     }
-                    if (null == child) {
+                    Integer integer= matchable.onMatch(child);
+                    if (null==integer||integer== Matchable.CONTINUE){
                         continue;
-                    } else if (null == matchable) {
-                        list.add(child);
-                        continue;
-                    }
-                    Integer integer = matchable.onMatch(child);
-                    if (null == integer || integer == Matchable.CONTINUE) {
-                        continue;
-                    } else if (integer == Matchable.BREAK) {
+                    }else if (integer== Matchable.BREAK){
                         break;
-                    } else if (integer == Matchable.MATCHED) {
+                    }else if (integer== Matchable.MATCHED){
                         list.add(child);
                     }
                 }
@@ -40,18 +36,14 @@ public class MatchIterator {
     public final<T> List<T> iterate(Collection<T> values, Matchable<T> matchable){
         int length=null!=values&&null!=matchable?values.size():0;
         if (length>0){
-            int max=matchable.getMax();
+            int max=matchable instanceof Matcher?((Matcher)matchable).getMax():-1;
             List<T> list=new ArrayList<>(length>=max?length:Math.max(0,max));
             synchronized (values){
                 for (T child:values) {
-                    if (list.size()>=max){
-                        break;
-                    }
                     if (null==child){
                         continue;
-                    }else if (null==matchable){
-                        list.add(child);
-                        continue;
+                    }else if (max>=0&&list.size()>=max){
+                        break;
                     }
                     Integer integer= matchable.onMatch(child);
                     if (null==integer||integer== Matchable.CONTINUE){
