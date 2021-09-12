@@ -2,11 +2,11 @@ package merlin.file.task;
 
 import com.merlin.file.Path;
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 import luckmerlin.core.Code;
 import luckmerlin.core.Reply;
 import luckmerlin.core.debug.Debug;
-import luckmerlin.task.Input;
 import luckmerlin.task.Running;
 import luckmerlin.task.TaskResult;
 
@@ -29,7 +29,7 @@ public class DeleteTask extends PathsTask implements BackgroundTask{
         }else if (path.isLocal()){
             return deleteLocalFile(new File(filePath));
         }
-        Reply<Input>  reply=new NasFetcher().delete(path.getHost(),filePath);
+        Reply<InputStream>  reply=new NasFetcher().delete(path.getHost(),filePath);
         reply=null!=reply?reply:new Reply<>(Code.CODE_FAIL,"Delete reply NULL",null);
         close(reply.getData());
         return new TaskResult(reply.getCode(),reply.getNote(),null);

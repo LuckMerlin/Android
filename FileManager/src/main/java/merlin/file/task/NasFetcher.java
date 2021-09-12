@@ -8,6 +8,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -17,13 +18,12 @@ import luckmerlin.core.Reply;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.io.Closer;
 import luckmerlin.core.json.Json;
-import luckmerlin.task.Input;
-import luckmerlin.task.Output;
-import luckmerlin.task.TaskResult;
+import luckmerlin.task.InputStreamWrapper;
+import luckmerlin.task.OutputStreamWrapper;
 
 final class NasFetcher extends Closer{
 
-    public final Reply<Input> delete(String host, String filePath) throws Exception {
+    public final Reply<InputStream> delete(String host, String filePath) throws Exception {
         HttpURLConnection connection=openHttpConnection(host,"DELETE");
         if (null==connection){
             Debug.W("Fail delete nas file while open connect NULL.");
@@ -37,7 +37,8 @@ final class NasFetcher extends Closer{
         return new Reply<>(Code.CODE_SUCCEED,null,new NasDeleteStream(connection));
     }
 
-    public final Reply<Output> openCloudOutput(String host, String toFilePath, long fromLength) throws Exception {
+    public final Reply<OutputStream> openCloudOutput(String host, String toFilePath,
+                                                     long fromLength,long totalLength) throws Exception {
         HttpURLConnection connection=openHttpConnection(host,"POST");
         if (null==connection){
             Debug.W("Fail open cloud output while open connect NULL.");
@@ -46,6 +47,7 @@ final class NasFetcher extends Closer{
         Debug.D("Opening cloud output stream."+host+" "+fromLength+" "+toFilePath);
         inflateHeader(connection,Label.LABEL_PATH,toFilePath);
         inflateHeader(connection,Label.LABEL_FROM,""+fromLength);
+        inflateHeader(connection,Label.LABEL_TOTAL,""+totalLength);
         inflateHeader(connection,"Content-Type", "binary/octet-stream");
         connection.setDoInput(true);
         connection.setDoOutput(true);
@@ -54,7 +56,7 @@ final class NasFetcher extends Closer{
         return new Reply<>(Code.CODE_SUCCEED,null,new NasOutputStream(connection,fromLength));
     }
 
-    public final Reply<Input> openCloudInput(String host, String fromFilePath, long fromLength) throws Exception {
+    public final Reply<InputStream> openCloudInput(String host, String fromFilePath, long fromLength) throws Exception {
         HttpURLConnection connection=openHttpConnection(host,"GET");
         if (null==connection){
             Debug.W("Fail open cloud input while open connect NULL.");
@@ -89,6 +91,7 @@ final class NasFetcher extends Closer{
             connection.setDoInput(true);
             connection.setRequestProperty("Accept", "application/json");
             connection.setDoOutput(false);
+            connection.setUseCaches(false);
             connection.connect();
             InputStream inputStream=connection.getInputStream();
             String encoding=connection.getContentEncoding();
@@ -156,11 +159,11 @@ final class NasFetcher extends Closer{
         return false;
     }
 
-    private static class NasDeleteStream extends Input implements Closeable {
+    private static class NasDeleteStream extends InputStreamWrapper implements Closeable {
         private final HttpURLConnection mConnection;
 
         public NasDeleteStream(HttpURLConnection connection) throws IOException {
-            super(null!=connection?connection.getInputStream():null,0);
+            super(null!=connection?connection.getInputStream():null);
             mConnection=connection;
         }
 
@@ -174,11 +177,11 @@ final class NasFetcher extends Closer{
         }
     }
 
-    private static class NasInputStream extends Input {
+    private static class NasInputStream extends InputStreamWrapper {
         private final HttpURLConnection mConnection;
 
         public NasInputStream(HttpURLConnection connection,long length) throws IOException {
-            super(null!=connection?connection.getInputStream():null,length);
+            super(null!=connection?connection.getInputStream():null);
             mConnection=connection;
         }
 
@@ -192,11 +195,11 @@ final class NasFetcher extends Closer{
         }
     }
 
-    private static class NasOutputStream extends Output{
+    private static class NasOutputStream extends OutputStreamWrapper {
         private final HttpURLConnection mConnection;
 
         public NasOutputStream(HttpURLConnection connection,long fromLength) throws IOException {
-            super(null!=connection?connection.getOutputStream():null,fromLength);
+            super(null!=connection?connection.getOutputStream():null);
             mConnection=connection;
         }
 

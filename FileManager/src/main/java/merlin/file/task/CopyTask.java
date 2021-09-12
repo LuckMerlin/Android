@@ -7,8 +7,8 @@ import java.util.List;
 import luckmerlin.core.Code;
 import luckmerlin.core.Reply;
 import luckmerlin.core.debug.Debug;
-import luckmerlin.task.Input;
-import luckmerlin.task.Output;
+import luckmerlin.task.InputOpener;
+import luckmerlin.task.OutputOpener;
 import luckmerlin.task.Stream;
 
 public class CopyTask extends PathStreamTask {
@@ -46,20 +46,21 @@ public class CopyTask extends PathStreamTask {
             return new Reply<>(Code.CODE_ARGS,"To file path invalid",null);
         }
         return new Reply<>(Code.CODE_SUCCEED, null, new Stream(fileName) {
+
             @Override
-            protected Reply<Input> onOpenInputStream(long skip) throws Exception{
+            protected Reply<InputOpener> onConnectInputStream() throws Exception {
                 if (fromFile.isLocal()){
-                    return openInput(new File(fromFilePath),skip);
+                    return connectInput(new File(fromFilePath));
                 }
-                return openCloudInput(fromFile,skip);
+                return connectCloudInput(fromFile);
             }
 
             @Override
-            protected Reply<Output> onOpenOutputStream(int cover) throws Exception{
+            protected Reply<OutputOpener> onConnectOutputStream() throws Exception {
                 if (folder.isLocal()){
-                    return openOutput(new File(toFilePath),cover);
+                    return connectOutput(new File(toFilePath));
                 }
-                return openCloudOutput(folder,toFilePath,cover);
+                return connectCloudOutput(folder,toFilePath);
             }
         });
     }

@@ -50,7 +50,7 @@ public class LocalClient extends Client<Query,Path> {
 
     public final Path getHome(Context context) {
         Path path=mHome;
-        return null!=path?path:new LocalPath().apply(Environment.getRootDirectory());
+        return null!=path?path:new LocalPath().apply(new File("/sdcard/"));
     }
 
     @Override

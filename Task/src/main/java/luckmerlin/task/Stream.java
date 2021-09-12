@@ -8,8 +8,8 @@ import luckmerlin.core.io.Closer;
 
 public abstract class Stream extends Closer implements Closeable {
     private String mName;
-    private Reply<Input> mInputReply;
-    private Reply<Output> mOutReply;
+    private Reply<InputOpener> mInputReply;
+    private Reply<OutputOpener> mOutReply;
 
     public Stream(String name){
         mName=name;
@@ -21,22 +21,22 @@ public abstract class Stream extends Closer implements Closeable {
         int IGNORE=4;
     }
 
-    protected abstract Reply<Input> onOpenInputStream(long skip) throws Exception;
+    protected abstract Reply<InputOpener> onConnectInputStream() throws Exception;
 
-    public final Reply<Input> openInputStream(long skip)throws Exception{
+    public final Reply<InputOpener> connectInputStream()throws Exception{
         if (null!=mInputReply){
-            return new Reply<>(Code.CODE_FAIL,"Already opened.",null);
+            return new Reply<>(Code.CODE_FAIL,"Already connected.",null);
         }
-        return mInputReply=onOpenInputStream(skip);
+        return mInputReply=onConnectInputStream();
     }
 
-    protected abstract Reply<Output> onOpenOutputStream(int cover)throws Exception;
+    protected abstract Reply<OutputOpener> onConnectOutputStream()throws Exception;
 
-    public final Reply<Output> openOutputStream(int cover)throws Exception{
+    public final Reply<OutputOpener> connectOutputStream()throws Exception{
         if (null!=mOutReply){
-            return new Reply<>(Code.CODE_FAIL,"Already opened.",null);
+            return new Reply<>(Code.CODE_FAIL,"Already connected.",null);
         }
-        return mOutReply=onOpenOutputStream(cover);
+        return mOutReply=onConnectOutputStream();
     }
 
     public final String getName(){
@@ -45,11 +45,11 @@ public abstract class Stream extends Closer implements Closeable {
 
     @Override
     public void close() throws IOException {
-        Reply<Input> inputReply=mInputReply;
-        Input input=null!=inputReply?inputReply.getData():null;
-        Reply<Output> outReply=mOutReply;
-        Output output=null!=outReply?outReply.getData():null;
-        close(true,input,output);
+        Reply<InputOpener> inputReply=mInputReply;
+        InputOpener inputOpener=null!=inputReply?inputReply.getData():null;
+        Reply<OutputOpener> outReply=mOutReply;
+        OutputOpener outputOpener=null!=outReply?outReply.getData():null;
+        close(true,inputOpener,outputOpener);
     }
 
 }
