@@ -165,7 +165,7 @@ public abstract class PathStreamTask extends PathsTask{
         return this;
     }
 
-    protected abstract Reply<Stream> onCreatePathStreamer(Path path);
+    protected abstract Reply<Stream> onCreatePathStreamer(Path fromFile);
 
     @Override
     protected final TaskResult onExecutePath(Path path, Running running) {

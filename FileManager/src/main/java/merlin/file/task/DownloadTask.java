@@ -3,11 +3,39 @@ package merlin.file.task;
 import com.merlin.file.Folder;
 import com.merlin.file.Path;
 import java.util.List;
+import luckmerlin.core.Code;
+import luckmerlin.core.Reply;
+import luckmerlin.core.debug.Debug;
+import luckmerlin.task.Stream;
 
-public class DownloadTask extends CopyTask {
+public class DownloadTask extends PathsStreamTask {
 
     public DownloadTask(List<Path> paths, Folder folder) {
         super(paths,folder);
     }
 
+    @Override
+    protected Reply<Stream> onCreatePathStreamer(Path fromFile) {
+        if (null==fromFile){
+            Debug.D("Can't start copy task while from file NULL.");
+            return new Reply<>(Code.CODE_ARGS,"From file NULL",null);
+        }
+        final String fromFilePath=fromFile.getPath();
+        if (null==fromFilePath||fromFilePath.length()<=0){
+            Debug.D("Can't start copy task while from file path invalid.");
+            return new Reply<>(Code.CODE_ARGS,"From file path invalid",null);
+        }
+        final String fileName=fromFile.getName();
+        if (null==fileName||fileName.length()<=0){
+            Debug.D("Can't start copy task while from file name invalid.");
+            return new Reply<>(Code.CODE_ARGS,"From file name invalid",null);
+        }
+        Folder folder=getFolder();
+        final String toFilePath=null!=folder?folder.getChildPath(fileName):null;
+        if (null==toFilePath||toFilePath.length()<=0){
+            Debug.D("Can't start copy task while to file path invalid.");
+            return new Reply<>(Code.CODE_ARGS,"To file path invalid",null);
+        }
+        return null;
+    }
 }

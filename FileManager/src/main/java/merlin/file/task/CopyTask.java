@@ -11,16 +11,10 @@ import luckmerlin.task.InputOpener;
 import luckmerlin.task.OutputOpener;
 import luckmerlin.task.Stream;
 
-public class CopyTask extends PathStreamTask {
-    private final Folder mFolder;
+public class CopyTask extends PathsStreamTask {
 
     public CopyTask(List<Path> paths, Folder folder) {
-        setPaths(paths);
-        mFolder=folder;
-    }
-
-    public final Folder getFolder() {
-        return mFolder;
+        super(paths,folder);
     }
 
     @Override
@@ -39,14 +33,14 @@ public class CopyTask extends PathStreamTask {
             Debug.D("Can't start copy task while from file name invalid.");
             return new Reply<>(Code.CODE_ARGS,"From file name invalid",null);
         }
-        Folder folder=mFolder;
+        Folder folder=getFolder();
         final String toFilePath=null!=folder?folder.getChildPath(fileName):null;
         if (null==toFilePath||toFilePath.length()<=0){
             Debug.D("Can't start copy task while to file path invalid.");
             return new Reply<>(Code.CODE_ARGS,"To file path invalid",null);
         }
+        Debug.TD("Creating copy task stream.",this);
         return new Reply<>(Code.CODE_SUCCEED, null, new Stream(fileName) {
-
             @Override
             protected Reply<InputOpener> onConnectInputStream() throws Exception {
                 if (fromFile.isLocal()){
