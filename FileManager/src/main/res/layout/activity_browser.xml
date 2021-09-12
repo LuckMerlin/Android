@@ -33,7 +33,6 @@
                                 android:paddingBottom="5dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 
                             <include binding:device="@{vm.currentClient}" layout="@layout/device_text" />
-
 <!--                            <TextView style="@style/titleNormalTextView" android:textStyle="bold"-->
 <!--                                android:text="@{` (`+((null==vm.currentMultiChooseCount||(vm.currentMultiChooseCount&lt;0))?``:``+vm.currentMultiChooseCount+`/`)+vm.currentFolder.length+')'}"-->
 <!--                                android:visibility="@{(null==vm.currentClient&amp;&amp;vm.currentFolder.length&lt;1)?View.GONE:View.VISIBLE}"-->
@@ -47,6 +46,9 @@
                                 style="@style/titleSubNormalTextView" android:layout_width="wrap_content"
                                 android:visibility="@{null==vm.currentClient?View.GONE:View.VISIBLE}"
                                 android:singleLine="true" android:layout_height="wrap_content"/>
+                            <TextView android:layout_weight="1" android:singleLine="true" android:textSize="7sp"
+                                android:text="@{vm.notifyText}" android:textColor="@color/textTitle"
+                                android:layout_width="0dp" android:layout_height="wrap_content"/>
                         </LinearLayout>
                     </LinearLayout>
             </LinearLayout>

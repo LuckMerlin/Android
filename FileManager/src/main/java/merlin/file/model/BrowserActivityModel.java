@@ -22,7 +22,6 @@ import com.merlin.file.NasClient;
 import com.merlin.file.Path;
 import com.merlin.file.TaskActivity;
 import com.merlin.file.TaskService;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -39,9 +38,7 @@ import luckmerlin.task.TaskBinder;
 import luckmerlin.task.TaskExecutor;
 import merlin.file.adapter.ClientBrowseAdapter;
 import merlin.file.adapter.Query;
-import merlin.file.task.ChooseTask;
 import merlin.file.task.CopyTask;
-import merlin.file.task.DeleteTask;
 import merlin.file.task.DownloadTask;
 import merlin.file.task.MoveTask;
 import merlin.file.task.PathTaskCreator;
@@ -52,8 +49,10 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick, OnVi
     private final ObservableField<Mode> mCurrentMode=new ObservableField<>(new Mode(Mode.MODE_NORMAL));
     private final ObservableField<Folder> mCurrentFolder=new ObservableField<>();
     private final ObservableField<Integer> mClientCount=new ObservableField<>();
+    private final ObservableField<String> mNotifyText=new ObservableField<>();
     private final PopupWindow mPopupWindow=new PopupWindow();
     private final ServiceConnector mConnector=new ServiceConnector();
+    private Runnable mNotifyDelayRunnable;
     private final ObservableField<RecyclerView.Adapter> mContentAdapter=new ObservableField<>();
     private final ClientBrowseAdapter mBrowserAdapter=new ClientBrowseAdapter(){
         @Override
@@ -108,6 +107,7 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick, OnVi
     @Override
     public void onTaskUpdate(int status, Task task, Object arg) {
         Debug.D("AAAAAAAAAA  "+status+" "+task+" "+arg);
+        
     }
 
     @Override
@@ -263,6 +263,24 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick, OnVi
         return taskBinder.start(task)!=null;
     }
 
+    private boolean resetNotifyText(String text){
+        String current=mNotifyText.get();
+        if ((null==current&&null==text)||(null!=current&&null!=text&&current.equals(text))){
+            return false;
+        }
+        mNotifyText.set(text);
+        return post(mNotifyDelayRunnable=new Runnable() {
+            @Override
+            public void run() {
+                Runnable runnable=mNotifyDelayRunnable;
+                if (null!=runnable&&runnable==this){
+                    mNotifyDelayRunnable=null;
+                    mNotifyText.set(null);
+                }
+            }
+        },3000);
+    }
+
     private boolean entryMode(Mode mode){
         Mode current=mCurrentMode.get();
         if ((null==current&&null==mode)||(null!=current&&null!=mode&&current.getMode()==mode.getMode())){
@@ -366,6 +384,10 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick, OnVi
 
     public ObservableField<RecyclerView.Adapter> getContentAdapter() {
         return mContentAdapter;
+    }
+
+    public ObservableField<String> getNotifyText() {
+        return mNotifyText;
     }
 
     @Override
