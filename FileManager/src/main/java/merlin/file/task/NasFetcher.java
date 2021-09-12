@@ -56,7 +56,7 @@ final class NasFetcher extends Closer{
         return new Reply<>(Code.CODE_SUCCEED,null,new NasOutputStream(connection,fromLength));
     }
 
-    public final Reply<InputStream> openCloudInput(String host, String fromFilePath, long fromLength) throws Exception {
+    public final Reply<InputStream> openCloudInput(String host, String fromFilePath, long fromLength,long limitSize) throws Exception {
         HttpURLConnection connection=openHttpConnection(host,"GET");
         if (null==connection){
             Debug.W("Fail open cloud input while open connect NULL.");
@@ -64,12 +64,12 @@ final class NasFetcher extends Closer{
         }
         inflateHeader(connection,Label.LABEL_PATH,fromFilePath);
         inflateHeader(connection,Label.LABEL_FROM,""+fromLength);
+        inflateHeader(connection,Label.LABEL_SIZE,""+limitSize);
         inflateHeader(connection,"Content-Type", "binary/octet-stream");
         connection.setDoInput(true);
-        connection.setDoOutput(true);
-        connection.setChunkedStreamingMode(0);
         connection.connect();
-        return new Reply<>(Code.CODE_SUCCEED,null,new NasInputStream(connection,fromLength));
+        Debug.TD("Open cloud input."+connection.getRequestMethod()+" "+fromLength,fromFilePath);
+        return new Reply<>(Code.CODE_SUCCEED,null,new NasInputStream(connection));
     }
 
     public final Reply<NasPath> fetchNasFile(String host, String path){
@@ -180,7 +180,7 @@ final class NasFetcher extends Closer{
     private static class NasInputStream extends InputStreamWrapper {
         private final HttpURLConnection mConnection;
 
-        public NasInputStream(HttpURLConnection connection,long length) throws IOException {
+        public NasInputStream(HttpURLConnection connection) throws IOException {
             super(null!=connection?connection.getInputStream():null);
             mConnection=connection;
         }

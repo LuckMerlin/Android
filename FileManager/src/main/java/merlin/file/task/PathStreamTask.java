@@ -68,10 +68,11 @@ public abstract class PathStreamTask extends PathsTask{
                 Debug.W("Fail connect cloud input while reply length invalid.");
                 return new Reply<>(Code.CODE_ARGS,"Reply length invalid",null);
             }
+            Debug.TD("Connect cloud input.",fromFile);
             return new Reply<>(Code.CODE_SUCCEED, null, new InputOpener(length) {
                 @Override
                 protected Reply<InputStream> onOpen(long length) throws Exception {
-                    return fetcher.openCloudInput(host,fromFilePath,length);
+                    return fetcher.openCloudInput(host,fromFilePath,length,-1);
                 }
             });
         }
