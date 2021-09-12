@@ -2,8 +2,6 @@ package merlin.file.model;
 
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.IBinder;
 import android.view.Gravity;
@@ -31,7 +29,6 @@ import java.util.Random;
 import luckmerlin.core.Code;
 import luckmerlin.core.data.Page;
 import luckmerlin.core.debug.Debug;
-import luckmerlin.core.match.Matchable;
 import luckmerlin.core.service.ServiceConnector;
 import luckmerlin.databinding.M;
 import luckmerlin.databinding.touch.OnViewClick;
@@ -50,7 +47,7 @@ import merlin.file.task.MoveTask;
 import merlin.file.task.PathTaskCreator;
 import merlin.file.task.UploadTask;
 
-public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLongClick, OnTaskUpdate {
+public class BrowserActivityModel extends BaseModel implements OnViewClick, OnViewLongClick, OnTaskUpdate {
     private final ObservableField<Client> mCurrentClient=new ObservableField<>();
     private final ObservableField<Mode> mCurrentMode=new ObservableField<>(new Mode(Mode.MODE_NORMAL));
     private final ObservableField<Folder> mCurrentFolder=new ObservableField<>();
@@ -80,14 +77,14 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
         bindService(TaskService.class,mConnector.setConnect((ComponentName name, IBinder service)-> {
             if (null!=service&&service instanceof TaskBinder){
                 TaskBinder binder=((TaskBinder)service);
-                binder.put(FileBrowserModel.this,null);
+                binder.put(BrowserActivityModel.this,null);
             }
         }), Context.BIND_AUTO_CREATE);
 
 //        mBrowserAdapter.setFixHolder(ListAdapter.TYPE_TAIL,view1);
         //
         TaskExecutor executor=new TaskExecutor();
-        startActivity(TaskActivity.class);
+//        startActivity(TaskActivity.class);
 //        executor.append(new FileCopyTask(new LocalPath().apply(new File("/sdcard/dddd.pdf")),
 //                new LocalPath().apply(new File("/sdcard/lin.pdf"))));
 //        executor.start();
@@ -214,21 +211,43 @@ public class FileBrowserModel extends BaseModel implements OnViewClick, OnViewLo
             case R.string.multiChoose: return entryMode(new Mode(Mode.MODE_MULTI_CHOOSE))||true;
             case R.string.transporter: return startActivity(TaskActivity.class)||true;
             case R.drawable.selector_cancel: return entryMode(null)||true;
-            case R.string.sure: executeIfNotEmpty((paths)->new ChooseTask(paths),true);break;
-            case R.string.upload: executeIfNotEmpty((paths)->new UploadTask(paths),true);break;
-            case R.string.download: executeIfNotEmpty((paths)->new DownloadTask(paths),true);break;
-            case R.string.move: executeIfNotEmpty((paths)->new MoveTask(paths),true);break;
-            case R.string.copy: executeIfNotEmpty((paths)->new CopyTask(paths),true);break;
-            case R.string.delete: executeIfNotEmpty((paths)->new DeleteTask(paths),true);break;
+//            case R.string.sure: executeIfNotEmpty((paths)->new ChooseTask(paths),true);break;
+            case R.string.upload: entryOrExecuteIfNotEmpty(Mode.MODE_UPLOAD,
+                    (paths)->new UploadTask(paths,mCurrentFolder.get()),true);break;
+            case R.string.download: entryOrExecuteIfNotEmpty(Mode.MODE_DOWNLOAD,
+                    (paths)->new DownloadTask(paths,mCurrentFolder.get()),true);break;
+            case R.string.move: entryOrExecuteIfNotEmpty(Mode.MODE_MOVE,
+                    (paths)->new MoveTask(paths,mCurrentFolder.get()),true);break;
+            case R.string.copy: entryOrExecuteIfNotEmpty(Mode.MODE_COPY,
+                    (paths)->new CopyTask(paths,mCurrentFolder.get()),true);break;
+//            case R.string.delete: executeIfNotEmpty((paths)->new DeleteTask(paths),true);break;
         }
         return false;
     }
 
-    private boolean executeIfNotEmpty(PathTaskCreator creator, boolean emptyNotify){
+//    private boolean executeIfNotEmpty(PathTaskCreator creator, boolean emptyNotify){
+//        Mode currentMode=mCurrentMode.get();
+//        List<Path> paths=null!=currentMode?currentMode.getList():null;
+//        if (null==paths||paths.size()<=0){
+//            return emptyNotify?toast(getText(R.string.whichEmpty,getText(R.string.choose)))||true:true;
+//        }
+//        Task task=null!=creator?creator.create(paths):null;
+//        return null!=task&&startTask(task)&&entryMode(null);
+//    }
+
+    private boolean entryOrExecuteIfNotEmpty(int mode,PathTaskCreator creator, boolean emptyNotify){
+        if (mode==Mode.MODE_MULTI_CHOOSE){
+            return false;//Invalid
+        }
         Mode currentMode=mCurrentMode.get();
         List<Path> paths=null!=currentMode?currentMode.getList():null;
         if (null==paths||paths.size()<=0){
             return emptyNotify?toast(getText(R.string.whichEmpty,getText(R.string.choose)))||true:true;
+        }
+        int current=currentMode.getMode();
+        
+        if (current==Mode.MODE_MULTI_CHOOSE||current==Mode.MODE_NORMAL){
+            return entryMode(new Mode(mode,paths));
         }
         Task task=null!=creator?creator.create(paths):null;
         return null!=task&&startTask(task)&&entryMode(null);

@@ -37,11 +37,11 @@ public class TaskActivityModel extends BaseModel implements OnTaskUpdate {
                 binder.put(TaskActivityModel.this,mVisibleMatchable);
                 mTaskListAdapter.set(binder.getTasks(mVisibleMatchable));
                //Test
-                List<Path> paths=new ArrayList<>();
-                paths.add(new TestNasFilePath());
-                DownloadTask downloadTask=new DownloadTask(paths);
-                binder.start(downloadTask.setName("下载文件"));
-                mTaskListAdapter.add(downloadTask,false);
+//                List<Path> paths=new ArrayList<>();
+//                paths.add(new TestNasFilePath());
+//                DownloadTask downloadTask=new DownloadTask(paths,null);
+//                binder.start(downloadTask.setName("下载文件"));
+//                mTaskListAdapter.add(downloadTask,false);
             }
         }), Context.BIND_AUTO_CREATE);
     }

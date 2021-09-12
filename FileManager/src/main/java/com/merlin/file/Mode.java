@@ -1,6 +1,7 @@
 package com.merlin.file;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class Mode {
@@ -16,7 +17,12 @@ public class Mode {
     private final int mMode;
 
     public Mode(int mode){
+        this(mode,null);
+    }
+
+    public Mode(int mode,List<Path> multiChoose ){
         mMode=mode;
+        mMultiChoose=multiChoose;
     }
 
     public final boolean is(int ...modes){
@@ -45,6 +51,14 @@ public class Mode {
 
     public final List<Path> getList() {
         return mMultiChoose;
+    }
+
+    public final boolean addAll(Collection<Path> paths){
+        if (null!=paths&&paths.size()>0){
+            List<Path> choose=mMultiChoose;
+            return (null!=choose?choose:(mMultiChoose=new ArrayList<>())).addAll(paths);
+        }
+        return false;
     }
 
     public final boolean add(Path data){

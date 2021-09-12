@@ -11,7 +11,7 @@ public class ChooseTask  extends PathsTask  implements BackgroundTask{
     }
 
     @Override
-    protected TaskResult onExecute(Running running) {
+    protected TaskResult onExecutePath(Path path, Running running) throws Exception {
         return null;
     }
 }

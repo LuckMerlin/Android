@@ -2,7 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:binding="http://schemas.android.com/apk/res-auto">
     <data>
-        <variable name="vm" type="merlin.file.model.FileBrowserModel" />
+        <variable name="vm" type="merlin.file.model.BrowserActivityModel" />
         <variable name="client" type="com.merlin.file.Client" />
         <import type="merlin.file.util.FileSize"/>
         <import type="com.merlin.file.Mode"/>
@@ -63,7 +63,7 @@
                     layout="@layout/operate_image"/>
 
                 <include binding:operate="@{Image.image(R.drawable.selector_menu).add(Click.c(R.drawable.selector_menu))}"
-                    binding:visibility="@{vm.mode.is(Mode.MODE_NORMAL,Mode.MODE_DOWNLOAD,Mode.MODE_UPLOAD,Mode.MODE_COPY,Mode.MODE_MOVE)?View.VISIBLE:View.GONE}"
+                    binding:visibility="@{vm.mode.is(Mode.MODE_NORMAL)?View.VISIBLE:View.GONE}"
                     layout="@layout/operate_image"/>
             </LinearLayout>
         </RelativeLayout>
@@ -94,9 +94,9 @@
                     <include binding:menuText="@{R.string.sure}" layout="@layout/item_browser_bottom_menu"
                         android:visibility="@{vm.mode.is(Mode.MODE_SELECT)?View.VISIBLE:View.GONE}" />
                     <include binding:menuText="@{R.string.upload}" layout="@layout/item_browser_bottom_menu"
-                        android:visibility="@{vm.mode.is(Mode.MODE_UPLOAD,Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}" />
+                        android:visibility="@{(vm.mode.is(Mode.MODE_MULTI_CHOOSE)&amp;&amp;vm.currentFolder.local)||vm.mode.is(Mode.MODE_UPLOAD)?View.VISIBLE:View.GONE}" />
                     <include binding:menuText="@{R.string.download}" layout="@layout/item_browser_bottom_menu"
-                        android:visibility="@{vm.mode.is(Mode.MODE_DOWNLOAD,Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}" />
+                        android:visibility="@{(vm.mode.is(Mode.MODE_MULTI_CHOOSE)&amp;&amp;!vm.currentFolder.local)||vm.mode.is(Mode.MODE_DOWNLOAD)?View.VISIBLE:View.GONE}" />
                     <include binding:menuText="@{R.string.move}" layout="@layout/item_browser_bottom_menu"
                         android:visibility="@{vm.mode.is(Mode.MODE_MOVE,Mode.MODE_MULTI_CHOOSE)?View.VISIBLE:View.GONE}" />
                     <include binding:menuText="@{R.string.copy}" layout="@layout/item_browser_bottom_menu"

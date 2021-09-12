@@ -1,21 +1,13 @@
 package merlin.file.task;
 
+import com.merlin.file.Folder;
 import com.merlin.file.Path;
-
 import java.util.List;
 
-import luckmerlin.task.Execute;
-import luckmerlin.task.Running;
-import luckmerlin.task.TaskResult;
+public class UploadTask extends CopyTask {
 
-public class UploadTask extends PathsTask {
-
-    public UploadTask(List<Path> paths) {
-        setPaths(paths);
+    public UploadTask(List<Path> paths, Folder folder) {
+        super(paths,folder);
     }
 
-    @Override
-    protected TaskResult onExecute(Running running) {
-        return null;
-    }
 }

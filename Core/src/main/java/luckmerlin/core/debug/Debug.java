@@ -20,7 +20,7 @@ public final class Debug {
     public static void D(String tag, Object msgObj) {
         String msg=null!=msgObj?msgObj.toString():null;
         if (null!=msg){
-            Log.d(null != tag && tag.length() > 0 ? (TAG + "." + tag) : TAG, msg);
+            Log.d(null != tag && tag.length() > 0 ?tag: TAG, msg);
         }
     }
 
@@ -31,7 +31,7 @@ public final class Debug {
     public static void W(String tag, Object msgObj) {
         String msg=null!=msgObj?msgObj.toString():null;
         if (null!=msg){
-            Log.w(null != tag && tag.length() > 0 ? (TAG + "." + tag) : TAG, msg);
+            Log.w(null != tag && tag.length() > 0 ?tag : TAG, msg);
         }
     }
 
@@ -69,7 +69,7 @@ public final class Debug {
             D(tag, msg);
         }
         if (enableEncryptLog) {
-            Log.d(null != tag && tag.length() > 0 ? (TAG + "." + tag) : TAG,(null!=msg?msg:"")+" "+ (null != encrypt ? encrypt : ""));
+            Log.d(null != tag && tag.length() > 0 ? (tag) : TAG,(null!=msg?msg:"")+" "+ (null != encrypt ? encrypt : ""));
         }
     }
 
@@ -82,7 +82,7 @@ public final class Debug {
     }
 
     public static void E(String tag, Object msgObj, Throwable throwable) {
-        tag = null != tag && tag.length() > 0 ? (TAG + "." + tag) : TAG;
+        tag = null != tag && tag.length() > 0 ? tag: TAG;
         String msg = null != msgObj ? msgObj.toString() : null;
         if (null!=msg){
             if (null!=throwable){

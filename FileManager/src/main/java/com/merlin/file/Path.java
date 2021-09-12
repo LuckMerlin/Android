@@ -53,6 +53,21 @@ public interface Path {
         return index>=0&&index<length?fileName.substring(index):null;
     }
 
+    public default String getChildPath(String childName){
+        if (null==childName||childName.length()<=0){
+            return null;
+        }
+        String sep=getSep();
+        if (null==sep||sep.length()<=0){
+            return null;
+        }
+        String path=getPath();
+        if (null==path||path.length()<=0){
+            return null;
+        }
+        return (!path.endsWith(sep)?path+sep:path)+childName;
+    }
+
     public String getParent();
 
     public String getSep();

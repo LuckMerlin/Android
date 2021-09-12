@@ -5,9 +5,11 @@ import android.database.sqlite.SQLiteDatabase;
 import java.io.Closeable;
 import java.io.IOException;
 
-public interface Closer {
+import luckmerlin.core.debug.Debug;
 
-    default int close(boolean close, Closeable...closeables){
+public class Closer {
+
+    public  final int close(boolean close, Closeable...closeables){
         int count=-1;
         if (close&&null != closeables&&closeables.length>0) {
             count=0;
@@ -19,7 +21,6 @@ public interface Closer {
                 try {
                     child.close();
                 } catch (IOException exception) {
-                    //Do nothing
                 }
             }
         }

@@ -1,31 +1,16 @@
 package luckmerlin.task;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import luckmerlin.core.Code;
+import luckmerlin.core.Reply;
 import luckmerlin.core.debug.Debug;
 
-public abstract class StreamTask extends AbstractTask<TaskResult> {
+public final class StreamTask extends AbstractTask {
+    private int mCover= Stream.Cover.NONE;
     private int mBufferSize;
-    private int mCover=Cover.NONE;
-    private boolean mCheckMd5=false;
+    private final Stream mStreamer;
 
-    public final StreamTask setCover(int cover){
-        mCover=cover;
-        return this;
-    }
-
-    public final int getCover() {
-        return mCover;
-    }
-
-    public final StreamTask checkMd5(boolean enable){
-        mCheckMd5=enable;
-        return this;
-    }
-
-    public final boolean isCheckMd5() {
-        return mCheckMd5;
+    public StreamTask(Stream streamer){
+        mStreamer=streamer;
     }
 
     public final StreamTask setBufferSize(int bufferSize) {
@@ -33,158 +18,63 @@ public abstract class StreamTask extends AbstractTask<TaskResult> {
         return this;
     }
 
-    public final int getBufferSize() {
-        return mBufferSize;
+    public final StreamTask setCover(int cover) {
+        this.mCover = cover;
+        return this;
     }
 
-    protected abstract Input onOpenInput(boolean checkMd5,Updater updater) throws Exception;
-    protected abstract Output onOpenOutput(long inputLength,Updater updater) throws Exception;
-
     @Override
-    protected final TaskResult onExecute(Running updater) {
+    protected final TaskResult onExecute(Running running) {
+        int cover=mCover;
+        Stream streamer=mStreamer;
+        if (null==streamer){
+            Debug.W("Can't execute stream task while stream NULL.");
+            return null;
+        }
         try {
-            update(Status.STATUS_PREPARE,null);
-            final boolean checkMd5=isCheckMd5();
-            final Input input=onOpenInput(checkMd5,updater);
-            if (null==input){
-                Debug.TD("Fail open input.",this);
-                return new TaskResult(Code.CODE_FAIL,"Fail open input.",null);
-            }
-            final long inputStreamLength=input.mLength;
-            if (checkMd5&&inputStreamLength>0&&input.mMd5==null){//Check input md5 valid
-                Debug.TD("Fail execute stream task while input stream md5 invalid.",this);
-                return new TaskResult(Code.CODE_FAIL,"Input stream md5 invalid.",null);
-            }
-            final Output output=onOpenOutput(inputStreamLength,updater);
+            Reply<Output> outputReply=streamer.openOutputStream(cover);
+            outputReply=null!=outputReply?outputReply:new Reply<>(Code.CODE_FAIL,"",null);
+            Output output=outputReply.isSucceed()?outputReply.getData():null;
             if (null==output){
-                Debug.TD("Fail open output.",this);
-                return new TaskResult(Code.CODE_FAIL,"Fail open output.",null);
+                Debug.TW("Can't execute stream while open output stream reply fail.",outputReply);
+                return new TaskResult(outputReply.getCode(),outputReply.getNote(),null);
             }
-            final long[] outputStreamLength=new long[]{output.mLength};
-            if (outputStreamLength[0]<0){
-                Debug.TD("Fail execute stream while output stream length invalid.",this);
-                return new TaskResult(Code.CODE_FAIL,"Output stream length invalid.",null);
+            closeOnFinish(output);
+            final long skipLength=output.getLength();
+            Debug.D("Opened stream task output stream."+cover+" "+skipLength);
+            Reply<Input> inputReply=streamer.openInputStream(skipLength);
+            inputReply=null!=inputReply?inputReply:new Reply<>(Code.CODE_FAIL,"",null);
+            Input input=null!=inputReply&&inputReply.isSucceed()?inputReply.getData():null;
+            if (null==input){
+                Debug.TW("Can't execute stream while open input stream reply fail.",inputReply);
+                return new TaskResult(outputReply.getCode(),outputReply.getNote(),null);
             }
-            final int cover=mCover;
-            if (cover!=Cover.REPLACE){
-                if (outputStreamLength[0]==inputStreamLength){
-                    if (checkMd5){
-                        String inputMd5=input.mMd5;
-                        String outputMd5=output.mMd5;
-                        if (null==inputMd5||null==outputMd5||!inputMd5.equals(outputMd5)){
-                            Debug.TD("Fail execute stream task while already done but md5 not match.",outputMd5);
-                            return new TaskResult(Code.CODE_ALREADY|Code.CODE_FAIL,"Already done but md5 not match.",null);
-                        }
-                        Debug.TD("Stream task md5 matched.",this);
-                    }
-                    Debug.TD("Already done stream task.",inputStreamLength);
-                    return new TaskResult(Code.CODE_ALREADY_DONE,"Stream task already done.",null);
-                }else if (outputStreamLength[0]>0&&Cover.IGNORE==cover){
-                    Debug.TD("Ignore execute stream task while output stream already exist.",this);
-                    return new TaskResult(Code.CODE_ALREADY|Code.CODE_FAIL,"Output already exist.",null);
-                }else if (outputStreamLength[0]>inputStreamLength){
-                    Debug.TD("Fail execute stream task while output length large than input length.",this);
-                    return new TaskResult(Code.CODE_FAIL,"Output length large than input length.",null);
-                }
-            }else{
-                outputStreamLength[0]=0;//Make output stream keep 0 to replace
-            }
-            update(Status.STATUS_PREPARE,null);
-            //To open input stream
-            InputStream taskInputStream=input.openStream(outputStreamLength[0]);
-            if (null==taskInputStream){
-                Debug.TD("Fail open input stream.",this);
-                return new TaskResult(Code.CODE_FAIL,"Fail open input stream.",null);
-            }
-            OutputStream outputSteam=output.openStream(outputStreamLength[0]);
-            if (null==outputSteam){
-                Debug.TD("Fail open output stream.",this);
-                return new TaskResult(Code.CODE_FAIL,"Fail open output stream.",null);
-            }
-            final long[] doneLength=new long[]{0};//Must init as 0
-            final Progress progress=new Progress() {
-                @Override
-                public long getDone() {
-                    return outputStreamLength[0]+doneLength[0];
-                }
-
-                @Override
-                public long getTotal() {
-                    return inputStreamLength;
-                }
-
-                @Override
-                public long getSpeed() {
-                    return 0;
-                }
-
-                @Override
-                public String getTitle() {
-                    return null;
-                }
-            };
-            update(Status.STATUS_DOING,progress);
+            closeOnFinish(input);
+            final long inputLength=input.getLength();
+            Debug.D("Opened stream task input stream."+inputLength);
             int bufferSize=mBufferSize;int read=0;
             bufferSize=bufferSize<=0?1024*1024:bufferSize;
-            byte[] buffer=new byte[bufferSize];
-            while ((read=taskInputStream.read(buffer))>=0){
+            byte[] buffer=new byte[bufferSize];long doneLength=skipLength;
+            final LongTypeProgress progress=new LongTypeProgress(inputLength).setDone(doneLength)
+                    .setTitle(streamer.getName());
+            update(Status.STATUS_DOING,progress);
+            Debug.D("Start stream task.");
+            while ((read=input.read(buffer))>=0){
                 if (read>0){
-                    outputSteam.write(buffer,0,read);
-                    doneLength[0]+=read;
+                    output.write(buffer,0,read);
+                    doneLength+=read;
+                    progress.setDone(doneLength);
                     update(Status.STATUS_DOING,progress);
                 }
             }
-            outputSteam.flush();
-            Debug.TD("Finish stream task.",this);
-            return new TaskResult(progress.getProgress()==100?Code.CODE_SUCCEED:Code.CODE_FAIL,
-                    null,null);
+            output.flush();
+            Debug.D("Finish stream task.");
+            return new TaskResult(Code.CODE_SUCCEED,null,null);
         }catch (Exception e){
+            Debug.E("Exception execute stream.e="+e,e);
             e.printStackTrace();
-        }
-        return null;
-    }
-
-    public interface Cover{
-        int NONE=0;
-        int REPLACE=3;
-        int IGNORE=4;
-    }
-
-    protected static class Input implements StreamOpener<InputStream>{
-        private final long mLength;
-        private final String mMd5;
-        private StreamOpener<InputStream> mOpener;
-
-        public Input(long length,String md5,StreamOpener<InputStream> opener){
-            mLength=length;
-            mMd5=md5;
-            mOpener=opener;
-        }
-
-        public InputStream openStream(long skip) throws Exception{
-            StreamOpener<InputStream> opener=mOpener;
-            return null!=opener?opener.openStream(skip):null;
+            return new TaskResult(Code.CODE_EXCEPTION,"Exception execute stream.e="+e,null);
         }
     }
 
-    protected static class Output implements StreamOpener<OutputStream>{
-        private final long mLength;
-        private final String mMd5;
-        private StreamOpener<OutputStream> mOpener;
-
-        public Output(long length,String md5,StreamOpener<OutputStream> opener){
-            mLength=length;
-            mMd5=md5;
-            mOpener=opener;
-        }
-
-        public OutputStream openStream(long skip) throws Exception {
-            StreamOpener<OutputStream> opener=mOpener;
-            return null!=opener?opener.openStream(skip):null;
-        }
-    }
-
-    protected interface StreamOpener<T>{
-        T openStream(long skip) throws Exception;
-    }
 }
