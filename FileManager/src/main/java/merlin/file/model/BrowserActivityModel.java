@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import luckmerlin.core.Code;
+import luckmerlin.core.Result;
 import luckmerlin.core.data.Page;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.service.ServiceConnector;
@@ -33,6 +34,8 @@ import luckmerlin.databinding.M;
 import luckmerlin.databinding.touch.OnViewClick;
 import luckmerlin.databinding.touch.OnViewLongClick;
 import luckmerlin.task.OnTaskUpdate;
+import luckmerlin.task.Progress;
+import luckmerlin.task.Status;
 import luckmerlin.task.Task;
 import luckmerlin.task.TaskBinder;
 import luckmerlin.task.TaskExecutor;
@@ -43,6 +46,7 @@ import merlin.file.task.DownloadTask;
 import merlin.file.task.MoveTask;
 import merlin.file.task.PathTaskCreator;
 import merlin.file.task.UploadTask;
+import merlin.file.util.FileSize;
 
 public class BrowserActivityModel extends BaseModel implements OnViewClick, OnViewLongClick, OnTaskUpdate {
     private final ObservableField<Client> mCurrentClient=new ObservableField<>();
@@ -106,8 +110,33 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick, OnVi
 
     @Override
     public void onTaskUpdate(int status, Task task, Object arg) {
-        Debug.D("AAAAAAAAAA  "+status+" "+task+" "+arg);
-        
+        String taskName=null;
+        if (null!=task){
+            status=task.getStatus();
+            taskName=task.getName();
+        }
+        String statusName=null;
+        switch (status){
+            case Status.STATUS_IDLE:
+                Result result=null!=task?task.getResult():null;
+                statusName="【"+(null!=result?getText(result.isSucceed()?
+                        R.string.succeed:R.string.failed):getText(R.string.idle))+"】";
+                break;
+            case Status.STATUS_DOING:
+                Progress progress=null!=task?task.getProgress():null;
+                if (null==progress){
+                    statusName="【"+getText(R.string.doing)+"】";
+                }else{
+                    statusName="【"+progress.getProgress()+"】"+
+                            FileSize.formatSizeText(progress.getSpeed())+"/s";
+                }
+                break;
+            case Status.STATUS_PREPARE: statusName="【"+getText(R.string.prepare)+"】";break;
+            case Status.STATUS_RECHECK: statusName="【"+getText(R.string.recheck)+"】";break;
+            case Status.STATUS_WAIT: statusName="【"+getText(R.string.wait)+"】";break;
+            default:statusName="【"+getText(R.string.unknown)+"】";break;
+        }
+        resetNotifyText((null!=taskName?taskName:"")+statusName);
     }
 
     @Override
