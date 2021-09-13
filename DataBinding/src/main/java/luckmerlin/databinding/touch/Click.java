@@ -11,7 +11,7 @@ import android.view.Window;
 import luckmerlin.core.match.Matchable;
 import luckmerlin.databinding.BS;
 import luckmerlin.databinding.Binding;
-import luckmerlin.databinding.Model;
+import luckmerlin.databinding.model.Model;
 
 /**
  * Create LuckMerlin

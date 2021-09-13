@@ -2,15 +2,22 @@ package merlin.file.model;
 
 import android.os.Build;
 import android.view.View;
+import luckmerlin.core.debug.Debug;
+import luckmerlin.databinding.model.Model;
 
-import luckmerlin.databinding.Model;
-
-public class BaseModel extends Model {
+public class BaseModel extends Model  {
 
     @Override
     protected void onRootAttached(View view) {
         super.onRootAttached(view);
+        Debug.D("onRootAttached "+this);
         enableNavigation(true);
+    }
+
+    @Override
+    protected void onRootDetached(View view) {
+        super.onRootDetached(view);
+        Debug.D("onRootDetached "+this);
     }
 
     protected final boolean enableNavigation(boolean enable){

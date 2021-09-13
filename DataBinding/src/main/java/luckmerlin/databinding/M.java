@@ -17,6 +17,7 @@ import androidx.databinding.ViewDataBinding;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import luckmerlin.core.debug.Debug;
+import luckmerlin.databinding.model.Model;
 
 public final class M {
 

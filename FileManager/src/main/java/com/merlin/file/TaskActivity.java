@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import com.file.manager.R;
 
+import luckmerlin.core.debug.Debug;
 import luckmerlin.databinding.M;
 
 public class TaskActivity extends Activity {
@@ -14,5 +15,4 @@ public class TaskActivity extends Activity {
         super.onCreate(savedInstanceState);
         M.setContentView(this, R.layout.activity_task);
     }
-
 }

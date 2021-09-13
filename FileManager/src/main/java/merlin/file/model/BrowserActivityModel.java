@@ -1,5 +1,6 @@
 package merlin.file.model;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.Build;
@@ -31,6 +32,8 @@ import luckmerlin.core.data.Page;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.service.ServiceConnector;
 import luckmerlin.databinding.M;
+import luckmerlin.databinding.model.OnActivityStarted;
+import luckmerlin.databinding.model.OnActivityStoped;
 import luckmerlin.databinding.touch.OnViewClick;
 import luckmerlin.databinding.touch.OnViewLongClick;
 import luckmerlin.task.OnTaskUpdate;
@@ -48,7 +51,8 @@ import merlin.file.task.PathTaskCreator;
 import merlin.file.task.UploadTask;
 import merlin.file.util.FileSize;
 
-public class BrowserActivityModel extends BaseModel implements OnViewClick, OnViewLongClick, OnTaskUpdate {
+public class BrowserActivityModel extends BaseModel implements OnViewClick,
+        OnViewLongClick, OnTaskUpdate, OnActivityStarted, OnActivityStoped {
     private final ObservableField<Client> mCurrentClient=new ObservableField<>();
     private final ObservableField<Mode> mCurrentMode=new ObservableField<>(new Mode(Mode.MODE_NORMAL));
     private final ObservableField<Folder> mCurrentFolder=new ObservableField<>();
@@ -72,21 +76,16 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick, OnVi
     @Override
     protected void onRootAttached(View view) {
         super.onRootAttached(view);
+        Debug.D("AAA onRootAttached AAAAAAAAAAAa "+this);
         addClient(new LocalClient(getText(R.string.local)));
         addClient(new NasClient("http://192.168.0.4:5000",getText(R.string.nas)));
         selectAny();
         mContentAdapter.set(mBrowserAdapter);
         entryMode(new Mode(Mode.MODE_NORMAL));
-        bindService(TaskService.class,mConnector.setConnect((ComponentName name, IBinder service)-> {
-            if (null!=service&&service instanceof TaskBinder){
-                TaskBinder binder=((TaskBinder)service);
-                binder.put(BrowserActivityModel.this,null);
-            }
-        }), Context.BIND_AUTO_CREATE);
 
 //        mBrowserAdapter.setFixHolder(ListAdapter.TYPE_TAIL,view1);
         //
-        TaskExecutor executor=new TaskExecutor();
+//        TaskExecutor executor=new TaskExecutor();
 //        startActivity(TaskActivity.class);
 //        executor.append(new FileCopyTask(new LocalPath().apply(new File("/sdcard/dddd.pdf")),
 //                new LocalPath().apply(new File("/sdcard/lin.pdf"))));
@@ -106,6 +105,18 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick, OnVi
 //                executor.start();
 //            }
 //        },4000);
+    }
+
+    @Override
+    public void onActivityStarted(Activity activity) {
+        if (isCurrentActivity(activity)){
+            bindService(TaskService.class,mConnector.setConnect((ComponentName name, IBinder service)-> {
+                if (null!=service&&service instanceof TaskBinder){
+                    TaskBinder binder=((TaskBinder)service);
+                    binder.put(BrowserActivityModel.this,null);
+                }
+            }), Context.BIND_AUTO_CREATE);
+        }
     }
 
     @Override
@@ -420,8 +431,20 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick, OnVi
     }
 
     @Override
+    public void onActivityStopped(Activity activity) {
+        if (isCurrentActivity(activity)){
+            TaskBinder binder=mConnector.getBinder(TaskBinder.class);
+            if (null!=binder){
+                binder.remove(this);
+            }
+            unbindService(mConnector);
+        }
+    }
+
+    @Override
     protected void onRootDetached(View view) {
         super.onRootDetached(view);
+        Debug.D("AAA onRootDetached AAAAAAAAAAAa "+this);
         TaskBinder binder=mConnector.getBinder(TaskBinder.class);
         if (null!=binder){
             binder.remove(this);

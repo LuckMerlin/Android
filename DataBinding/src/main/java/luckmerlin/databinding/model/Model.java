@@ -1,8 +1,8 @@
-package luckmerlin.databinding;
+package luckmerlin.databinding.model;
 
 import android.app.Activity;
+import android.app.Application;
 import android.app.Service;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -12,7 +12,6 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
 import android.view.ContextThemeWrapper;
 import android.view.View;
@@ -25,7 +24,6 @@ import android.widget.Toast;
 import androidx.databinding.ViewDataBinding;
 import java.lang.ref.WeakReference;
 import luckmerlin.core.debug.Debug;
-import luckmerlin.databinding.touch.Click;
 
 /**
  * Create LuckMerlin
@@ -47,6 +45,11 @@ public abstract class Model {
             return false;
         }
         return true;
+    }
+
+    protected final boolean isCurrentActivity(Activity activity){
+        Activity current=null!=activity?getActivity():null;
+        return null!=current&&current==activity;
     }
 
     public final boolean isAttachedToWindow(View view){
@@ -113,6 +116,45 @@ public abstract class Model {
         return false;
     }
 
+    protected final Application getApplication(){
+        return getApplication(null);
+    }
+
+    protected final Application getApplication(Context context){
+        context=null!=context?context:getContext();
+        context=null!=context&&!(context instanceof Application)?context.getApplicationContext():context;
+        return null!=context&&context instanceof Application?(Application)context:null;
+    }
+
+    protected final boolean registerActivityLifecycleCallbacks(Application.ActivityLifecycleCallbacks callbacks){
+        return registerActivityLifecycleCallbacks(null,callbacks);
+    }
+
+    protected final boolean registerActivityLifecycleCallbacks(Context context,
+                    Application.ActivityLifecycleCallbacks callbacks){
+        Application application=null!=callbacks?getApplication(context):null;
+        if (null!=application){
+            application.unregisterActivityLifecycleCallbacks(callbacks);
+            application.registerActivityLifecycleCallbacks(callbacks);
+            return true;
+        }
+        return false;
+    }
+
+    protected final boolean unregisterActivityLifecycleCallbacks(Application.ActivityLifecycleCallbacks callbacks){
+        return unregisterActivityLifecycleCallbacks(null,callbacks);
+    }
+
+    protected final boolean unregisterActivityLifecycleCallbacks(Context context,
+                   Application.ActivityLifecycleCallbacks callbacks){
+        Application application=null!=callbacks?getApplication(context):null;
+        if (null!=application){
+            application.unregisterActivityLifecycleCallbacks(callbacks);
+            return true;
+        }
+        return false;
+    }
+
     public final boolean attachRoot(ViewDataBinding binding){
         return null!=binding&&attachRoot(binding.getRoot());
     }
@@ -120,7 +162,7 @@ public abstract class Model {
     public final boolean attachRoot(View root){
         if (null!=root&&null==mRoot){
             final View current=root;
-            final View.OnAttachStateChangeListener listener=new View.OnAttachStateChangeListener(){
+            final ModeLifecycleListener listener=new ModeLifecycleListener(this){
                 @Override
                 public void onViewAttachedToWindow(View v) {
                     if (null!=v&&v==current){
@@ -137,9 +179,16 @@ public abstract class Model {
                         v.setTag(TAG_ID,null);
                         Debug.TD(null,"Detached model view."+this);
                         detachedRoot(v);
+                        if (Model.this instanceof ActivityLifecycle){
+                            unregisterActivityLifecycleCallbacks(v.getContext(),this);
+                        }
+                        super.setModel(null);
                     }
                 }
             };
+            if (this instanceof ActivityLifecycle){
+                registerActivityLifecycleCallbacks(root.getContext(),listener);
+            }
             if (null==current.getParent()){
                 root.addOnAttachStateChangeListener(listener);
                 return true;

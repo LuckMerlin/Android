@@ -9,6 +9,8 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 
 import com.file.manager.R;
+
+import luckmerlin.core.debug.Debug;
 import luckmerlin.databinding.M;
 
 public class MainActivity extends Activity {
