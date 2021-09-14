@@ -3,7 +3,7 @@ package luckmerlin.android
 import android.app.Activity
 import android.os.Bundle
 import luckmerlin.android.demo.R
-import luckmerlin.databinding.M
+import luckmerlin.databinding.model.M
 
 class TestActivity: Activity(){
 

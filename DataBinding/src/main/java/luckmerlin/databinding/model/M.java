@@ -1,4 +1,4 @@
-package luckmerlin.databinding;
+package luckmerlin.databinding.model;
 
 import android.app.Activity;
 import android.app.Application;
@@ -17,6 +17,9 @@ import androidx.databinding.ViewDataBinding;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import luckmerlin.core.debug.Debug;
+import luckmerlin.databinding.Listener;
+import luckmerlin.databinding.OnModelBind;
+import luckmerlin.databinding.OnModelCreate;
 import luckmerlin.databinding.model.Model;
 
 public final class M {
@@ -44,8 +47,8 @@ public final class M {
         return bind(binding,binder);
     }
 
-    public static ViewDataBinding setContentView(Context context,PopupWindow window,int layoutId, ViewGroup.LayoutParams params) {
-        return setContentView(context,window,layoutId,params,null,null);
+    public static ViewDataBinding setContentView(Context context,PopupWindow window,int layoutId,  Listener binder) {
+        return setContentView(context,window,layoutId,null,null,binder);
     }
 
     public static ViewDataBinding setContentView(Context context, PopupWindow window, int layoutId,
@@ -176,19 +179,29 @@ public final class M {
         final View root=null!=binding?binding.getRoot():null;
         if (null==root){
             return null;
+        }else if (null!=Model.findModel(root,false,null)){//Check if already binding
+            return (T)binding;
         }
-        if (null!=binder&&binding(binder, binding)){
+        Model model=null;
+        if (null!=binder&&null!=(model=dispatchBind(binder, binding))){
+            model.attachRoot(root);
             return binding;
-        }else if (binding(root,binding)){
+        }else if (null!=(model=dispatchBind(root, binding))){
+            model.attachRoot(root);
             return binding;
         }
         final Context context=root.getContext();
-        if (null==context||binding(context, binding)){
+        if (null==context){
+            return binding;
+        }else if (null!=(model=dispatchBind(context, binding))){
+            model.attachRoot(root);
             return binding;
         }else if (!(context instanceof Activity)&&context instanceof ContextWrapper &&
-                binding(((ContextWrapper)context).getBaseContext(), binding)){
+                null!=(model=dispatchBind(((ContextWrapper)context).getBaseContext(), binding))){
+            model.attachRoot(root);
             return binding;
-        }else if (binding(context.getApplicationContext(), binding)){
+        }else if (null!=(model=dispatchBind(context.getApplicationContext(), binding))){
+            model.attachRoot(root);
             return binding;
         }
         final Activity activity=null!=context&&context instanceof Activity?((Activity)context):null;
@@ -200,7 +213,8 @@ public final class M {
                 if (null==type){
                     return null;
                 }
-                Object object=null!=binder&&binder instanceof OnModelCreate?((OnModelCreate)binder).onCreate(root1,type):null;
+                Object object=null!=binder&&binder instanceof OnModelCreate?
+                        ((OnModelCreate)binder).onCreate(root1,type):null;
                 if (null!=object&&type.isAssignableFrom(object.getClass())){
                     return object;
                 }
@@ -258,8 +272,8 @@ public final class M {
                     continue;
                 }
                 //Create and set model object
-                if (null!=(modelObject=modelCreator.onCreate(root,type))&&modelObject instanceof Model&&
-                        type.isAssignableFrom(modelObject.getClass())){
+                if (null!=(modelObject=modelCreator.onCreate(root,type))&&modelObject
+                        instanceof Model&& type.isAssignableFrom(modelObject.getClass())){
                     try {
                         child.invoke(binding,modelObject);
                         ((Model)modelObject).attachRoot(root);
@@ -273,7 +287,7 @@ public final class M {
         return binding;
     }
 
-    private static  <T extends ViewDataBinding> boolean binding(Object object,T binding){
-        return null!=object&&object instanceof OnModelBind &&((OnModelBind)object).onModelBind(binding);
+    private static  <T extends ViewDataBinding> Model dispatchBind(Object object,T binding){
+        return null!=object&&object instanceof OnModelBind ?((OnModelBind)object).onModelBind(binding):null;
     }
 }

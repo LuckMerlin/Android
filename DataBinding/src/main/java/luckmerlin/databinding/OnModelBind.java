@@ -1,7 +1,8 @@
 package luckmerlin.databinding;
 
 import androidx.databinding.ViewDataBinding;
+import luckmerlin.databinding.model.Model;
 
 public interface OnModelBind extends Listener {
-    boolean onModelBind(ViewDataBinding binding);
+    Model onModelBind(ViewDataBinding binding);
 }

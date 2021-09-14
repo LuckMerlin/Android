@@ -53,6 +53,21 @@ public interface Path {
         return index>=0&&index<length?fileName.substring(index):null;
     }
 
+    public default String getSlidePath(String name){
+        if (null==name||name.length()<=0){
+            return null;
+        }
+        String sep=getSep();
+        if (null==sep||sep.length()<=0){
+            return null;
+        }
+        String parent=getParent();
+        if (null==parent||parent.length()<=0){
+            return null;
+        }
+        return (!parent.endsWith(sep)?parent+sep:parent)+name;
+    }
+
     public default String getChildPath(String childName){
         if (null==childName||childName.length()<=0){
             return null;

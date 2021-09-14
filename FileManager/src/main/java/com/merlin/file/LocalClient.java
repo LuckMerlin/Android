@@ -12,6 +12,7 @@ import java.util.Queue;
 
 import luckmerlin.core.Canceler;
 import luckmerlin.core.Code;
+import luckmerlin.core.OnFinish;
 import luckmerlin.core.Reply;
 import luckmerlin.core.data.OnPageLoadFinish;
 import luckmerlin.core.debug.Debug;
@@ -22,6 +23,39 @@ public class LocalClient extends Client<Query,Path> {
 
     public LocalClient(String name) {
         super(null,name);
+    }
+
+    @Override
+    public Canceler rename(Path path, String newName, OnFinish<Path> callback) {
+        String pathValue=null!=path?path.getPath():null;
+        File localFile=null;String newFilePath;File newFile;
+        if (null==(newName=(null!=newName?newName.trim():null))||newName.length()<=0){
+            Debug.W("Can't rename local file while new name invalid.");
+            notifyFinish(Code.CODE_ARGS,"New name invalid.",null,callback);
+            return null;
+        }else if (null==(newFilePath=path.getSlidePath(newName))||newFilePath.length()<=0){
+            Debug.W("Can't rename local file while new file path generate fail.");
+            notifyFinish(Code.CODE_ARGS,"New file path generate fail.",null,callback);
+            return null;
+        }else if (null==(newFile=new File(newFilePath))||newFile.exists()){
+            Debug.W("Can't rename local file while new file already exist.");
+            notifyFinish(Code.CODE_ARGS,"New file already exist.",null,callback);
+            return null;
+        }else if (null==pathValue||pathValue.length()<=0||null==(localFile=new File(pathValue))){
+            Debug.W("Can't rename local file while path invalid.");
+            notifyFinish(Code.CODE_ARGS,"Path invalid.",null,callback);
+            return null;
+        }else if (!localFile.exists()){
+            Debug.W("Can't rename local file while file not exist.");
+            notifyFinish(Code.CODE_NOT_EXIST,"File not exist.",null,callback);
+            return null;
+        }
+        long length=localFile.length();
+        localFile.renameTo(newFile);
+        boolean succeed=!localFile.exists()&&newFile.exists()&&length==newFile.length();
+        Debug.D("Finish rename local file.succeed="+succeed);
+        notifyFinish(succeed?Code.CODE_SUCCEED:Code.CODE_FAIL,null,null,callback);
+        return (interrupt)->false;
     }
 
     @Override

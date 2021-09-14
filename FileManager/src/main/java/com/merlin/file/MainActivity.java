@@ -10,8 +10,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.file.manager.R;
 
-import luckmerlin.core.debug.Debug;
-import luckmerlin.databinding.M;
+import luckmerlin.databinding.model.M;
 
 public class MainActivity extends Activity {
 

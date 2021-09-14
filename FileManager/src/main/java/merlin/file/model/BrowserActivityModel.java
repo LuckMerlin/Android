@@ -3,7 +3,6 @@ package merlin.file.model;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
-import android.os.Build;
 import android.os.IBinder;
 import android.view.Gravity;
 import android.view.View;
@@ -13,6 +12,7 @@ import androidx.databinding.ObservableField;
 import androidx.databinding.ViewDataBinding;
 import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
+import com.file.manager.databinding.AlertMessageBinding;
 import com.file.manager.databinding.BrowserMenusBinding;
 import com.file.manager.databinding.PathContextMenusBinding;
 import com.merlin.file.Client;
@@ -27,11 +27,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import luckmerlin.core.Code;
+import luckmerlin.core.OnFinishSucceed;
 import luckmerlin.core.Result;
 import luckmerlin.core.data.Page;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.service.ServiceConnector;
-import luckmerlin.databinding.M;
+import luckmerlin.databinding.model.M;
+import luckmerlin.databinding.OnModelBind;
 import luckmerlin.databinding.model.OnActivityStarted;
 import luckmerlin.databinding.model.OnActivityStoped;
 import luckmerlin.databinding.touch.OnViewClick;
@@ -41,10 +43,10 @@ import luckmerlin.task.Progress;
 import luckmerlin.task.Status;
 import luckmerlin.task.Task;
 import luckmerlin.task.TaskBinder;
-import luckmerlin.task.TaskExecutor;
 import merlin.file.adapter.ClientBrowseAdapter;
 import merlin.file.adapter.Query;
 import merlin.file.task.CopyTask;
+import merlin.file.task.DeleteTask;
 import merlin.file.task.DownloadTask;
 import merlin.file.task.MoveTask;
 import merlin.file.task.PathTaskCreator;
@@ -76,35 +78,11 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
     @Override
     protected void onRootAttached(View view) {
         super.onRootAttached(view);
-        Debug.D("AAA onRootAttached AAAAAAAAAAAa "+this);
         addClient(new LocalClient(getText(R.string.local)));
         addClient(new NasClient("http://192.168.0.4:5000",getText(R.string.nas)));
         selectAny();
         mContentAdapter.set(mBrowserAdapter);
         entryMode(new Mode(Mode.MODE_NORMAL));
-
-//        mBrowserAdapter.setFixHolder(ListAdapter.TYPE_TAIL,view1);
-        //
-//        TaskExecutor executor=new TaskExecutor();
-//        startActivity(TaskActivity.class);
-//        executor.append(new FileCopyTask(new LocalPath().apply(new File("/sdcard/dddd.pdf")),
-//                new LocalPath().apply(new File("/sdcard/lin.pdf"))));
-//        executor.start();
-//        post(new Runnable() {
-//            @Override
-//            public void run() {
-//                Folder folder=mCurrentFolder.get();
-////                null!=folder?folder.getpa
-//                executor.append(new FileCopyTask(
-////                        new LocalPath().apply(
-////                        new File("/sdcard/dddd.pdf")),
-////                        new File("/sdcard/独家记忆.mp3")),
-//                        new TestNasFilePath(),
-//                        new LocalPath().apply(new File("/sdcard/test.mp3"))
-//                        ));
-//                executor.start();
-//            }
-//        },4000);
     }
 
     @Override
@@ -187,11 +165,7 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
             mPopupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
             mPopupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
             mPopupWindow.setOutsideTouchable(true);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                mPopupWindow.showAsDropDown(view,0,0,Gravity.CENTER_HORIZONTAL);
-            }else{
-                mPopupWindow.showAsDropDown(view,0,0);
-            }
+            mPopupWindow.showAtLocation(view,Gravity.CENTER,0,0);
             if (null==binding||!(binding instanceof PathContextMenusBinding)){
                 mPopupWindow.dismiss();
                 return false;
@@ -247,49 +221,53 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
                     }
                 }
                 return true;
+            case R.string.rename: renamePath(view,null!=tag&&tag instanceof Path?(Path)tag:null);break;
             case R.drawable.selector_menu: return showBrowserContextMenu(view)||true;
             case R.string.multiChoose: return entryMode(new Mode(Mode.MODE_MULTI_CHOOSE))||true;
             case R.string.transporter: return startActivity(TaskActivity.class)||true;
             case R.drawable.selector_cancel: return entryMode(null)||true;
 //            case R.string.sure: executeIfNotEmpty((paths)->new ChooseTask(paths),true);break;
-            case R.string.upload: entryOrExecuteIfNotEmpty(Mode.MODE_UPLOAD,
-                    (paths)->new UploadTask(paths,mCurrentFolder.get()),true);break;
-            case R.string.download: entryOrExecuteIfNotEmpty(Mode.MODE_DOWNLOAD,
-                    (paths)->new DownloadTask(paths,mCurrentFolder.get()),true);break;
-            case R.string.move: entryOrExecuteIfNotEmpty(Mode.MODE_MOVE,
-                    (paths)->new MoveTask(paths,mCurrentFolder.get()),true);break;
-            case R.string.copy: entryOrExecuteIfNotEmpty(Mode.MODE_COPY,
-                    (paths)->new CopyTask(paths,mCurrentFolder.get()),true);break;
-//            case R.string.delete: executeIfNotEmpty((paths)->new DeleteTask(paths),true);break;
+            case R.string.upload: entryOrExecuteIfNotEmpty(Mode.MODE_UPLOAD,tag,
+                    (paths,folder)->new UploadTask(paths,folder),true);break;
+            case R.string.download: entryOrExecuteIfNotEmpty(Mode.MODE_DOWNLOAD,tag,
+                    (paths,folder)->new DownloadTask(paths,folder),true);break;
+            case R.string.move: entryOrExecuteIfNotEmpty(Mode.MODE_MOVE,tag,
+                    (paths,folder)->new MoveTask(paths,folder),true);break;
+            case R.string.copy: entryOrExecuteIfNotEmpty(Mode.MODE_COPY,tag,
+                    (paths,folder)->new CopyTask(paths,folder),true);break;
+            case R.string.delete: entryOrExecuteIfNotEmpty(null,tag,
+                    (paths,folder)->new DeleteTask(paths), true);break;
         }
         return false;
     }
 
-//    private boolean executeIfNotEmpty(PathTaskCreator creator, boolean emptyNotify){
-//        Mode currentMode=mCurrentMode.get();
-//        List<Path> paths=null!=currentMode?currentMode.getList():null;
-//        if (null==paths||paths.size()<=0){
-//            return emptyNotify?toast(getText(R.string.whichEmpty,getText(R.string.choose)))||true:true;
-//        }
-//        Task task=null!=creator?creator.create(paths):null;
-//        return null!=task&&startTask(task)&&entryMode(null);
-//    }
-
-    private boolean entryOrExecuteIfNotEmpty(int mode,PathTaskCreator creator, boolean emptyNotify){
-        if (mode==Mode.MODE_MULTI_CHOOSE){
+    private boolean entryOrExecuteIfNotEmpty(Integer mode,Object selectObject,
+                                             PathTaskCreator creator, boolean emptyNotify){
+        if (null!=mode&&mode==Mode.MODE_MULTI_CHOOSE){
             return false;//Invalid
         }
-        Mode currentMode=mCurrentMode.get();
-        List<Path> paths=null!=currentMode?currentMode.getList():null;
+        final Mode currentMode=mCurrentMode.get();
+        List<Path> paths=null;
+        if (null!=currentMode){
+            if (null!=selectObject&&selectObject instanceof Path&&
+                    !currentMode.contains(selectObject)){
+                currentMode.add((Path)selectObject);
+            }
+            paths=currentMode.getList();
+        }
         if (null==paths||paths.size()<=0){
             return emptyNotify?toast(getText(R.string.whichEmpty,getText(R.string.choose)))||true:true;
         }
         int current=currentMode.getMode();
-        
-        if (current==Mode.MODE_MULTI_CHOOSE||current==Mode.MODE_NORMAL){
+        Folder currentFolder=mCurrentFolder.get();
+        if (null!=mode&&(current==Mode.MODE_MULTI_CHOOSE||current==Mode.MODE_NORMAL)){
             return entryMode(new Mode(mode,paths));
+        }else if (current==Mode.MODE_UPLOAD&&null!=currentFolder&&currentFolder.isLocal()){
+            return toast(R.string.canNotInCurrent)&&false;
+        }else if (current==Mode.MODE_DOWNLOAD&&null!=currentFolder&&!currentFolder.isLocal()){
+            return toast(R.string.canNotInCurrent)&&false;
         }
-        Task task=null!=creator?creator.create(paths):null;
+        Task task=null!=creator?creator.create(paths,currentFolder):null;
         return null!=task&&startTask(task)&&entryMode(null);
     }
 
@@ -319,6 +297,52 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
                 }
             }
         },3000);
+    }
+
+    private boolean renamePath(View view,Path path){
+        final Client client=mCurrentClient.get();
+        if (null==view||null==path){
+            return false;
+        }else if(null==client){
+            return toast(getText(R.string.failed))&&false;
+        }
+        String hint=path.getName();
+        hint=null!=hint&&hint.length()>0?hint:getText(R.string.inputPlease);
+        PopupWindow popupWindow=new PopupWindow();
+        return showAlertMessage(popupWindow,new AlertMessageModel(){
+            @Override
+            public boolean onClicked(View view, int id, int count, Object tag) {
+                if (id==R.string.sure){
+                    String inputText=getInputText();
+                    if (null==inputText||inputText.length()<=0){
+                        return toast(R.string.rename,getText(R.string.input))||true;
+                    }
+                    client.rename(path, inputText,(OnFinishSucceed<Path>)
+                            (int code, String note, Path data)-> mBrowserAdapter.replace(path,data));
+                }
+                popupWindow.dismiss();
+                return super.onClicked(view, id, count, tag);
+            }
+        }.setTitle(getText(R.string.rename)).setInputHit(hint).setLeft(R.string.sure).setRight(R.string.cancel));
+    }
+
+    private boolean showAlertMessage(PopupWindow popupWindow,AlertMessageModel messageModel){
+        ViewDataBinding binding=null;
+        if (null!=popupWindow&&null!=messageModel&&null!=(binding=M.setContentView(getContext(),
+            popupWindow, R.layout.alert_message, (OnModelBind)(ViewDataBinding binding1)-> {
+                if (null!=binding1&&binding1 instanceof AlertMessageBinding){
+                    ((AlertMessageBinding)binding1).setVm(messageModel);
+                    return messageModel;
+                }
+                return null;
+            }))){
+            popupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+            popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+            popupWindow.setOutsideTouchable(true);
+            popupWindow.showAtLocation(binding.getRoot(),Gravity.CENTER,0,0);
+            return true;
+        }
+        return false;
     }
 
     private boolean entryMode(Mode mode){
@@ -444,11 +468,11 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
     @Override
     protected void onRootDetached(View view) {
         super.onRootDetached(view);
-        Debug.D("AAA onRootDetached AAAAAAAAAAAa "+this);
         TaskBinder binder=mConnector.getBinder(TaskBinder.class);
         if (null!=binder){
             binder.remove(this);
         }
         unbindService(mConnector);
     }
+
 }

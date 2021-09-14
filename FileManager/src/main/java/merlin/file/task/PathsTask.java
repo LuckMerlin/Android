@@ -63,8 +63,8 @@ public abstract class PathsTask extends AbstractTask {
                 paths.put(path,null!=taskResult?taskResult:(taskResult=new TaskResult(Code.CODE_FAIL,"",null)));
                 latestFailTaskResult=!taskResult.isSucceed()?taskResult:latestFailTaskResult;
             }
-            return null!=latestFailTaskResult&&latestFailTaskResult.isSucceed()?
-                    new TaskResult(Code.CODE_SUCCEED,"All path succeed.",null):latestFailTaskResult;
+            return null==latestFailTaskResult? new TaskResult(Code.CODE_SUCCEED,
+                    "All path succeed.",null):latestFailTaskResult;
         }catch (Exception e){
             Debug.W("Exception execute paths task.e="+e);
             return new TaskResult(Code.CODE_EXCEPTION,"Exception execute paths task.e="+e,null);

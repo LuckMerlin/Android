@@ -10,6 +10,7 @@ import java.util.List;
 
 import luckmerlin.core.Canceler;
 import luckmerlin.core.Code;
+import luckmerlin.core.OnFinish;
 import luckmerlin.core.data.OnPageLoadFinish;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.json.Json;
@@ -30,6 +31,20 @@ public class NasClient extends Client<Query,Path>{
 
     public NasClient(String host,String name) {
         super(host,name);
+    }
+
+    @Override
+    public Canceler rename(Path path, String newName, OnFinish<Path> callback) {
+        String pathValue=null!=path?path.getPath():null;
+        if (null==pathValue||pathValue.length()<=0){
+            Debug.W("Can't rename nas file while path invalid.");
+            notifyFinish(Code.CODE_ARGS,"Path invalid.",null,callback);
+        }else if (null==(newName=(null!=newName?newName.trim():null))||newName.length()<=0){
+            Debug.W("Can't rename nas file while new name invalid.");
+            notifyFinish(Code.CODE_ARGS,"New name invalid.",null,callback);
+            return null;
+        }
+        return null;
     }
 
     @Override

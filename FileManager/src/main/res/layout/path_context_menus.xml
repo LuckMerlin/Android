@@ -10,33 +10,36 @@
         <import type="com.file.manager.R"/>
         <import type="android.view.View"/>
     </data>
-    <LinearLayout android:orientation="vertical" android:background="@drawable/round_corner_gray"
+    <ScrollView android:background="@drawable/round_corner_gray"
         android:layout_width="wrap_content" android:layout_height="wrap_content">
+        <LinearLayout android:orientation="vertical" android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
 
-        <include android:visibility="@{path.local&amp;&amp;mode!=Mode.MODE_MULTI_CHOOSE?View.VISIBLE:View.GONE}"
-            binding:menu="@{Text.text(R.string.upload).add(Click.c(R.string.upload).tag(path))}"
-            layout="@layout/item_context_menu"/>
+            <include android:visibility="@{path.local&amp;&amp;mode!=Mode.MODE_MULTI_CHOOSE?View.VISIBLE:View.GONE}"
+                binding:menu="@{Text.text(R.string.upload).add(Click.c(R.string.upload).tag(path))}"
+                layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Text.text(R.string.download).add(Click.c(R.string.download).tag(path))}"
-            layout="@layout/item_context_menu"/>
+            <include binding:menu="@{Text.text(R.string.download).add(Click.c(R.string.download).tag(path))}"
+                layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Text.text(R.string.move).add(Click.c(R.string.move).tag(path))}"
-            layout="@layout/item_context_menu"/>
+            <include binding:menu="@{Text.text(R.string.move).add(Click.c(R.string.move).tag(path))}"
+                layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Text.text(R.string.copy).add(Click.c(R.string.copy).tag(path))}"
-            layout="@layout/item_context_menu"/>
+            <include binding:menu="@{Text.text(R.string.copy).add(Click.c(R.string.copy).tag(path))}"
+                layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Text.text(R.string.delete).add(Click.c(R.string.delete).tag(path))}"
-            layout="@layout/item_context_menu"/>
+            <include binding:menu="@{Text.text(R.string.delete).add(Click.c(R.string.delete).tag(path))}"
+                layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Text.text(R.string.rename).add(Click.c(R.string.rename).tag(path))}"
-            layout="@layout/item_context_menu"/>
+            <include binding:menu="@{Text.text(R.string.rename).add(Click.c(R.string.rename).tag(path))}"
+                layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Text.text(R.string.scan).add(Click.c(R.string.scan).tag(path))}"
-            android:visibility="@{path.local?View.GONE:View.VISIBLE}"
-            layout="@layout/item_context_menu"/>
+            <include binding:menu="@{Text.text(R.string.scan).add(Click.c(R.string.scan).tag(path))}"
+                android:visibility="@{path.local?View.GONE:View.VISIBLE}"
+                layout="@layout/item_context_menu"/>
 
-        <include binding:menu="@{Text.text(R.string.detail).add(Click.c(R.string.detail).tag(path))}"
-            layout="@layout/item_context_menu"/>
-    </LinearLayout>
+            <include binding:menu="@{Text.text(R.string.detail).add(Click.c(R.string.detail).tag(path))}"
+                layout="@layout/item_context_menu"/>
+        </LinearLayout>
+    </ScrollView>
 </layout>

@@ -12,7 +12,7 @@ public class Reply<T> implements Result{
     }
 
     public final boolean isSucceed(){
-        return getCode()==Code.CODE_SUCCEED;
+        return Code.isSucceed(getCode());
     }
 
     public final int getCode() {

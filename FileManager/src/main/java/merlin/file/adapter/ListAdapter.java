@@ -378,8 +378,11 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
     }
 
   public final boolean replace(T data){
+     return replace(null,data);
+  }
+  public final boolean replace(Object indexObj,T data){
        List<T> list= null!=data?mData:null;
-       int index=null!=list?list.indexOf(data):-1;
+       int index=null!=list?list.indexOf(null!=indexObj?indexObj:data):-1;
        return index>=0&&replace(index,data);
    }
 
@@ -394,7 +397,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
 
   public final boolean insert(int index, Collection<T> data) {
         return add(index, data, true);
-    }
+  }
 
   public final boolean replace(int index,T data) {
         if (null!=data&&index>=0){

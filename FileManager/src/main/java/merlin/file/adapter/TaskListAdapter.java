@@ -10,8 +10,10 @@ import com.file.manager.databinding.ItemTaskBinding;
 import java.util.List;
 
 import luckmerlin.core.Result;
+import luckmerlin.core.debug.Debug;
 import luckmerlin.task.Status;
 import luckmerlin.task.Task;
+import luckmerlin.task.TaskResult;
 import merlin.file.task.DownloadTask;
 import merlin.file.task.UploadTask;
 

@@ -59,14 +59,19 @@ public final class StreamTask extends AbstractTask {
             closeOnFinish(outputOpener);
             final long outputLength=outputOpener.getLength();
             Debug.D("Connected stream task output stream."+cover+" "+outputLength);
+            final LongTypeProgress progress=new LongTypeProgress(inputLength).setDone(0).
+                    setTitle(streamer.getName());
+            update(Status.STATUS_PREPARE,progress);
             if (inputLength==outputLength&&cover!= Stream.Cover.REPLACE){
                 Debug.TW("Ignore execute stream while length of stream already matched.",outputReply);
+                update(Status.STATUS_PREPARE,progress.setDone(inputLength));
                 return new TaskResult(Code.CODE_ALREADY_DONE,"Length already matched",null);
             }else if (outputLength>inputLength){
                 Debug.TW("Can't execute stream while output length larger than input.",outputReply);
                 return new TaskResult(Code.CODE_FAIL,"Output length larger than input",null);
             }
             final long skipLength=cover== Stream.Cover.REPLACE?0:outputLength;
+            update(Status.STATUS_PREPARE,progress.setDone(skipLength));
             //
             Reply<InputStream> inputStreamReply=inputOpener.open(skipLength);
             inputStreamReply=null!=inputStreamReply?inputStreamReply:new Reply<>(Code.CODE_FAIL,"Open fail",null);
@@ -87,9 +92,7 @@ public final class StreamTask extends AbstractTask {
             int bufferSize=mBufferSize;int read=0;
             bufferSize=bufferSize<=0?1024*1024:bufferSize;
             byte[] buffer=new byte[bufferSize];long doneLength=skipLength;
-            final LongTypeProgress progress=new LongTypeProgress(inputLength).setDone(doneLength)
-                    .setTitle(streamer.getName());
-            update(Status.STATUS_DOING,progress);
+            update(Status.STATUS_PREPARE,progress);
             Debug.D("Start stream task.");
             while ((read=inputStream.read(buffer))>=0){
                 if (read>0){

@@ -155,18 +155,19 @@ public abstract class Model {
         return false;
     }
 
-    public final boolean attachRoot(ViewDataBinding binding){
+
+    final boolean attachRoot(ViewDataBinding binding){
         return null!=binding&&attachRoot(binding.getRoot());
     }
 
-    public final boolean attachRoot(View root){
+    final boolean attachRoot(View root){
         if (null!=root&&null==mRoot){
             final View current=root;
             final ModeLifecycleListener listener=new ModeLifecycleListener(this){
                 @Override
                 public void onViewAttachedToWindow(View v) {
                     if (null!=v&&v==current){
-                        Debug.TD(null,"Attached model view."+this);
+                        Debug.TD(null,"Attached model view."+Model.this);
                         v.setTag(TAG_ID,Model.this);
                         mRoot=new WeakReference<View>(v);
                         onRootAttached(v);
@@ -176,8 +177,9 @@ public abstract class Model {
                 @Override
                 public void onViewDetachedFromWindow(View v) {
                     if (null!=v&&v==current){
+                        v.removeOnAttachStateChangeListener(this);
                         v.setTag(TAG_ID,null);
-                        Debug.TD(null,"Detached model view."+this);
+                        Debug.TD(null,"Detached model view."+Model.this);
                         detachedRoot(v);
                         if (Model.this instanceof ActivityLifecycle){
                             unregisterActivityLifecycleCallbacks(v.getContext(),this);
@@ -187,13 +189,13 @@ public abstract class Model {
                 }
             };
             if (this instanceof ActivityLifecycle){
-                registerActivityLifecycleCallbacks(root.getContext(),listener);
+                registerActivityLifecycleCallbacks(current.getContext(),listener);
             }
-            if (null==current.getParent()){
+            if (null==current.getRootView()){
                 root.addOnAttachStateChangeListener(listener);
                 return true;
             }
-            listener.onViewAttachedToWindow(root);
+            listener.onViewAttachedToWindow(current);
             return true;
         }
         return false;
