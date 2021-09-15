@@ -7,9 +7,15 @@ import luckmerlin.databinding.Binding;
 
 public class Text extends BS implements Binding {
     private Object mText;
+    private Object mHint;
 
     public Text setText(Object text){
         mText=text;
+        return this;
+    }
+
+    public Text hint(Object hint){
+        mHint=hint;
         return this;
     }
 
@@ -22,13 +28,17 @@ public class Text extends BS implements Binding {
         super.onBind(view);
         if (null!=view){
             Object text=mText;
+            Object hint=mHint;
             if (view instanceof TextView){
                 if (null==text){
-                    ((TextView)view).setText(null);
                 }else if (text instanceof Integer){
                     ((TextView)view).setText((Integer)text);
                 }else if (text instanceof CharSequence){
                     ((TextView)view).setText((CharSequence)text);
+                }
+                if (null==hint){
+                }else if (hint instanceof Integer){
+                    ((TextView)view).setHint((Integer)hint);
                 }
             }
         }

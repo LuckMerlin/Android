@@ -12,15 +12,16 @@
         android:background="@drawable/round_corner_gray" android:padding="10dp"
         android:layout_height="wrap_content" android:minWidth="220dp" android:minHeight="60dp">
 
-        <TextView android:text="@{vm.title??`dddddd`}" android:textColor="@color/textTitle"
+        <TextView android:text="@{vm.title??``}" android:textColor="@color/textTitle"
             android:paddingBottom="3dp" android:paddingTop="3dp" android:layout_gravity="center"
             android:visibility="@{vm.title.length()>0?View.VISIBLE:View.VISIBLE}"
             android:textSize="@dimen/textTitle" android:singleLine="true" android:gravity="center"
             android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 
-        <EditText android:text="@={vm.input}" android:hint="@{vm.inputHint"
+        <EditText android:text="@={vm.input}" binding:m="@{Text.text(null).hint(vm.inputHint)}"
             android:visibility="@{vm.inputHint==null?View.GONE:View.VISIBLE}"
-            android:focusableInTouchMode="true" android:focusedByDefault="true"
+            android:background="@drawable/round_corner_gray"
+            android:focusableInTouchMode="true" android:focusedByDefault="true" android:inputType="text"
             android:layout_gravity="center" android:textColor="@color/textTitleSub"
             android:layout_width="match_parent" android:layout_marginTop="5dp" android:layout_marginBottom="5dp"
             android:textSize="@dimen/textSmall" android:layout_height="wrap_content"/>
@@ -35,7 +36,6 @@
             android:layout_width="wrap_content" android:layout_height="wrap_content">
 
             <TextView binding:m="@{Text.text(vm.left).add(Click.c(vm.left))}"
-
                 android:visibility="@{null==vm.left?View.GONE:View.VISIBLE}"
                 style="@style/buttonStyle"/>
 

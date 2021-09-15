@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.PopupWindow;
 import androidx.databinding.ObservableField;
 import androidx.databinding.ViewDataBinding;
@@ -309,13 +310,15 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         String hint=path.getName();
         hint=null!=hint&&hint.length()>0?hint:getText(R.string.inputPlease);
         PopupWindow popupWindow=new PopupWindow();
+        popupWindow.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
+        popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
         return showAlertMessage(popupWindow,new AlertMessageModel(){
             @Override
             public boolean onClicked(View view, int id, int count, Object tag) {
                 if (id==R.string.sure){
                     String inputText=getInputText();
                     if (null==inputText||inputText.length()<=0){
-                        return toast(R.string.rename,getText(R.string.input))||true;
+                        return toast(R.string.whichEmpty,getText(R.string.input))||true;
                     }
                     client.rename(path, inputText,(OnFinishSucceed<Path>)
                             (int code, String note, Path data)-> mBrowserAdapter.replace(path,data));
