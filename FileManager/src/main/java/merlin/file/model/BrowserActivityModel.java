@@ -6,11 +6,8 @@ import android.content.Context;
 import android.os.IBinder;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.PopupWindow;
 import androidx.databinding.ObservableField;
-import androidx.databinding.ViewDataBinding;
 import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
 import com.file.manager.databinding.AlertMessageBinding;
@@ -27,18 +24,19 @@ import com.merlin.file.TaskService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import luckmerlin.core.Code;
 import luckmerlin.core.OnFinishSucceed;
 import luckmerlin.core.Result;
 import luckmerlin.core.data.Page;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.service.ServiceConnector;
-import luckmerlin.databinding.model.M;
-import luckmerlin.databinding.OnModelBind;
 import luckmerlin.databinding.model.OnActivityStarted;
 import luckmerlin.databinding.model.OnActivityStoped;
 import luckmerlin.databinding.touch.OnViewClick;
 import luckmerlin.databinding.touch.OnViewLongClick;
+import luckmerlin.databinding.window.PopupWindow;
+import luckmerlin.task.CallableTask;
 import luckmerlin.task.OnTaskUpdate;
 import luckmerlin.task.Progress;
 import luckmerlin.task.Status;
@@ -46,6 +44,7 @@ import luckmerlin.task.Task;
 import luckmerlin.task.TaskBinder;
 import merlin.file.adapter.ClientBrowseAdapter;
 import merlin.file.adapter.Query;
+import merlin.file.task.BackgroundCallableTask;
 import merlin.file.task.CopyTask;
 import merlin.file.task.DeleteTask;
 import merlin.file.task.DownloadTask;
@@ -139,39 +138,26 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
     }
 
     private boolean showBrowserContextMenu(View view){
-        if (null!=view){
-            mPopupWindow.dismiss();
-            ViewDataBinding binding=M.setContentView(view.getContext(),
-                    mPopupWindow,R.layout.browser_menus,null);
-            mPopupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
-            mPopupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
-            mPopupWindow.setOutsideTouchable(true);
-            mPopupWindow.showAtLocation(view,Gravity.CENTER,0,0);
-            if (null==binding||!(binding instanceof BrowserMenusBinding)){
-                mPopupWindow.dismiss();
-                return false;
-            }
-            BrowserMenusBinding menusBinding=(BrowserMenusBinding)binding;
-            menusBinding.setFolder(mCurrentFolder.get());
+        PopupWindow popupWindow=mPopupWindow;
+        if (null!=view&&null!=popupWindow){
+            popupWindow.dismiss().setContentView(view.getContext(), R.layout.browser_menus,
+                    (BrowserMenusBinding binding)-> binding.setFolder(mCurrentFolder.get())).
+                    setWidth(WindowManager.LayoutParams.WRAP_CONTENT).
+                    setHeight(WindowManager.LayoutParams.WRAP_CONTENT).
+                    setOutsideTouchable(true).showAtLocation(view,Gravity.CENTER,0,0);
             return true;
         }
         return false;
     }
 
     private boolean showPathContextMenu(View view,Path path){
-        if (null!=view&&null!=path){
-            mPopupWindow.dismiss();
-            ViewDataBinding binding=M.setContentView(view.getContext(),
-                    mPopupWindow,R.layout.path_context_menus,null);
-            mPopupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
-            mPopupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
-            mPopupWindow.setOutsideTouchable(true);
-            mPopupWindow.showAtLocation(view,Gravity.CENTER,0,0);
-            if (null==binding||!(binding instanceof PathContextMenusBinding)){
-                mPopupWindow.dismiss();
-                return false;
-            }
-            ((PathContextMenusBinding)binding).setPath(path);
+        PopupWindow popupWindow=mPopupWindow;
+        if (null!=view&&null!=path&&null!=popupWindow){
+            popupWindow.dismiss().setWidth(WindowManager.LayoutParams.WRAP_CONTENT).
+                    setHeight(WindowManager.LayoutParams.WRAP_CONTENT).
+                    setContentView(view.getContext(), R.layout.path_context_menus,
+                    (PathContextMenusBinding binding)-> binding.setPath(path)).
+                    showAtLocation(view,Gravity.CENTER,0,0);
             return true;
         }
         return false;
@@ -215,17 +201,19 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
                 return true;
             case R.drawable.selector_back: return backward()||true;
             case R.layout.device_text:
-                if (null!=tag&&tag instanceof Client){
+                if (null!=tag&&tag instanceof Client&&!isMode(Mode.MODE_MULTI_CHOOSE)){
                     Client client=nextClient((Client)tag);
                     if (null!=client){
                         return select(client)||true;
                     }
                 }
                 return true;
+            case R.string.scan: scanPath(view,null!=tag&&tag instanceof Path?(Path)tag:null);break;
             case R.string.rename: renamePath(view,null!=tag&&tag instanceof Path?(Path)tag:null);break;
-            case R.drawable.selector_menu: return showBrowserContextMenu(view)||true;
+            case R.drawable.selector_menu:
+                return (count>1?launchTaskActivity():showBrowserContextMenu(view))||true;
             case R.string.multiChoose: return entryMode(new Mode(Mode.MODE_MULTI_CHOOSE))||true;
-            case R.string.transporter: return startActivity(TaskActivity.class)||true;
+            case R.string.transporter: return launchTaskActivity()||true;
             case R.drawable.selector_cancel: return entryMode(null)||true;
 //            case R.string.sure: executeIfNotEmpty((paths)->new ChooseTask(paths),true);break;
             case R.string.upload: entryOrExecuteIfNotEmpty(Mode.MODE_UPLOAD,tag,
@@ -236,14 +224,16 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
                     (paths,folder)->new MoveTask(paths,folder),true);break;
             case R.string.copy: entryOrExecuteIfNotEmpty(Mode.MODE_COPY,tag,
                     (paths,folder)->new CopyTask(paths,folder),true);break;
-            case R.string.delete: entryOrExecuteIfNotEmpty(null,tag,
-                    (paths,folder)->new DeleteTask(paths), true);break;
+            case R.string.delete: entryOrRunIfNotEmpty(null,tag, (folder,paths)->delete(paths), true);break;
         }
         return false;
     }
 
-    private boolean entryOrExecuteIfNotEmpty(Integer mode,Object selectObject,
-                                             PathTaskCreator creator, boolean emptyNotify){
+    private boolean launchTaskActivity(){
+        return startActivity(TaskActivity.class);
+    }
+
+    private boolean entryOrExecuteIfNotEmpty(Integer mode,Object selectObject, PathTaskCreator creator, boolean emptyNotify){
         if (null!=mode&&mode==Mode.MODE_MULTI_CHOOSE){
             return false;//Invalid
         }
@@ -270,6 +260,35 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         }
         Task task=null!=creator?creator.create(paths,currentFolder):null;
         return null!=task&&startTask(task)&&entryMode(null);
+    }
+
+    private boolean entryOrRunIfNotEmpty(Integer mode, Object selectObject, OnCheckRun runnable, boolean emptyNotify){
+        if (null!=mode&&mode==Mode.MODE_MULTI_CHOOSE){
+            return false;//Invalid
+        }
+        final Mode currentMode=mCurrentMode.get();
+        List<Path> paths=null;
+        if (null!=currentMode){
+            if (null!=selectObject&&selectObject instanceof Path&&
+                    !currentMode.contains(selectObject)){
+                currentMode.add((Path)selectObject);
+            }
+            paths=currentMode.getList();
+        }
+        if (null==paths||paths.size()<=0){
+            return emptyNotify?toast(getText(R.string.whichEmpty,getText(R.string.choose)))||true:true;
+        }else if (null!=runnable){
+            Folder currentFolder=mCurrentFolder.get();
+            runnable.onCheckRun(currentFolder,paths);
+            entryMode(null);
+            return true;
+        }
+        return false;
+    }
+
+    private <T extends Result> boolean startTask(Callable<T> callback,boolean background) {
+        return null!=callback&&startTask(background?new BackgroundCallableTask(callback):
+                new CallableTask<T>(callback));
     }
 
     private boolean startTask(Task task) {
@@ -300,6 +319,35 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         },3000);
     }
 
+    private boolean scanPath(View view,Path path){
+        final Client client=mCurrentClient.get();
+        if (null==client||null==path){
+            return toast(R.string.failed)&&false;
+        }
+        return startTask(()->client.scan(path),true);
+    }
+
+    private boolean delete(List<Path> paths){
+        final View root=getRootView();
+        if (null==root){
+            return false;
+        }
+        PopupWindow popupWindow=new PopupWindow();
+        return null!=popupWindow.setFocusable(true).setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED).
+                setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN).
+                setWidth(WindowManager.LayoutParams.WRAP_CONTENT).setFocusable(true).
+                setHeight(WindowManager.LayoutParams.WRAP_CONTENT).
+                setContentView(root.getContext(), R.layout.alert_message, (AlertMessageBinding binding)->
+                binding.setVm(new AlertMessageModel().setTitle(getText(R.string.delete)).
+                setMessage(getText(R.string.deleteSure)).setLeft(R.string.sure).
+                setRight(R.string.cancel).setOnViewClick((View view, int id, int count, Object tag)-> {
+                    popupWindow.dismiss();
+                    if (id==R.string.sure){
+                        startTask(new DeleteTask(paths));
+                    }
+                return true; }))).showAtLocation(root);
+     }
+
     private boolean renamePath(View view,Path path){
         final Client client=mCurrentClient.get();
         if (null==view||null==path){
@@ -307,45 +355,30 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         }else if(null==client){
             return toast(getText(R.string.failed))&&false;
         }
-        String hint=path.getName();
-        hint=null!=hint&&hint.length()>0?hint:getText(R.string.inputPlease);
-        PopupWindow popupWindow=new PopupWindow();
-        popupWindow.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
-        popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-        return showAlertMessage(popupWindow,new AlertMessageModel(){
-            @Override
-            public boolean onClicked(View view, int id, int count, Object tag) {
-                if (id==R.string.sure){
-                    String inputText=getInputText();
-                    if (null==inputText||inputText.length()<=0){
-                        return toast(R.string.whichEmpty,getText(R.string.input))||true;
+        String hintName=path.getName();
+        final String hint=null!=hintName&&hintName.length()>0?hintName:getText(R.string.inputPlease);
+        final PopupWindow popupWindow=new PopupWindow();
+        return null!=popupWindow.setFocusable(true).setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED).
+                setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN).
+                setWidth(WindowManager.LayoutParams.WRAP_CONTENT).setFocusable(true).
+                setHeight(WindowManager.LayoutParams.WRAP_CONTENT).
+                setContentView(view.getContext(), R.layout.alert_message,
+                (AlertMessageBinding binding)-> binding.setVm(new AlertMessageModel(){
+                    @Override
+                    public boolean onClicked(View view, int id, int count, Object tag) {
+                        if (id==R.string.sure){
+                            String inputText=getInputText();
+                            if (null==inputText||inputText.length()<=0){
+                                return toast(R.string.whichEmpty,getText(R.string.input))||true;
+                            }
+                            client.rename(path, inputText,(OnFinishSucceed<Path>) (int code, String note, Path data)->
+                                    super.runOnUiThread(()->mBrowserAdapter.replace(path,data)));
+                        }
+                        popupWindow.dismiss();
+                        return super.onClicked(view, id, count, tag);
                     }
-                    client.rename(path, inputText,(OnFinishSucceed<Path>)
-                            (int code, String note, Path data)-> mBrowserAdapter.replace(path,data));
-                }
-                popupWindow.dismiss();
-                return super.onClicked(view, id, count, tag);
-            }
-        }.setTitle(getText(R.string.rename)).setInputHit(hint).setLeft(R.string.sure).setRight(R.string.cancel));
-    }
-
-    private boolean showAlertMessage(PopupWindow popupWindow,AlertMessageModel messageModel){
-        ViewDataBinding binding=null;
-        if (null!=popupWindow&&null!=messageModel&&null!=(binding=M.setContentView(getContext(),
-            popupWindow, R.layout.alert_message, (OnModelBind)(ViewDataBinding binding1)-> {
-                if (null!=binding1&&binding1 instanceof AlertMessageBinding){
-                    ((AlertMessageBinding)binding1).setVm(messageModel);
-                    return messageModel;
-                }
-                return null;
-            }))){
-            popupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
-            popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
-            popupWindow.setOutsideTouchable(true);
-            popupWindow.showAtLocation(binding.getRoot(),Gravity.CENTER,0,0);
-            return true;
-        }
-        return false;
+                }.setTitle(getText(R.string.rename)).setInputHit(hint).
+                        setLeft(R.string.sure).setRight(R.string.cancel))).showAtLocation(view);
     }
 
     private boolean entryMode(Mode mode){
@@ -402,6 +435,19 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
             List<Client> clients=mClients;
             int size=null!=clients?clients.size():0;
             return size>0&&select(new Random().nextInt(size));
+        }
+        return false;
+    }
+
+    private boolean isMode(int ...modes){
+        Mode mode=mCurrentMode.get();
+        if (null!=mode){
+            int modeValue=mode.getMode();
+            for (int child:modes) {
+                if (modeValue==child){
+                    return true;
+                }
+            }
         }
         return false;
     }

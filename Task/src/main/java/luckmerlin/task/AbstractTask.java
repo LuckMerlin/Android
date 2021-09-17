@@ -5,7 +5,7 @@ import java.io.IOException;
 import luckmerlin.core.Result;
 import luckmerlin.core.debug.Debug;
 
-public abstract class AbstractTask<T extends TaskResult> implements Task<T> {
+public abstract class AbstractTask<T extends Result> implements Task<T> {
     private transient String mName;
     private transient Running mRunning;
 

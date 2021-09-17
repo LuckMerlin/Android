@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import luckmerlin.core.Code;
 import luckmerlin.core.Reply;
+import luckmerlin.core.Result;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.task.InputOpener;
 import luckmerlin.task.OutputOpener;
@@ -169,7 +170,7 @@ public abstract class PathStreamTask extends PathsTask{
     protected abstract Reply<Stream> onCreatePathStreamer(Path fromFile);
 
     @Override
-    protected final TaskResult onExecutePath(Path path, Running running) {
+    protected final Result onExecutePath(Path path, Running running) {
         Reply<Stream> streamerReply=null;Stream streamer=null;
         streamerReply=null!=(streamerReply=onCreatePathStreamer(path))?streamerReply:
                 new Reply<>(Code.CODE_FAIL,"Fail create path streamer.",null);
@@ -178,7 +179,7 @@ public abstract class PathStreamTask extends PathsTask{
             return new TaskResult(streamerReply.getCode(),streamerReply.getNote(),null);
         }
         Debug.D("Fetched path stream task stream.");
-        TaskResult taskResult=new StreamTask(streamer).setCover(mCover).
+        Result taskResult=new StreamTask(streamer).setCover(mCover).
                 setBufferSize(mBufferSize).execute(running);
         close(streamer);
         return taskResult;

@@ -2,7 +2,7 @@ package luckmerlin.task;
 
 import luckmerlin.core.Result;
 
-public interface Task<T extends TaskResult> extends Execute,  Status{
+public interface Task<T extends Result> extends Execute,  Status{
 
     T execute(Running running);
 

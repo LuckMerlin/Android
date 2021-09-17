@@ -13,10 +13,17 @@ public class AlertMessageModel extends Model implements OnViewClick {
     private final ObservableField<Integer> mCenterText=new ObservableField<>();
     private final ObservableField<String> mInputText=new ObservableField<>();
     private final ObservableField<String> mInputHintText=new ObservableField<>();
+    private OnViewClick mOnViewClick;
 
     @Override
     public boolean onClicked(View view, int id, int count, Object tag) {
-        return false;
+        OnViewClick onViewClick=mOnViewClick;
+        return null!=onViewClick&&onViewClick.onClicked(view,id,count,tag);
+    }
+
+    public AlertMessageModel setOnViewClick(OnViewClick callback){
+        mOnViewClick=callback;
+        return this;
     }
 
     public final AlertMessageModel setTitle(String title){

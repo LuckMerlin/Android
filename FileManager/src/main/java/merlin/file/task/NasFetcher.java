@@ -20,8 +20,9 @@ import luckmerlin.core.io.Closer;
 import luckmerlin.core.json.Json;
 import luckmerlin.task.InputStreamWrapper;
 import luckmerlin.task.OutputStreamWrapper;
+import merlin.file.http.Http;
 
-final class NasFetcher extends Closer{
+final class NasFetcher extends Http {
 
     public final Reply<InputStream> delete(String host, String filePath) throws Exception {
         HttpURLConnection connection=openHttpConnection(host,"DELETE");
@@ -124,39 +125,6 @@ final class NasFetcher extends Closer{
         }
         Debug.D("Can't parse nas path response.");
         return new Reply<>(Code.CODE_FAIL,"Fail.",null);
-    }
-
-    public final HttpURLConnection openHttpConnection(String urlPath, String method) {
-        URL url= null;
-        try {
-            url = null!=urlPath&&urlPath.length()>0?new URL(urlPath):null;
-            HttpURLConnection conn = null!=url?(HttpURLConnection) url.openConnection():null;
-            if (null!=conn){
-                conn.setRequestMethod(null!=method&&method.length()>0?method:"GET");
-                conn.setRequestProperty("Charset", "UTF-8");
-                conn.setUseCaches(false);
-                conn.setConnectTimeout(8000);
-                conn.setReadTimeout(5000);
-                return conn;
-            }
-        } catch (Exception e) {
-            Debug.E("Exception open http connect.e="+e,e);
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public final boolean inflateHeader(HttpURLConnection connection,String key,String value){
-        if (null!=connection&&null!=key&&key.length()>0&&null!=value){
-            try {
-                connection.setRequestProperty(key, URLEncoder.encode(value,"utf-8"));
-                return true;
-            } catch (UnsupportedEncodingException e) {
-                Debug.E("Exception set value to header."+e,e);
-                e.printStackTrace();
-            }
-        }
-        return false;
     }
 
     private static class NasDeleteStream extends InputStreamWrapper implements Closeable {

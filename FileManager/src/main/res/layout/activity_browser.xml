@@ -13,10 +13,10 @@
         <import type="android.text.Html"/>
     </data>
     <LinearLayout android:background="@drawable/round_corner_gray" android:orientation="vertical"
-        android:layout_width="match_parent" android:layout_height="match_parent" android:paddingTop="2dp">
+        android:fitsSystemWindows="true" android:layout_width="match_parent"
+        android:layout_height="match_parent" android:paddingTop="2dp">
         <RelativeLayout android:layout_alignParentTop="true" android:layout_width="match_parent"
-            android:paddingLeft="5dp" android:paddingRight="5dp" android:layout_height="@dimen/listItemNormal"
-            android:layout_marginTop="15dp">
+            android:paddingLeft="5dp" android:paddingRight="5dp" android:layout_height="@dimen/listItemNormal">
             <LinearLayout android:layout_alignParentLeft="true" android:orientation="horizontal"
                 android:gravity="center_vertical" android:layout_centerVertical="true"
                 android:layout_width="match_parent" android:layout_height="wrap_content">

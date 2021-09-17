@@ -52,6 +52,15 @@ public abstract class Model {
         return null!=current&&current==activity;
     }
 
+    protected final boolean finishActivity(){
+        Activity activity=getActivity();
+        if (null!=activity){
+            activity.finish();
+            return true;
+        }
+        return false;
+    }
+
     public final boolean isAttachedToWindow(View view){
         return null!=view&&(Build.VERSION.SDK_INT >= 19?view.isAttachedToWindow():null!=view.getWindowToken());
     }
@@ -67,6 +76,10 @@ public abstract class Model {
             }
         }
         return null;
+    }
+
+    protected final boolean runOnUiThread(Runnable runnable){
+        return null!=runnable&&post(runnable);
     }
 
     protected final <T extends Activity> boolean startActivity(Class<T> cls){

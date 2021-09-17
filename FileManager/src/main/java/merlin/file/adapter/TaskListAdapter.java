@@ -1,27 +1,28 @@
 package merlin.file.adapter;
 
 import android.view.ViewGroup;
-import android.widget.ImageView;
-
 import androidx.databinding.ViewDataBinding;
 import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
 import com.file.manager.databinding.ItemTaskBinding;
 import java.util.List;
-
 import luckmerlin.core.Result;
-import luckmerlin.core.debug.Debug;
 import luckmerlin.task.Status;
 import luckmerlin.task.Task;
-import luckmerlin.task.TaskResult;
 import merlin.file.task.DownloadTask;
 import merlin.file.task.UploadTask;
 
 public class TaskListAdapter extends ListAdapter<Task>{
 
     @Override
-    protected Integer onResolveDataTypeLayoutId(ViewGroup parent) {
-        return R.layout.item_task;
+    protected Integer onResolveViewTypeLayoutId(ViewGroup parent, int viewType) {
+        switch (viewType){
+            case TYPE_DATA:
+                return R.layout.item_task;
+            case TYPE_EMPTY:
+                return R.layout.list_empty;
+        }
+        return null;
     }
 
     @Override

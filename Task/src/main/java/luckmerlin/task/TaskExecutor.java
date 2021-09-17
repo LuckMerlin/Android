@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import luckmerlin.core.Canceler;
 import luckmerlin.core.Code;
+import luckmerlin.core.Result;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.match.Matchable;
 import luckmerlin.core.match.MatchIterator;
@@ -95,7 +96,7 @@ public class TaskExecutor implements TaskRunner {
         return null!=running.setCanceler(executor.submit(()->{
             long time= SystemClock.elapsedRealtime();
             Debug.TD("Start task.",task);
-            TaskResult result=task.execute(running);
+            Result result=task.execute(running);
             running.setResult(null!=result?result:new TaskResult(Code.CODE_FAIL,"Unknown",null));
             long duration=SystemClock.elapsedRealtime()-time;
             Debug.TD("Finish task."+duration,task);

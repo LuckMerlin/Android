@@ -48,7 +48,7 @@ public class TaskBinder extends Binder implements TaskRunner {
     }
 
     @Override
-    public List<Task> start(Object matchable ) {
+    public List<Task> start(Object matchable) {
         TaskRunner runner=mTaskRunner;
         return null!=runner?runner.start(matchable):null;
     }

@@ -3,12 +3,26 @@
     xmlns:binding="http://schemas.android.com/apk/res-auto">
     <data>
         <variable name="vm" type="merlin.file.model.TaskActivityModel" />
+        <import type="com.file.manager.R"/>
+        <import type="luckmerlin.databinding.touch.Click"/>
     </data>
-    <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:adapter="@{vm.taskListAdapter}"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+    <LinearLayout android:background="@drawable/round_corner_gray" android:orientation="vertical"
+        android:fitsSystemWindows="true" android:layout_width="match_parent"
+        android:layout_height="match_parent" android:paddingTop="2dp">
+        <RelativeLayout android:layout_alignParentTop="true" android:layout_width="match_parent"
+            android:paddingLeft="5dp" android:paddingRight="5dp" android:layout_height="@dimen/listItemNormal">
+            <LinearLayout android:layout_alignParentLeft="true" android:orientation="horizontal"
+                android:gravity="center_vertical" android:layout_centerVertical="true"
+                android:layout_width="match_parent" android:layout_height="wrap_content">
+                <ImageView android:layout_width="@dimen/titleIconSize" android:layout_height="@dimen/titleIconSize" android:layout_marginLeft="5dp"
+                    android:imageResource="@{R.drawable.selector_back}"
+                    android:layout_marginRight="15dp" binding:m="@{Click.c(R.drawable.selector_back)}"/>
+                <TextView android:text="@string/transporter" android:textSize="@dimen/textTitle" android:padding="5dp"
+                    android:minWidth="40dp" android:textStyle="bold"
+                    style="@style/titleNormalTextView"/>
+            </LinearLayout>
+        </RelativeLayout>
+        <androidx.recyclerview.widget.RecyclerView android:adapter="@{vm.taskListAdapter}"
+            android:layout_width="match_parent" android:layout_height="match_parent"/>
     </LinearLayout>
 </layout>

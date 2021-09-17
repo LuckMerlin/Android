@@ -3,13 +3,10 @@ package com.merlin.file;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Environment;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.Queue;
-
 import luckmerlin.core.Canceler;
 import luckmerlin.core.Code;
 import luckmerlin.core.OnFinish;
@@ -52,10 +49,17 @@ public class LocalClient extends Client<Query,Path> {
         }
         long length=localFile.length();
         localFile.renameTo(newFile);
-        boolean succeed=!localFile.exists()&&newFile.exists()&&length==newFile.length();
-        Debug.D("Finish rename local file.succeed="+succeed);
-        notifyFinish(succeed?Code.CODE_SUCCEED:Code.CODE_FAIL,null,null,callback);
+        int code=!localFile.exists()&&newFile.exists()&&length==newFile.length()?
+                Code.CODE_SUCCEED:Code.CODE_FAIL;
+        Debug.D("Finish rename local file.code="+code);
+        notifyFinish(code,null, code==Code.CODE_SUCCEED?new LocalPath().
+                apply(newFile):null,callback);
         return (interrupt)->false;
+    }
+
+    @Override
+    public Reply scan(Path path) {
+        return null;
     }
 
     @Override
