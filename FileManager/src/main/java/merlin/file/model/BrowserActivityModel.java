@@ -95,6 +95,7 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
                 if (null!=service&&service instanceof TaskBinder){
                     TaskBinder binder=((TaskBinder)service);
                     binder.put(BrowserActivityModel.this,null);
+//                    binder.start(new TestTask());
                 }
             }), Context.BIND_AUTO_CREATE);
         }

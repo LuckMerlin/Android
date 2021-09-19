@@ -23,13 +23,23 @@ public class TasksExecutor implements TaskRunner {
     private ExecutorService mExecutor;
     private final MatchIterator mMatcher=new MatchIterator();
     private final Set<Tasked> mTaskList=new LinkedHashSet<>();
+    private Saver mSaver;
     private Map<OnTaskUpdate,Matchable<Task>> mUpdateMaps;
 
-    protected ExecutorService onCreateExecutorService(){
-        return null;
+    public TasksExecutor(ExecutorService executor){
+        mExecutor=executor;
     }
 
-    private void onTaskStatusUpdate(int status,Tasked tasked,Progress progress){
+    public final TasksExecutor setSaver(Saver saver){
+        mSaver=saver;
+        return this;
+    }
+
+    public final Saver getSaver() {
+        return mSaver;
+    }
+
+    private void onTaskStatusUpdate(int status, Tasked tasked, Progress progress){
         Map<OnTaskUpdate,Matchable<Task>> updateMaps=mUpdateMaps;
         if (null!=updateMaps&&null!=tasked){
             Set<OnTaskUpdate> set=null;
@@ -74,10 +84,10 @@ public class TasksExecutor implements TaskRunner {
             return null;
         }
         List<Tasked> currentTasks=iterateKeys(taskList,new Matcher<Tasked>((arg)->
-                null!=arg&&null!=arg.mTask&&task==arg.mTask?
+                null!=arg&&(task==arg||(null!=arg.mTask&&task==arg.mTask))?
                         Matchable.MATCHED:Matchable.CONTINUE).setMax(1));
         Tasked tasked=null!=currentTasks&&currentTasks.size()>0?currentTasks.get(0):null;
-        if (null==tasked&&taskList.add(tasked=new Tasked(task))) {
+        if (null==tasked&&taskList.add(tasked=(task instanceof Tasked? (Tasked)task:new Tasked(task)))) {
             //Do nothing
         }
         final Tasked finalTasked=tasked;
@@ -87,21 +97,37 @@ public class TasksExecutor implements TaskRunner {
             return null;
         }
         ExecutorService executor= mExecutor;
-        if (null==(executor=(null!=executor?executor:(null!=(mExecutor=onCreateExecutorService())?
-                mExecutor: Executors.newSingleThreadExecutor())))){
+        if (null==(executor=(null!=executor?executor: (mExecutor=Executors.newSingleThreadExecutor())))){
             Debug.W("Can't start task while executor invalid.");
             return null;
         }
+        final String taskId=finalTasked.mTaskId;
         final InnerRunner runner=new InnerRunner(null!=currentRunner? currentRunner.getProgress():null){
             @Override
             public Runner update(int status, Progress progress) {
                 if (mRunning){
+                    Saved saved=mSaved;
+                    if (null!=saved){
+                        boolean updated=saved.setProgress(progress);
+                        updated|=saved.setStatus(status);
+                        Saver saver=mSaver;
+                        if (updated&&null!=saver&&saver.save(saved)){
+                            //Saved
+                        }
+                    }
                     super.update(status, progress);
                     TasksExecutor.this.onTaskStatusUpdate(status,finalTasked,progress);
                 }
                 return this;
             }
         };
+        if (null!=taskId&&taskId.length()>0 && task instanceof Savable){
+            Saved saved=new Saved();
+            saved.setTaskId(taskId);
+            saved.setTaskClass(finalTasked.getClass());
+            ((Savable)task).onSave(saved);
+            runner.mSaved=saved;
+        }
         runner.mRunning=true;
         finalTasked.setRunner(runner.update(Status.STATUS_WAIT,null));
         Debug.TD("Wait to start task.",task);
@@ -168,7 +194,8 @@ public class TasksExecutor implements TaskRunner {
     @Override
     public boolean add(Task task) {
         Set<Tasked> taskeds=mTaskList;
-        return null!=task&&!taskeds.contains(task)&&taskeds.add(new Tasked(task));
+        return null!=task&&!taskeds.contains(task)&&taskeds.add(task instanceof Tasked?
+                (Tasked)task:new Tasked(task));
     }
 
     @Override
@@ -204,6 +231,7 @@ public class TasksExecutor implements TaskRunner {
         private List<Finisher> mFinishers;
         private int mStatus=Status.STATUS_IDLE;
         protected boolean mRunning=false;
+        protected Saved mSaved;
 
         protected InnerRunner(Progress progress) {
             super(progress);
@@ -217,10 +245,7 @@ public class TasksExecutor implements TaskRunner {
         @Override
         public Runner update(int status, Progress progress) {
             mStatus=status;
-            if (null!=progress){
-                super.setProgress(progress);
-            }
-            return this;
+            return super.setProgress(progress);
         }
 
         protected final Runner cleanFinisher(boolean run){
