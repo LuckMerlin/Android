@@ -95,7 +95,6 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
                 if (null!=service&&service instanceof TaskBinder){
                     TaskBinder binder=((TaskBinder)service);
                     binder.put(BrowserActivityModel.this,null);
-                    binder.start(new TestTask());
                 }
             }), Context.BIND_AUTO_CREATE);
         }
@@ -180,6 +179,11 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         return false;
     }
 
+    private boolean reset(){
+        ClientBrowseAdapter adapter=mBrowserAdapter;
+        return null!=adapter&&null!=adapter.reset(adapter.getLastSucceedArg());
+    }
+
     private Client nextClient(Client client){
         List<Client> clients=mClients;
         int length=null!=clients?clients.size():-1;
@@ -204,6 +208,7 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
                     return openPath(path)||true;
                 }
                 return true;
+            case R.string.reset: return reset()||true;
             case R.drawable.selector_back: return backward()||true;
             case R.layout.device_text:
                 if (null!=tag&&tag instanceof Client&&!isMode(Mode.MODE_MULTI_CHOOSE)){

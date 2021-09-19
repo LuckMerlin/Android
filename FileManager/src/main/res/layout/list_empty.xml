@@ -2,10 +2,20 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:binding="http://schemas.android.com/apk/res-auto">
     <data>
+        <variable name="title" type="String" />
+        <variable name="iconDrawable" type="android.graphics.drawable.Drawable" />
+        <variable name="click" type="luckmerlin.databinding.Binding" />
+        <import type="android.view.View"/>
     </data>
-    <TextView
-        android:text="@string/empty"
-        android:textSize="@dimen/textTitle" android:padding="5dp"
-        android:minWidth="40dp" android:textStyle="bold"
-        style="@style/titleNormalTextView"/>
+    <LinearLayout android:orientation="vertical" android:gravity="center"
+        android:layout_width="wrap_content" android:layout_height="wrap_content">
+        <ImageView android:imageDrawable="@{iconDrawable}"
+            android:layout_width="90dp" android:layout_height="90dp"/>
+        <TextView android:text="@{title??``}" android:textSize="@dimen/textTitle"
+            android:padding="5dp" android:minWidth="40dp" android:textStyle="bold"
+            style="@style/titleNormalTextView"/>
+        <TextView binding:m="@{click}" style="@style/buttonStyle" android:layout_marginTop="15dp"
+            android:visibility="@{null==click?View.GONE:View.VISIBLE}"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    </LinearLayout>
 </layout>

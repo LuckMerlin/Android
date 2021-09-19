@@ -3,13 +3,15 @@
     <string name="sure">确定</string>
     <string name="upload">上传</string>
     <string name="delete">删除</string>
-    <string name="empty">空</string>
+    <string name="empty">内容为空</string>
+    <string name="none_permission">无权限</string>
     <string name="move">移动</string>
     <string name="copy">复制</string>
     <string name="download">下载</string>
     <string name="local">本地</string>
     <string name="nas">Nas</string>
     <string name="rename">重命名</string>
+    <string name="reset">重置</string>
     <string name="input">输入</string>
     <string name="scan">扫描</string>
     <string name="cancel">取消</string>

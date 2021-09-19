@@ -2,6 +2,7 @@ package merlin.file.adapter;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -505,6 +506,11 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         Context context=getAdapterContext();
         return null!=context?context.getResources().getString(textResId,args):null;
    }
+
+    protected final Drawable getDrawable(int drawableResId){
+        Context context=getAdapterContext();
+        return null!=context?context.getResources().getDrawable(drawableResId):null;
+    }
 
   public final RecyclerView getRecyclerView(){
         WeakReference<RecyclerView> reference = mRecyclerView;
