@@ -30,7 +30,7 @@ public class TaskBinder extends Binder implements TaskRunner {
     }
 
     @Override
-    public boolean add(Task task) {
+    public boolean add(Object task) {
         TaskRunner runner=mTaskRunner;
         return null!=runner&&runner.add(task);
     }
@@ -45,6 +45,12 @@ public class TaskBinder extends Binder implements TaskRunner {
     public final int getSize() {
         TaskGroup taskGroup=mTaskRunner;
         return null!=taskGroup?taskGroup.getSize():-1;
+    }
+
+    @Override
+    public List<Tasked> fetch(Matchable matchable) {
+        TaskRunner runner=mTaskRunner;
+        return null!=runner?runner.fetch(matchable):null;
     }
 
     @Override

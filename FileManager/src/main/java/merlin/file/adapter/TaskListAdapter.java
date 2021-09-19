@@ -16,7 +16,7 @@ import luckmerlin.task.Tasked;
 import merlin.file.task.DownloadTask;
 import merlin.file.task.UploadTask;
 
-public class TaskListAdapter extends ListAdapter<Task>{
+public class TaskListAdapter extends ListAdapter<Tasked>{
 
     @Override
     protected Integer onResolveViewTypeLayoutId(ViewGroup parent, int viewType) {
@@ -31,7 +31,7 @@ public class TaskListAdapter extends ListAdapter<Task>{
 
     @Override
     protected void onBindViewHolder(RecyclerView.ViewHolder holder, int viewType,
-                                    ViewDataBinding binding, int position, Task data, List<Object> payloads) {
+                                    ViewDataBinding binding, int position, Tasked data, List<Object> payloads) {
         if (null!=binding) {
             if (binding instanceof ItemTaskBinding) {
                 ItemTaskBinding taskBinding = (ItemTaskBinding) binding;
@@ -39,21 +39,21 @@ public class TaskListAdapter extends ListAdapter<Task>{
                 int status = Status.STATUS_IDLE;
                 Result result = null;
                 Progress progress = null;
-                if (null != data && data instanceof Tasked) {
-                    Tasked tasked = (Tasked) data;
-                    status = tasked.getStatus();
-                    result = tasked.getResult();
-                    progress = tasked.getProgress();
-                    data = tasked.getTask();
+                Task task=null;
+                if (null != data) {
+                    task=data.getTask();
+                    status = data.getStatus();
+                    result = data.getResult();
+                    progress = data.getProgress();
                 }
                 int statusIcon = R.drawable.icon_cancel;
                 if (status == Status.STATUS_IDLE) {
                     statusIcon = R.drawable.icon_failed;
                     if (null != result && result.isSucceed()) {
                         statusIcon = R.drawable.icon_succeed;
-                    } else if (null != data && data instanceof DownloadTask) {
+                    } else if (null != data && task instanceof DownloadTask) {
                         statusIcon = R.drawable.icon_download;
-                    } else if (null != data && data instanceof UploadTask) {
+                    } else if (null != data && task instanceof UploadTask) {
                         statusIcon = R.drawable.icon_upload;
                     }
                 }

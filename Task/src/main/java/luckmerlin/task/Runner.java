@@ -1,13 +1,20 @@
 package luckmerlin.task;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Future;
 import luckmerlin.core.Canceler;
+import luckmerlin.core.JsonResult;
 import luckmerlin.core.Result;
 
-public abstract class Runner implements Status{
+public class Runner implements Status{
+    private List<Finisher> mFinishers;
     private Progress mProgress;
     private Result mResult;
     private Canceler mCanceler;
+    private int mStatus;
+    protected Saved mSaved;
+    protected boolean mRunning=false;
 
     protected Runner(Progress progress){
         mProgress=progress;
@@ -15,11 +22,26 @@ public abstract class Runner implements Status{
 
     protected final Runner setResult(Result result) {
         this.mResult = result;
+        Saved saved=mSaved;
+        if (null!=saved&&saved.setResult(null!=result&&result
+                instanceof JsonResult?(JsonResult)result:null)){
+            //Do nothing
+        }
         return this;
     }
 
     protected final Runner setProgress(Progress progress) {
-        this.mProgress = progress;
+        Progress current=mProgress;
+        if (!((null==current&&null==progress)||(null!=current&&null!=progress&&current==progress))){
+            this.mProgress = progress;
+        }
+        return this;
+    }
+
+    protected final Runner setStatus(int status) {
+        if (mStatus!=status){
+            this.mStatus = status;
+        }
         return this;
     }
 
@@ -38,13 +60,17 @@ public abstract class Runner implements Status{
         return mProgress;
     }
 
-    public abstract int getStatus();
+    public final int getStatus(){
+        return mStatus;
+    }
 
     public final Result getResult() {
         return mResult;
     }
 
-    public abstract Runner update(int status,Progress progress);
+    public  Runner update(int status,Progress progress){
+        return setProgress(progress).setStatus(status);
+    }
 
     public final boolean isSucceed(){
         Result result=getResult();
@@ -68,5 +94,35 @@ public abstract class Runner implements Status{
         return false;
     }
 
-    public abstract Runner finisher(boolean add, Finisher runnable);
+    protected final Runner cleanFinisher(boolean run){
+        List<Finisher> finishers=mFinishers;
+        if (null!=finishers){
+            if (run){
+                for (Finisher finisher:finishers) {
+                    if (null!=finisher){
+                        finisher.onFinish(getResult());
+                    }
+                }
+            }
+            finishers.clear();
+            mFinishers=null;
+        }
+        return this;
+    }
+
+    public final Runner finisher(boolean add, Finisher runnable) {
+        if (mRunning&&null != runnable) {
+            List<Finisher> finishers = mFinishers;
+            finishers=add&&null==finishers?(mFinishers=new ArrayList<>()):finishers;
+            if (null!=(finishers=add&&null==finishers?(mFinishers=new ArrayList<>()):finishers)){
+                if (add&&!finishers.contains(runnable)){
+                    finishers.add(runnable);
+                }else if (!add&&finishers.remove(runnable)&&finishers.size()<=0){
+                    mFinishers=null;
+                }
+            }
+        }
+        return this;
+    }
+
 }

@@ -53,7 +53,6 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         return index;
     }
 
-
     public final T getLatest(){
         ArrayList<T> data=mData;
         int size=null!=data?data.size():-1;

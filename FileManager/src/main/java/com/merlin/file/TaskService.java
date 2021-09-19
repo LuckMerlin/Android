@@ -5,14 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
-import java.lang.reflect.Constructor;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.json.Json;
 import luckmerlin.task.OnTaskUpdate;
-import luckmerlin.task.Savable;
 import luckmerlin.task.Saved;
 import luckmerlin.task.Saver;
 import luckmerlin.task.Task;
@@ -42,7 +40,7 @@ public class TaskService extends Service  implements OnTaskUpdate,Saver {
                 if (null==(childText=(null!=child? preferences.getString
                         (child,null):null))||childText.length()<=0||
                         null==(childJson=Json.create(childText))||
-                        !addTaskFromSaved(new Saved(childJson))){
+                        !mBinder.add(new Saved(childJson))){
                     preferences.edit().remove(child).commit();
                     Debug.TW("Remove saved invalid task.",child);
                 }
@@ -52,39 +50,14 @@ public class TaskService extends Service  implements OnTaskUpdate,Saver {
         mBinder.put(this,null);
     }
 
-    private boolean addTaskFromSaved(Saved saved){
-        Class<? extends Task> taskClass=null!=saved?saved.getTaskClass():null;
-        if(null==taskClass|| !Savable.class.isAssignableFrom(taskClass)){
-            return false;
-        }
-        Constructor[] constructors=taskClass.getDeclaredConstructors();
-        try {
-            if (null!=constructors&&constructors.length>0){
-                Class[] parameterTypes=null;Class childTypes=null;Object instance=null;
-                for (Constructor constructor:constructors){
-                    if (null!=(parameterTypes=null!=constructor?
-                            constructor.getParameterTypes():null)&&
-                            parameterTypes.length==1&&
-                            null!=(childTypes=parameterTypes[0])&&
-                            Saved.class.isAssignableFrom(childTypes)){
-                        constructor.setAccessible(true);
-                        if (null!=(instance=constructor.newInstance(saved))&& instance instanceof Task){
-                            mBinder.add((Task)instance);
-                            return true;
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Debug.E("Exception add task from saved.e="+e);
-            e.printStackTrace();
-        }
-        return false;
+    @Override
+    public Task create(Saved saved) {
+        return null;
     }
 
     @Override
     public boolean save(Saved saved) {
-        if (null!=saved){
+        if (null!=saved&&saved.getTaskClass()!=null){
             String taskId=saved.getTaskId();
             SharedPreferences preferences=null!=taskId?mPreference:null;
             return null!=preferences&&preferences.edit().putString(taskId,saved.toString()).commit();

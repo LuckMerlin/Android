@@ -35,7 +35,7 @@ public class TaskActivityModel extends BaseModel implements OnTaskUpdate, OnActi
                 if (null!=service&&service instanceof TaskBinder){
                     TaskBinder binder=((TaskBinder)service);
                     binder.put(TaskActivityModel.this,mVisibleMatchable);
-                    mTaskListAdapter.set(binder.getTasks(mVisibleMatchable));
+                    mTaskListAdapter.set(binder.fetch(mVisibleMatchable));
                 }
             }), Context.BIND_AUTO_CREATE);
         }

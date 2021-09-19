@@ -1,14 +1,16 @@
 package luckmerlin.task;
 
 import android.os.SystemClock;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import luckmerlin.core.Canceler;
@@ -22,11 +24,17 @@ import luckmerlin.core.match.Matcher;
 public class TasksExecutor implements TaskRunner {
     private ExecutorService mExecutor;
     private final MatchIterator mMatcher=new MatchIterator();
-    private final Set<Tasked> mTaskList=new LinkedHashSet<>();
+    private final Set<Tasked> mTaskList;
     private Saver mSaver;
     private Map<OnTaskUpdate,Matchable<Task>> mUpdateMaps;
 
     public TasksExecutor(ExecutorService executor){
+        this(executor,null);
+    }
+
+    public TasksExecutor(ExecutorService executor,Comparator<Tasked> comparator){
+        mTaskList=new TreeSet<>(null!=comparator?comparator:(Tasked o1, Tasked o2) ->
+                Long.compare(o1.mCreateTime,o2.getCreateTime()));
         mExecutor=executor;
     }
 
@@ -102,11 +110,12 @@ public class TasksExecutor implements TaskRunner {
             return null;
         }
         final String taskId=finalTasked.mTaskId;
-        final InnerRunner runner=new InnerRunner(null!=currentRunner? currentRunner.getProgress():null){
+        final Runner runner=new Runner(null!=currentRunner? currentRunner.getProgress():null){
             @Override
             public Runner update(int status, Progress progress) {
                 if (mRunning){
                     Saved saved=mSaved;
+                    progress=null!=progress?progress:getProgress();
                     if (null!=saved){
                         boolean updated=saved.setProgress(progress);
                         updated|=saved.setStatus(status);
@@ -123,10 +132,15 @@ public class TasksExecutor implements TaskRunner {
         };
         if (null!=taskId&&taskId.length()>0 && task instanceof Savable){
             Saved saved=new Saved();
-            saved.setTaskId(taskId);
-            saved.setTaskClass(finalTasked.getClass());
-            ((Savable)task).onSave(saved);
-            runner.mSaved=saved;
+            saved.setTaskId(taskId).setCreateTime(finalTasked.getCreateTime());
+            final Class taskClass=finalTasked.getTaskClass();
+            if(saved.setTaskClass(taskClass)){
+                Debug.TD("Saved task.",taskClass);
+                ((Savable)task).onSave(saved);
+                runner.mSaved=saved;
+            }else{
+                Debug.TW("Fail save task while task class invalid.",taskClass);
+            }
         }
         runner.mRunning=true;
         finalTasked.setRunner(runner.update(Status.STATUS_WAIT,null));
@@ -135,11 +149,12 @@ public class TasksExecutor implements TaskRunner {
             long time= SystemClock.elapsedRealtime();
             Debug.TD("Start task.",task);
             Result result=task.execute(runner);
-            runner.setResult(null!=result?result:new ReplyResult(Code.CODE_FAIL,"Unknown",null));
+            result=null!=result?result:new ReplyResult(Code.CODE_FAIL,"Unknown",null);
+            runner.setResult(result);
             long duration=SystemClock.elapsedRealtime()-time;
             Debug.TD("Finish task."+duration,task);
-            runner.update(Status.STATUS_IDLE,null);
             runner.cleanFinisher(true);
+            runner.update(Status.STATUS_IDLE,null);
             runner.mRunning=false;
         }))?tasked:null;
     }
@@ -158,6 +173,11 @@ public class TasksExecutor implements TaskRunner {
                 }
                 return match;
         }):null;
+    }
+
+    @Override
+    public List<Tasked> fetch(Matchable matchable) {
+        return iterateKeys(mTaskList,matchable);
     }
 
     @Override
@@ -192,10 +212,42 @@ public class TasksExecutor implements TaskRunner {
     }
 
     @Override
-    public boolean add(Task task) {
-        Set<Tasked> taskeds=mTaskList;
-        return null!=task&&!taskeds.contains(task)&&taskeds.add(task instanceof Tasked?
-                (Tasked)task:new Tasked(task));
+    public boolean add(Object task) {
+        if (null==task){
+            return false;
+        }else if (task instanceof Task){
+            Set<Tasked> taskeds=mTaskList;
+            return null!=task&&!taskeds.contains(task)&&taskeds.add(task instanceof Tasked?
+                    (Tasked)task:new Tasked((Task)task));
+        }else if (task instanceof Saved){
+            Saved saved=(Saved)task;
+            Saver saver=mSaver;
+            Task taskInstance=null!=saver?saver.create(saved):null;
+            if (null==taskInstance||(taskInstance instanceof Tasked)){
+                taskInstance=null;
+                try {
+                    Constructor constructor=saved.getTaskConstructor();
+                    Object instance=null;
+                    if(null!=constructor){
+                        constructor.setAccessible(true);
+                        if (null!=(instance=constructor.newInstance(saved))&& instance instanceof Task){
+                            taskInstance=(Task)instance;
+                        }
+                    }
+                } catch (Exception e) {
+                    Debug.E("Exception add task from saved.e="+e);
+                    e.printStackTrace();
+                }
+            }
+            if (null!=taskInstance&&!(taskInstance instanceof Tasked)){
+                Tasked tasked=new Tasked<>(saved.getTaskId(),taskInstance,saved.getCreateTime());
+                tasked.setRunner(new Runner(saved.getProgress()).
+                        setStatus(Status.STATUS_IDLE).setResult(saved.getResult()));
+                return add(tasked);
+            }
+            return false;
+        }
+        return false;
     }
 
     @Override
@@ -225,59 +277,5 @@ public class TasksExecutor implements TaskRunner {
 
     private List<Tasked> iterateKeys(Collection<Tasked> collection, Matchable<Tasked> matchable){
         return null!=collection&&null!=matchable?mMatcher.iterate(collection, matchable):null;
-    }
-
-    private static class InnerRunner extends Runner{
-        private List<Finisher> mFinishers;
-        private int mStatus=Status.STATUS_IDLE;
-        protected boolean mRunning=false;
-        protected Saved mSaved;
-
-        protected InnerRunner(Progress progress) {
-            super(progress);
-        }
-
-        @Override
-        public int getStatus() {
-            return mStatus;
-        }
-
-        @Override
-        public Runner update(int status, Progress progress) {
-            mStatus=status;
-            return super.setProgress(progress);
-        }
-
-        protected final Runner cleanFinisher(boolean run){
-            List<Finisher> finishers=mFinishers;
-            if (null!=finishers){
-                if (run){
-                    for (Finisher finisher:finishers) {
-                        if (null!=finisher){
-                            finisher.onFinish(getResult());
-                        }
-                    }
-                }
-                finishers.clear();
-                mFinishers=null;
-            }
-            return this;
-        }
-
-        @Override
-        public final Runner finisher(boolean add, Finisher runnable) {
-            if (mRunning&&null != runnable) {
-                List<Finisher> finishers = mFinishers;
-                finishers=add&&null==finishers?(mFinishers=new ArrayList<>()):finishers;
-                if (null!=(finishers=add&&null==finishers?(mFinishers=new ArrayList<>()):finishers)){
-                    if (add&&!finishers.contains(runnable)){
-                        finishers.add(runnable);
-                    }else if (!add&&finishers.remove(runnable)&&finishers.size()<=0){
-                        mFinishers=null;
-                    }
-                }
-            }
-            return this;
-        }
     }
 }
