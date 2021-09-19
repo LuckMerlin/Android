@@ -7,8 +7,6 @@ import android.os.IBinder;
 import android.view.View;
 import com.file.manager.R;
 import com.merlin.file.TaskService;
-
-import luckmerlin.core.debug.Debug;
 import luckmerlin.core.match.Matchable;
 import luckmerlin.core.service.ServiceConnector;
 import luckmerlin.databinding.model.OnActivityStarted;
@@ -54,8 +52,29 @@ public class TaskActivityModel extends BaseModel implements OnTaskUpdate, OnActi
     public boolean onClicked(View view, int id, int count, Object tag) {
         switch (id){
             case R.drawable.selector_back: return finishActivity()||true;
+            case R.drawable.icon_failed: return restartTask(null!=tag&&tag instanceof Task?(Task)tag:null,false)||true;
+            case R.drawable.icon_succeed: return restartTask(null!=tag&&tag instanceof Task?(Task)tag:null,true)||true;
+            case R.drawable.icon_cancel: return cancelTask(null!=tag&&tag instanceof Task?(Task)tag:null)||true;
         }
         return false;
+    }
+
+    private boolean cancelTask(Task task){
+        TaskBinder binder=null!=task?mConnector.getBinder(TaskBinder.class):null;
+        return null!=binder&&null!=binder.cancel(true,task);
+    }
+
+    private boolean restartTask(Task task,boolean alert){
+        if (null==task){
+            return false;
+        }else if (!alert){
+            TaskBinder binder=mConnector.getBinder(TaskBinder.class);
+            return null!=binder&&null!=binder.restart(task);
+        }
+        return showAlert(new AlertMessageModel().setOnViewClick((View view, int id, int count, Object tag)->
+                id==R.string.sure&&restartTask(task,false)&&false).setTitle(getText(R.string.reExecute)).
+                setMessage(getText(R.string.confirmWhich, getText(R.string.reExecute))).
+                setLeft(R.string.sure).setRight(R.string.cancel));
     }
 
     @Override

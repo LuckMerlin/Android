@@ -2,6 +2,8 @@ package merlin.file.model;
 
 import android.view.View;
 import androidx.databinding.ObservableField;
+
+import luckmerlin.core.debug.Debug;
 import luckmerlin.databinding.model.Model;
 import luckmerlin.databinding.touch.OnViewClick;
 
@@ -24,6 +26,10 @@ public class AlertMessageModel extends Model implements OnViewClick {
     public AlertMessageModel setOnViewClick(OnViewClick callback){
         mOnViewClick=callback;
         return this;
+    }
+
+    public final OnViewClick getOnViewClick() {
+        return mOnViewClick;
     }
 
     public final AlertMessageModel setTitle(String title){

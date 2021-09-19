@@ -20,6 +20,15 @@ public class Runner implements Status{
         mProgress=progress;
     }
 
+    public final Runner cleanResult(){
+        return setResult(null);
+    }
+
+    public final boolean isInterrupted(){
+        Thread thread=Thread.currentThread();
+        return null!=thread&&thread.isInterrupted();
+    }
+
     protected final Runner setResult(Result result) {
         this.mResult = result;
         Saved saved=mSaved;
@@ -46,8 +55,8 @@ public class Runner implements Status{
     }
 
     protected final Runner setCanceler(Future future) {
-        this.mCanceler = null!=future?(interrupt)->!future.isDone()&&
-                !future.isCancelled()&&future.cancel(interrupt):null;
+        this.mCanceler = null!=future?(interrupt)->
+                !future.isDone()&& !future.isCancelled()&&future.cancel(interrupt):null;
         return this;
     }
 

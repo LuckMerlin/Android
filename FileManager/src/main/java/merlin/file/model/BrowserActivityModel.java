@@ -8,6 +8,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import androidx.databinding.ObservableField;
+import androidx.databinding.ViewDataBinding;
 import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
 import com.file.manager.databinding.AlertMessageBinding;
@@ -31,6 +32,8 @@ import luckmerlin.core.Result;
 import luckmerlin.core.data.Page;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.service.ServiceConnector;
+import luckmerlin.databinding.OnModelBind;
+import luckmerlin.databinding.model.Model;
 import luckmerlin.databinding.model.OnActivityStarted;
 import luckmerlin.databinding.model.OnActivityStoped;
 import luckmerlin.databinding.touch.OnViewClick;
@@ -52,7 +55,6 @@ import merlin.file.task.DeleteTask;
 import merlin.file.task.DownloadTask;
 import merlin.file.task.MoveTask;
 import merlin.file.task.PathTaskCreator;
-import merlin.file.task.TestTask;
 import merlin.file.task.UploadTask;
 import merlin.file.util.FileSize;
 
@@ -143,28 +145,26 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
 
     private boolean showBrowserContextMenu(View view){
         PopupWindow popupWindow=mPopupWindow;
-        if (null!=view&&null!=popupWindow){
-            popupWindow.dismiss().setContentView(view.getContext(), R.layout.browser_menus,
-                    (BrowserMenusBinding binding)-> binding.setFolder(mCurrentFolder.get())).
-                    setWidth(WindowManager.LayoutParams.WRAP_CONTENT).
-                    setHeight(WindowManager.LayoutParams.WRAP_CONTENT).
-                    setOutsideTouchable(true).showAtLocation(view,Gravity.CENTER,0,0);
-            return true;
-        }
-        return false;
+        return null!=popupWindow&&show(view, popupWindow.setOutsideTouchable(true),
+                R.layout.browser_menus,(ViewDataBinding binding)-> {
+                    if (null!=binding&&binding instanceof BrowserMenusBinding) {
+                        ((BrowserMenusBinding) binding).setFolder(mCurrentFolder.get());
+                        return null;
+                    }
+                    return null;
+                });
     }
 
     private boolean showPathContextMenu(View view,Path path){
         PopupWindow popupWindow=mPopupWindow;
-        if (null!=view&&null!=path&&null!=popupWindow){
-            popupWindow.dismiss().setWidth(WindowManager.LayoutParams.WRAP_CONTENT).
-                    setHeight(WindowManager.LayoutParams.WRAP_CONTENT).
-                    setContentView(view.getContext(), R.layout.path_context_menus,
-                    (PathContextMenusBinding binding)-> binding.setPath(path)).
-                    showAtLocation(view,Gravity.CENTER,0,0);
-            return true;
-        }
-        return false;
+        return null!=popupWindow&&show(view, popupWindow.setOutsideTouchable(true),
+                R.layout.path_context_menus,(ViewDataBinding binding)-> {
+                    if (null!=binding&&binding instanceof PathContextMenusBinding) {
+                        ((PathContextMenusBinding) binding).setPath(path);
+                        return null;
+                    }
+                    return null;
+                });
     }
 
     public boolean addClient(Client client){
@@ -343,52 +343,43 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
             return false;
         }
         PopupWindow popupWindow=new PopupWindow();
-        return null!=popupWindow.setFocusable(true).setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED).
-                setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN).
-                setWidth(WindowManager.LayoutParams.WRAP_CONTENT).setFocusable(true).
-                setHeight(WindowManager.LayoutParams.WRAP_CONTENT).
-                setContentView(root.getContext(), R.layout.alert_message, (AlertMessageBinding binding)->
-                binding.setVm(new AlertMessageModel().setTitle(getText(R.string.delete)).
-                setMessage(getText(R.string.deleteSure)).setLeft(R.string.sure).
-                setRight(R.string.cancel).setOnViewClick((View view, int id, int count, Object tag)-> {
-                    popupWindow.dismiss();
-                    if (id==R.string.sure){
-                        startTask(new DeleteTask(paths));
-                    }
-                return true; }))).showAtLocation(root);
+//        return null!=popupWindow.setFocusable(true).setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED).
+//                setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN).
+//                setWidth(WindowManager.LayoutParams.WRAP_CONTENT).setFocusable(true).
+//                setHeight(WindowManager.LayoutParams.WRAP_CONTENT).
+//                setContentView(root.getContext(), R.layout.alert_message, (AlertMessageBinding binding)->
+//                binding.setVm(new AlertMessageModel().setTitle(getText(R.string.delete)).
+//                setMessage(getText(R.string.deleteSure)).setLeft(R.string.sure).
+//                setRight(R.string.cancel).setOnViewClick((View view, int id, int count, Object tag)-> {
+//                    popupWindow.dismiss();
+//                    if (id==R.string.sure){
+//                        startTask(new DeleteTask(paths));
+//                    }
+//                return true; }))).showAtLocation(root);
+        return false;
      }
 
     private boolean renamePath(View view,Path path){
         final Client client=mCurrentClient.get();
-        if (null==view||null==path){
+        if (null==path){
             return false;
         }else if(null==client){
             return toast(getText(R.string.failed))&&false;
         }
         String hintName=path.getName();
         final String hint=null!=hintName&&hintName.length()>0?hintName:getText(R.string.inputPlease);
-        final PopupWindow popupWindow=new PopupWindow();
-        return null!=popupWindow.setFocusable(true).setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED).
-                setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN).
-                setWidth(WindowManager.LayoutParams.WRAP_CONTENT).setFocusable(true).
-                setHeight(WindowManager.LayoutParams.WRAP_CONTENT).
-                setContentView(view.getContext(), R.layout.alert_message,
-                (AlertMessageBinding binding)-> binding.setVm(new AlertMessageModel(){
-                    @Override
-                    public boolean onClicked(View view, int id, int count, Object tag) {
-                        if (id==R.string.sure){
-                            String inputText=getInputText();
-                            if (null==inputText||inputText.length()<=0){
-                                return toast(R.string.whichEmpty,getText(R.string.input))||true;
-                            }
-                            client.rename(path, inputText,(OnFinishSucceed<Path>) (int code, String note, Path data)->
-                                    super.runOnUiThread(()->mBrowserAdapter.replace(path,data)));
-                        }
-                        popupWindow.dismiss();
-                        return super.onClicked(view, id, count, tag);
-                    }
-                }.setTitle(getText(R.string.rename)).setInputHit(hint).
-                        setLeft(R.string.sure).setRight(R.string.cancel))).showAtLocation(view);
+        final AlertMessageModel messageModel=new AlertMessageModel();
+        return showAlert(messageModel.setOnViewClick((View view1, int id, int count, Object tag)-> {
+            if (id==R.string.sure){
+                String inputText=messageModel.getInputText();
+                if (null==inputText||inputText.length()<=0){
+                    return toast(R.string.whichEmpty,getText(R.string.input))||true;
+                }
+                client.rename(path, inputText,(OnFinishSucceed<Path>) (int code, String note, Path data)->
+                                        super.runOnUiThread(()->mBrowserAdapter.replace(path,data)));
+            }
+            return false;
+        }).setTitle(getText(R.string.rename)).setInputHit(hint).setLeft(R.string.sure).setRight(R.string.cancel));
     }
 
     private boolean entryMode(Mode mode){

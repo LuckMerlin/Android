@@ -182,27 +182,22 @@ public final class M {
         }else if (null!=Model.findModel(root,false,null)){//Check if already binding
             return (T)binding;
         }
-        Model model=null;
+        Object model=null;
         if (null!=binder&&null!=(model=dispatchBind(binder, binding))){
-            model.attachRoot(root);
-            return binding;
+            return null!=model&&model instanceof Model&& !((Model)model).attachRoot(root)?null:binding;
         }else if (null!=(model=dispatchBind(root, binding))){
-            model.attachRoot(root);
-            return binding;
+            return null!=model&&model instanceof Model&& !((Model)model).attachRoot(root)?null:binding;
         }
         final Context context=root.getContext();
         if (null==context){
             return binding;
         }else if (null!=(model=dispatchBind(context, binding))){
-            model.attachRoot(root);
-            return binding;
+            return null!=model&&model instanceof Model&& !((Model)model).attachRoot(root)?null:binding;
         }else if (!(context instanceof Activity)&&context instanceof ContextWrapper &&
                 null!=(model=dispatchBind(((ContextWrapper)context).getBaseContext(), binding))){
-            model.attachRoot(root);
-            return binding;
+            return null!=model&&model instanceof Model&& !((Model)model).attachRoot(root)?null:binding;
         }else if (null!=(model=dispatchBind(context.getApplicationContext(), binding))){
-            model.attachRoot(root);
-            return binding;
+            return null!=model&&model instanceof Model&& !((Model)model).attachRoot(root)?null:binding;
         }
         final Activity activity=null!=context&&context instanceof Activity?((Activity)context):null;
         Context applicationContext=null!=context?context.getApplicationContext():null;
@@ -277,6 +272,7 @@ public final class M {
                     try {
                         child.invoke(binding,modelObject);
                         ((Model)modelObject).attachRoot(root);
+                        Debug.TD(null,"Auto create and attach model."+modelObject);
                     } catch (Exception e) {
                         Debug.E("Exception attach root.e="+e,e);
                         e.printStackTrace();

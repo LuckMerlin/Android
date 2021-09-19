@@ -2,10 +2,17 @@ package merlin.file.model;
 
 import android.graphics.Color;
 import android.os.Build;
+import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import androidx.databinding.ViewDataBinding;
+import com.file.manager.R;
+import com.file.manager.databinding.AlertMessageBinding;
+import luckmerlin.databinding.OnModelBind;
 import luckmerlin.databinding.model.Model;
+import luckmerlin.databinding.touch.OnViewClick;
+import luckmerlin.databinding.window.PopupWindow;
 
 public class BaseModel extends Model  {
 
@@ -14,6 +21,48 @@ public class BaseModel extends Model  {
         super.onRootAttached(view);
         enableNavigation(true);
         fullScreen(getWindow());
+    }
+
+    protected final boolean showAlert(AlertMessageModel model){
+        return showAlert(null,model);
+    }
+
+    protected final boolean showAlert(PopupWindow popupWindow,AlertMessageModel model){
+        return showAlert(null,popupWindow,model);
+    }
+
+    protected final boolean showAlert(View root,PopupWindow popupWindow,AlertMessageModel model){
+        if (null==model){
+            return false;
+        }
+        final PopupWindow finalPopupWindow=null!=popupWindow?popupWindow:new PopupWindow();
+        return show(root, finalPopupWindow.setFocusable(true).setTouchable(true).setTouchModal(true).
+                setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED).
+                setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN),
+                R.layout.alert_message, (ViewDataBinding binding) ->{
+            if (null!=binding&&binding instanceof AlertMessageBinding){
+                OnViewClick click=model.getOnViewClick();
+                model.setOnViewClick((View view, int id, int count, Object tag)-> {
+                    if (null!=click&&click.onClicked(view,id,count,tag)){
+                        return true;
+                    }
+                    finalPopupWindow.dismiss();
+                    return true;
+                });
+                ((AlertMessageBinding)binding).setVm(model);
+                return model;
+            }
+                return null;
+        });
+    }
+
+    protected final boolean show(View root,PopupWindow popupWindow,int layoutId,OnModelBind callback){
+        if (null==popupWindow||null==(root=null!=root?root:getRootView())){
+            return false;
+        }
+        popupWindow.setWidth(WindowManager.LayoutParams.WRAP_CONTENT).setHeight(WindowManager.
+                LayoutParams.WRAP_CONTENT).setContentView(root.getContext(), layoutId, callback);
+        return null!=popupWindow.showAtLocation(root, Gravity.CENTER,0,0)&&popupWindow.isShowing();
     }
 
     protected final boolean enableNavigation(boolean enable){

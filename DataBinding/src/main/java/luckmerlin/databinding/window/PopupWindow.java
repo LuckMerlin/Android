@@ -1,6 +1,7 @@
 package luckmerlin.databinding.window;
 
 import android.content.Context;
+import android.os.Build;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -47,20 +48,12 @@ public class PopupWindow {
         return this;
     }
 
-    public <T extends ViewDataBinding> PopupWindow setContentView(Context context, int contentId, Execute<T> execute){
-        return setContentView(context,contentId,execute,null);
+    public ViewDataBinding setContentView(Context context, int contentId){
+        return setContentView(context,contentId,null);
     }
 
-    public <T extends ViewDataBinding> PopupWindow setContentView(Context context, int contentId,
-                                                                  Execute<T> execute, Listener listener){
-        Type[] types=null!=execute&&null!=context?execute.getClass().getGenericInterfaces():null;
-        Type classType=null!=types&&types.length==1?types[0]:null;
-        Class cls=null!=classType&&classType instanceof Class?(Class)classType:null;
-        ViewDataBinding binding=null!=cls?M.setContentView(context, mPopupWindow,contentId,listener):null;
-        if (null!=binding&&cls.isAssignableFrom(cls)){
-            execute.execute((T)binding);
-        }
-        return this;
+    public ViewDataBinding setContentView(Context context, int contentId,Listener listener){
+        return M.setContentView(context, mPopupWindow,contentId,listener);
     }
 
     public PopupWindow setContentView(View contentView){
@@ -78,6 +71,18 @@ public class PopupWindow {
         return this;
     }
 
+    public final PopupWindow setTouchModal(boolean enable){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            mPopupWindow.setTouchModal(enable);
+        }
+        return this;
+    }
+
+    public final PopupWindow setTouchable(boolean enable){
+        mPopupWindow.setTouchable(enable);
+        return this;
+    }
+
     public final PopupWindow showAtLocation(View view){
         return showAtLocation(view, Gravity.CENTER,0,0);
     }
@@ -90,6 +95,10 @@ public class PopupWindow {
     public final PopupWindow dismiss(){
         mPopupWindow.dismiss();
         return this;
+    }
+
+    public final boolean isShowing(){
+        return mPopupWindow.isShowing();
     }
 
     public final int getSoftInputMode() {

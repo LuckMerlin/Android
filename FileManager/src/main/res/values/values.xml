@@ -6,6 +6,8 @@
     <string name="empty">内容为空</string>
     <string name="none_permission">无权限</string>
     <string name="move">移动</string>
+    <string name="reExecute">重新运行</string>
+    <string name="confirmWhich">确认 %1s</string>
     <string name="copy">复制</string>
     <string name="download">下载</string>
     <string name="local">本地</string>

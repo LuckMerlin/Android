@@ -6,6 +6,7 @@
         <variable name="progress" type="luckmerlin.task.Progress" />
         <variable name="statusText" type="String" />
         <variable name="statusIcon" type="int" />
+        <variable name="deleteEnable" type="boolean" />
         <import type="luckmerlin.databinding.touch.Click"/>
         <import type="luckmerlin.databinding.view.Image"/>
         <import type="merlin.file.util.FileSize"/>
@@ -51,12 +52,8 @@
                     android:layout_width="wrap_content" android:layout_height="wrap_content"/>
             </LinearLayout>
         </LinearLayout>
-<!--        <TextView binding:m="@{Click.c(R.drawable.selector_button).tag(task)}"-->
-<!--            android:textColor="@color/textTitle" android:background="@drawable/selector_button"-->
-<!--            android:paddingLeft="15dp" android:paddingRight="15dp" android:paddingBottom="7dp"-->
-<!--            android:paddingTop="7dp" android:text="@{statusText}" android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"/>-->
         <ImageView android:imageResource="@{statusIcon}" android:padding="5dp"
-            android:layout_width="30dp" android:layout_height="30dp"/>
+            binding:m="@{Click.c(statusIcon).tag(task)}"
+            android:layout_width="38dp" android:layout_height="38dp"/>
     </LinearLayout>
 </layout>

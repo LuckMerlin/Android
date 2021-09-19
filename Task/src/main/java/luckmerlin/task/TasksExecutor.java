@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import luckmerlin.core.Canceler;
 import luckmerlin.core.Code;
+import luckmerlin.core.Resolver;
 import luckmerlin.core.Result;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.match.MatchIterator;
@@ -66,23 +67,17 @@ public class TasksExecutor implements TaskRunner {
     }
 
     @Override
+    public List<Tasked> restart(Object taskObject) {
+        return runTaskResolve(taskObject,(tasked)->{
+            Runner runner=null!=tasked?tasked.getRunner():null;
+            return null!=runner&&!runner.isExecuting()&&runner.
+                    cleanResult().getResult()==null&& startTask(tasked)!=null;
+        });
+    }
+
+    @Override
     public List<Tasked> start(Object taskObject) {
-        if (null==taskObject){
-            return null;
-        }else if (taskObject instanceof Task){
-            Task task=(Task)taskObject;
-            Tasked tasked=startTask(task);
-            return null!=tasked? Arrays.asList((new Tasked[]{tasked})):null;
-        }else if (taskObject instanceof Matchable){
-            Matchable matchable=(Matchable)taskObject;
-            return iterateKeys(mTaskList,(Tasked arg)-> {
-                Task task=null!=arg?arg.mTask:null;
-                Integer match=null!=task?matchable.onMatch(task):null;
-                return null!=match&&match==Matchable.MATCHED?(null!=startTask(task)?
-                        Matchable.MATCHED:Matchable.CONTINUE):match;
-            });
-        }
-        return null;
+        return runTaskResolve(taskObject,(tasked)->null!=startTask(tasked));
     }
 
     private Tasked startTask(Task task){
@@ -160,19 +155,15 @@ public class TasksExecutor implements TaskRunner {
     }
 
     @Override
-    public List<Tasked> cancel(boolean interrupt, Matchable matchable) {
-        return null!=matchable?iterateKeys(mTaskList,(Tasked arg)-> {
-                Integer match=null!=arg?matchable.onMatch(arg):null;
-                if (null!=match&&match==Matchable.MATCHED){
-                    Runner runner=arg.getRunner();
-                    if (null==runner||null==runner.getResult()){
-                        return Matchable.CONTINUE;
-                    }
-                    Canceler canceler=runner.getCanceler();
-                    return null!=canceler&&canceler.cancel(interrupt)?Matchable.MATCHED:Matchable.CONTINUE;
-                }
-                return match;
-        }):null;
+    public List<Tasked> cancel(boolean interrupt, Object taskObject) {
+        return runTaskResolve(taskObject,(tasked)->{
+            Runner runner=null!=tasked?tasked.getRunner():null;
+            if (null==runner||!runner.isExecuting()||null!=runner.getResult()){
+                return false;
+            }
+            Canceler canceler=runner.getCanceler();
+            return null!=canceler&&canceler.cancel(interrupt);
+        });
     }
 
     @Override
@@ -273,6 +264,25 @@ public class TasksExecutor implements TaskRunner {
     public int getSize() {
         Set<Tasked> taskeds=mTaskList;
         return null!=taskeds?taskeds.size():-1;
+    }
+
+    private List<Tasked> runTaskResolve(Object taskObject, Resolver<Tasked> resolver){
+        if (null==taskObject||null==resolver){
+            return null;
+        }else if (taskObject instanceof Task){
+            final Object finalTask=taskObject instanceof Tasked?((Tasked)taskObject).getTask():taskObject;
+            return runTaskResolve(new Matcher<>((Matchable)(Object arg)-> null!=arg&&arg.
+                    equals(null!=finalTask?finalTask:taskObject)?Matchable.MATCHED:Matchable.CONTINUE).setMax(1), resolver);
+        }else if (taskObject instanceof Matchable){
+            Matchable matchable=(Matchable)taskObject;
+            return iterateKeys(mTaskList,(Tasked arg)-> {
+                Task task=null!=arg?arg.mTask:null;
+                Integer match=null!=task?matchable.onMatch(task):null;
+                return null!=match&&match==Matchable.MATCHED?(resolver.onResolve(arg)?
+                        Matchable.MATCHED:Matchable.CONTINUE):match;
+            });
+        }
+        return null;
     }
 
     private List<Tasked> iterateKeys(Collection<Tasked> collection, Matchable<Tasked> matchable){

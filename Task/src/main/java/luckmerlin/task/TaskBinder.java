@@ -18,6 +18,12 @@ public class TaskBinder extends Binder implements TaskRunner {
     }
 
     @Override
+    public List<Tasked> restart(Object matchable) {
+        TaskRunner runner=mTaskRunner;
+        return null!=runner?runner.restart(matchable):null;
+    }
+
+    @Override
     public boolean remove(OnTaskUpdate callback) {
         TaskRunner runner=mTaskRunner;
         return null!=runner&&runner.remove(callback);
@@ -60,7 +66,7 @@ public class TaskBinder extends Binder implements TaskRunner {
     }
 
     @Override
-    public List<Tasked> cancel(boolean interrupt, Matchable matchable) {
+    public List<Tasked> cancel(boolean interrupt, Object matchable) {
         TaskRunner runner=mTaskRunner;
         return null!=runner?runner.cancel(interrupt,matchable):null;
     }

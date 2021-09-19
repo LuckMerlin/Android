@@ -1,13 +1,13 @@
 package luckmerlin.core;
 
-public class Call<T> extends Reply<T>{
+public class Caller<T> extends Reply<T>{
     private Canceler mCanceler;
 
-    public Call(int code, String note, T data) {
+    public Caller(int code, String note, T data) {
         super(code, note, data);
     }
 
-    public final Call setCanceler(Canceler canceler) {
+    public final Caller setCanceler(Canceler canceler) {
         this.mCanceler = canceler;
         return this;
     }

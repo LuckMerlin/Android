@@ -6,6 +6,8 @@
         <import type="android.view.View"/>
         <import type="luckmerlin.databinding.view.Text"/>
         <import type="luckmerlin.databinding.touch.Click"/>
+        <import type="com.file.manager.R"/>
+
     </data>
 
     <LinearLayout android:orientation="vertical" android:layout_width="match_parent"
@@ -31,23 +33,23 @@
             android:visibility="@{vm.message.length()>0?View.VISIBLE:View.GONE}"
             android:layout_marginTop="10dp" android:layout_marginBottom="10dp"
             android:layout_gravity="center" android:textSize="@dimen/textSmall"
+
             android:gravity="center" android:maxLines="5"
             android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 
         <LinearLayout android:orientation="horizontal" android:layout_gravity="center"
             android:layout_width="wrap_content" android:layout_height="wrap_content">
-
             <TextView binding:m="@{Text.text(vm.left).add(Click.c(vm.left))}"
                 android:visibility="@{null==vm.left?View.GONE:View.VISIBLE}"
                 style="@style/buttonStyle"/>
 
             <TextView binding:m="@{Text.text(vm.center).add(Click.c(vm.center))}"
                 android:visibility="@{null==vm.center?View.GONE:View.VISIBLE}"
-                style="@style/buttonStyle"/>
+                android:layout_marginLeft="5dp" style="@style/buttonStyle"/>
 
             <TextView binding:m="@{Text.text(vm.right).add(Click.c(vm.right))}"
                 android:visibility="@{null==vm.right?View.GONE:View.VISIBLE}"
-                style="@style/buttonStyle"/>
+                style="@style/buttonStyle" android:layout_marginLeft="5dp"/>
         </LinearLayout>
     </LinearLayout>
 </layout>

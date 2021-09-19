@@ -1,7 +1,7 @@
 package luckmerlin.task;
 
-import luckmerlin.core.Call;
+import luckmerlin.core.Caller;
 
-public interface Executor<T extends Call> {
+public interface Executor<T extends Caller> {
     T execute(Runnable runnable);
 }
