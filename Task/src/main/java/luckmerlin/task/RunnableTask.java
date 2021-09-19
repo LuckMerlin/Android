@@ -19,7 +19,7 @@ public class RunnableTask extends AbstractTask<Result>{
     }
 
     @Override
-    protected Result onExecute(Running running) {
+    protected Result onExecute(Runner runner) {
         Runnable runnable=mRunnable;
         if (null!=runnable){
             runnable.run();

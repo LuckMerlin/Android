@@ -30,9 +30,9 @@ public class TaskBinder extends Binder implements TaskRunner {
     }
 
     @Override
-    public List<Task> add(Task... tasks) {
+    public boolean add(Task task) {
         TaskRunner runner=mTaskRunner;
-        return null!=runner?runner.add(tasks):null;
+        return null!=runner&&runner.add(task);
     }
 
     @Override
@@ -48,13 +48,13 @@ public class TaskBinder extends Binder implements TaskRunner {
     }
 
     @Override
-    public List<Task> start(Object matchable) {
+    public List<Tasked> start(Object matchable) {
         TaskRunner runner=mTaskRunner;
         return null!=runner?runner.start(matchable):null;
     }
 
     @Override
-    public List<Task> cancel(boolean interrupt, Matchable matchable) {
+    public List<Tasked> cancel(boolean interrupt, Matchable matchable) {
         TaskRunner runner=mTaskRunner;
         return null!=runner?runner.cancel(interrupt,matchable):null;
     }

@@ -6,23 +6,16 @@ import luckmerlin.core.Result;
 import luckmerlin.core.debug.Debug;
 
 public abstract class AbstractTask<T extends Result> implements Task<T> {
-    private transient String mName;
-    private transient Running mRunning;
-
-    public final AbstractTask setRunning(Running running){
-        if (null!=mRunning){
-            mRunning=running;
-        }
-        return this;
-    }
+    private String mName;
+    private transient Runner mRunner;
 
     public final AbstractTask<T> setName(String name){
         mName=name;
         return this;
     }
 
-    public final Running getRunning() {
-        return mRunning;
+    public final Runner getRunner() {
+        return mRunner;
     }
 
     protected final boolean closeOnFinish(Closeable...closeables){
@@ -30,21 +23,22 @@ public abstract class AbstractTask<T extends Result> implements Task<T> {
     }
 
     protected final boolean finisher(boolean add,Finisher finisher){
-        Running running=null!=finisher?mRunning:null;
-        return null!=finisher&&null!=running.finisher(add,finisher);
+        Runner runner=null!=finisher?mRunner:null;
+        return null!=finisher&&null!=runner.finisher(add,finisher);
     }
 
-    protected final boolean update(int status){
-        return update(status,null);
-    }
-
-    protected final boolean update(int status, Progress arg){
-        Running running=mRunning;
-        if (null!=running){
-            running.update(status,this,arg);
+    protected final boolean update(int status,Progress progress){
+        Runner runner=mRunner;
+        if (null!=runner){
+            runner.update(status,progress);
             return true;
         }
         return false;
+    }
+
+    public final boolean isExecuting(){
+        Runner runner=getRunner();
+        return null!=runner&&runner.getStatus()!=Status.STATUS_IDLE;
     }
 
     @Override
@@ -52,33 +46,15 @@ public abstract class AbstractTask<T extends Result> implements Task<T> {
         return mName;
     }
 
-    @Override
-    public final int getStatus() {
-        Running running=mRunning;
-        return null!=running?running.getStatus():Status.STATUS_IDLE;
-    }
+    protected abstract T onExecute(Runner runner);
 
     @Override
-    public final Result getResult() {
-        Running running=mRunning;
-        return null!=running?running.getResult():null;
-    }
-
-    @Override
-    public final Progress getProgress() {
-        Running running=mRunning;
-        return null!=running?running.getProgress():null;
-    }
-
-    protected abstract T onExecute(Running running);
-
-    @Override
-    public final T execute(Running running) {
+    public T execute(Runner runner) {
         if (isExecuting()){
             Debug.W("Can't execute task while already executing.");
             return null;
         }
-        return onExecute(mRunning=running);
+        return onExecute(mRunner=runner);
     }
 
     protected final boolean close(Closeable ...closeables){

@@ -21,7 +21,7 @@ public class CallableTask<T extends Result> extends AbstractTask<T>{
     }
 
     @Override
-    protected T onExecute(Running running) {
+    protected T onExecute(Runner runner) {
         Callable<T> callable=mCallable;
         if (null!=callable){
             try {

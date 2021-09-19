@@ -5,13 +5,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.os.IBinder;
 import android.view.View;
-
 import com.file.manager.R;
-import com.merlin.file.Path;
 import com.merlin.file.TaskService;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.match.Matchable;
@@ -22,10 +17,9 @@ import luckmerlin.databinding.touch.OnViewClick;
 import luckmerlin.task.OnTaskUpdate;
 import luckmerlin.task.Task;
 import luckmerlin.task.TaskBinder;
+import luckmerlin.task.Tasked;
 import merlin.file.adapter.TaskListAdapter;
 import merlin.file.task.BackgroundTask;
-import merlin.file.task.DownloadTask;
-import merlin.file.test.TestNasFilePath;
 
 public class TaskActivityModel extends BaseModel implements OnTaskUpdate, OnActivityStarted,
         OnActivityStoped, OnViewClick {
@@ -48,10 +42,11 @@ public class TaskActivityModel extends BaseModel implements OnTaskUpdate, OnActi
     }
 
     @Override
-    public void onTaskUpdate(int status, Task task, Object arg) {
+    public void onTaskUpdate(int status, Tasked tasked, Object arg) {
+        Task task=null!=tasked?tasked.getTask():null;
         Integer match=null!=task?mVisibleMatchable.onMatch(task):null;
         if (null!=match&&match==Matchable.MATCHED){
-            post(()->mTaskListAdapter.notifyChildChanged(task));
+            post(()->mTaskListAdapter.replace(tasked));
         }
     }
 

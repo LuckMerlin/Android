@@ -3,6 +3,7 @@
     xmlns:binding="http://schemas.android.com/apk/res-auto">
     <data>
         <variable name="task" type="luckmerlin.task.Task" />
+        <variable name="progress" type="luckmerlin.task.Progress" />
         <variable name="statusText" type="String" />
         <variable name="statusIcon" type="int" />
         <import type="luckmerlin.databinding.touch.Click"/>
@@ -29,23 +30,24 @@
             <TextView android:text="@{task.name}" android:textSize="16sp" android:ellipsize="middle"
                 android:singleLine="true" android:textColor="@color/textTitle"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-            <ProgressBar style="@android:style/Widget.ProgressBar.Horizontal"
-                android:progress="@{(int)task.progress.progress}" android:layout_marginTop="2dp"
+            <merlin.file.view.AnimationProgressBar style="@android:style/Widget.ProgressBar.Horizontal"
+                android:progressDrawable="@drawable/progress_bar" android:background="@android:color/transparent"
+                android:progress="@{(int)progress.progress}" android:layout_marginTop="2dp"
                 android:layout_marginBottom="2dp" android:layout_width="match_parent"
                 android:layout_height="4dp"/>
             <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
                 android:layout_height="wrap_content">
-                <TextView android:gravity="left" android:singleLine="true"
-                    android:textSize="@dimen/textTitleSmall" android:textColor="@color/textTitleSub"
-                    android:text="@{FileSize.formatSizeText(task.progress.done)}"
+                <TextView android:gravity="left" android:singleLine="true" android:textSize="@dimen/textTitleSmall"
+                    android:textColor="@color/textTitleSub"
+                    android:text="@{FileSize.formatSizeText(progress.done)+`/`+FileSize.formatSizeText(progress.total)}"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-                <TextView android:text="@{task.progress.title??``}" android:gravity="center"
-                    android:layout_weight="1"
-                    android:textColor="@color/textTitleSub" android:textSize="@dimen/textTitleTiny"
-                    android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                <TextView android:text="@{progress.title??``}" android:gravity="center"
+                    android:layout_weight="1" android:textColor="@color/textTitleSub"
+                    android:textSize="@dimen/textTitleTiny" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
                 <TextView android:singleLine="true" android:gravity="right"
                     android:textColor="@color/textTitleSub" android:textSize="@dimen/textTitleSmall"
-                    android:text="@{FileSize.formatSizeText(task.progress.speed)+`/s`}"
+                    android:text="@{FileSize.formatSizeText(progress.speed)+`/s`}"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"/>
             </LinearLayout>
         </LinearLayout>

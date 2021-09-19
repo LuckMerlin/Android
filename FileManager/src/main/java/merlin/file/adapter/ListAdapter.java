@@ -6,18 +6,14 @@ import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.widget.Toast;
 import androidx.databinding.DataBindingUtil;
 import androidx.databinding.ViewDataBinding;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import luckmerlin.core.Code;
 import luckmerlin.core.debug.Debug;
 
 public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -383,7 +379,7 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
   public final boolean replace(Object indexObj,T data){
        List<T> list= null!=data?mData:null;
        int index=null!=list?list.indexOf(null!=indexObj?indexObj:data):-1;
-       return index>=0&&replace(index,data);
+      return index>=0&&replace(index,data);
    }
 
   public final boolean insert(int index,T data) {
@@ -400,38 +396,37 @@ public abstract class ListAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
   }
 
   public final boolean replace(int index,T data) {
-        if (null!=data&&index>=0){
-            ArrayList<T> list= new ArrayList<>(1);
-            list.add(data);
-            return replace(index,list);
+       final ArrayList<T> list=null!=data?mData:null;
+        if (null!=list&&index>=0&&index<list.size()){
+            list.remove(list.get(index));
+            list.add(index,data);
+            notifyItemChanged(index,"Item replaced");
+            return true;
         }
         return false;
     }
 
   public final boolean replace(int from,ArrayList<T> data){
         int length=null!=data?data.size():-1;
-        if (length>0){
-            ArrayList<T> list=mData;
-            list=null!=list?list:(mData=new ArrayList<>());
-            if (null!=list){
-                int size=list.size();
-                from=from<0||from>size?size:from;
-                synchronized (list){
-                    for (int i = 0; i < length; i++) {
-                        int index=i+from;
-                        T child=data.get(i);
-                        if (index<list.size()){
-                            list.remove(list.get(index));
-                            list.add(index,child);
-                            notifyItemChanged(index,"Item replaced");
-                        }else{
-                            list.add(child);
-                            notifyItemInserted(index);
-                        }
+        final ArrayList<T> list=length>0?mData:null;
+        if (null!=list){
+            int size=list.size();
+            from=from<0||from>size?size:from;
+            synchronized (list){
+                for (int i = 0; i < length; i++) {
+                    int index=i+from;
+                    T child=data.get(i);
+                    if (index<list.size()){
+                        list.remove(list.get(index));
+                        list.add(index,child);
+                        notifyItemChanged(index,"Item replaced");
+                    }else{
+                        list.add(child);
+                        notifyItemInserted(index);
                     }
                 }
-                return true;
             }
+            return true;
         }
         return false;
     }

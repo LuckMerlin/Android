@@ -6,7 +6,7 @@ import luckmerlin.core.Code;
 import luckmerlin.core.Reply;
 import luckmerlin.core.debug.Debug;
 
-public final class StreamTask extends AbstractTask {
+public final class StreamTask extends AbstractTask<ReplyResult> {
     private int mCover= Stream.Cover.NONE;
     private int mBufferSize;
     private final Stream mStreamer;
@@ -26,7 +26,7 @@ public final class StreamTask extends AbstractTask {
     }
 
     @Override
-    protected final TaskResult onExecute(Running running) {
+    protected ReplyResult onExecute(Runner runner) {
         final int cover=mCover;
         Stream streamer=mStreamer;
         if (null==streamer){
@@ -39,14 +39,14 @@ public final class StreamTask extends AbstractTask {
             InputOpener inputOpener=null!=inputReply&&inputReply.isSucceed()?inputReply.getData():null;
             if (null==inputOpener){
                 Debug.TW("Can't execute stream while open input stream reply fail.",inputReply);
-                return new TaskResult(inputReply.getCode(),inputReply.getNote(),null);
+                return new ReplyResult(inputReply.getCode(),inputReply.getNote(),null);
             }
             closeOnFinish(inputOpener);
             final long inputLength=inputOpener.getLength();
             Debug.D("Connected stream task input stream."+inputLength);
             if (inputLength<0){
                 Debug.TW("Can't execute stream while open input stream length invalid.",inputReply);
-                return new TaskResult(inputReply.getCode(),inputReply.getNote(),null);
+                return new ReplyResult(inputReply.getCode(),inputReply.getNote(),null);
             }
             //
             Reply<OutputOpener> outputReply=streamer.connectOutputStream();
@@ -54,21 +54,20 @@ public final class StreamTask extends AbstractTask {
             OutputOpener outputOpener=outputReply.isSucceed()?outputReply.getData():null;
             if (null==outputOpener){
                 Debug.TW("Can't execute stream while open output stream reply fail.",outputReply);
-                return new TaskResult(outputReply.getCode(),outputReply.getNote(),null);
+                return new ReplyResult(outputReply.getCode(),outputReply.getNote(),null);
             }
             closeOnFinish(outputOpener);
             final long outputLength=outputOpener.getLength();
             Debug.D("Connected stream task output stream."+cover+" "+outputLength);
-            final LongTypeProgress progress=new LongTypeProgress(inputLength).setDone(0).
-                    setTitle(streamer.getName());
+            final Progress progress=new Progress(inputLength).setDone(0).setTitle(streamer.getName());
             update(Status.STATUS_PREPARE,progress);
             if (inputLength==outputLength&&cover!= Stream.Cover.REPLACE){
                 Debug.TW("Ignore execute stream while length of stream already matched.",outputReply);
                 update(Status.STATUS_PREPARE,progress.setDone(inputLength));
-                return new TaskResult(Code.CODE_ALREADY_DONE,"Length already matched",null);
+                return new ReplyResult(Code.CODE_ALREADY_DONE,"Length already matched",null);
             }else if (outputLength>inputLength){
                 Debug.TW("Can't execute stream while output length larger than input.",outputReply);
-                return new TaskResult(Code.CODE_FAIL,"Output length larger than input",null);
+                return new ReplyResult(Code.CODE_FAIL,"Output length larger than input",null);
             }
             final long skipLength=cover== Stream.Cover.REPLACE?0:outputLength;
             update(Status.STATUS_PREPARE,progress.setDone(skipLength));
@@ -78,7 +77,7 @@ public final class StreamTask extends AbstractTask {
             InputStream inputStream=inputStreamReply.getData();
             if (null==inputStream){
                 Debug.W("Can't execute stream while open input stream NULL.");
-                return new TaskResult(inputStreamReply.getCode(),inputStreamReply.getNote(),null);
+                return new ReplyResult(inputStreamReply.getCode(),inputStreamReply.getNote(),null);
             }
             //
             Reply<OutputStream> outputStreamReply=outputOpener.open(skipLength,inputLength);
@@ -86,7 +85,7 @@ public final class StreamTask extends AbstractTask {
             OutputStream outputStream=outputStreamReply.getData();
             if (null==outputStream){
                 Debug.W("Can't execute stream while open output stream NULL.");
-                return new TaskResult(outputStreamReply.getCode(),outputStreamReply.getNote(),null);
+                return new ReplyResult(outputStreamReply.getCode(),outputStreamReply.getNote(),null);
             }
             //
             int bufferSize=mBufferSize;int read=0;
@@ -104,11 +103,11 @@ public final class StreamTask extends AbstractTask {
             }
             outputStream.flush();
             Debug.D("Finish stream task.");
-            return new TaskResult(Code.CODE_SUCCEED,null,null);
+            return new ReplyResult(Code.CODE_SUCCEED,null,null);
         }catch (Exception e){
             Debug.E("Exception execute stream.e="+e,e);
             e.printStackTrace();
-            return new TaskResult(Code.CODE_EXCEPTION,"Exception execute stream.e="+e,null);
+            return new ReplyResult(Code.CODE_EXCEPTION,"Exception execute stream.e="+e,null);
         }
     }
 

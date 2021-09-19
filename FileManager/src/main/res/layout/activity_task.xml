@@ -22,6 +22,9 @@
                     style="@style/titleNormalTextView"/>
             </LinearLayout>
         </RelativeLayout>
+
+        <View android:paddingLeft="5dp" android:paddingRight="5dp" style="@style/horizontalDividerLine"/>
+
         <androidx.recyclerview.widget.RecyclerView android:adapter="@{vm.taskListAdapter}"
             android:layout_width="match_parent" android:layout_height="match_parent"/>
     </LinearLayout>

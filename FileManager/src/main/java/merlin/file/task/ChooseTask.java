@@ -2,8 +2,10 @@ package merlin.file.task;
 
 import com.merlin.file.Path;
 import java.util.List;
-import luckmerlin.task.Running;
-import luckmerlin.task.TaskResult;
+
+import luckmerlin.core.Result;
+import luckmerlin.task.ReplyResult;
+import luckmerlin.task.Runner;
 
 public class ChooseTask  extends PathsTask  implements BackgroundTask{
     public ChooseTask(List<Path> paths) {
@@ -11,7 +13,7 @@ public class ChooseTask  extends PathsTask  implements BackgroundTask{
     }
 
     @Override
-    protected TaskResult onExecutePath(Path path, Running running) throws Exception {
+    protected Result onExecutePath(Path path, Runner runner) throws Exception {
         return null;
     }
 }

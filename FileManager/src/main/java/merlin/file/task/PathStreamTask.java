@@ -13,10 +13,10 @@ import luckmerlin.core.Result;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.task.InputOpener;
 import luckmerlin.task.OutputOpener;
-import luckmerlin.task.Running;
+import luckmerlin.task.Runner;
 import luckmerlin.task.Stream;
 import luckmerlin.task.StreamTask;
-import luckmerlin.task.TaskResult;
+import luckmerlin.task.ReplyResult;
 
 public abstract class PathStreamTask extends PathsTask{
     private int mCover= Stream.Cover.NONE;
@@ -170,17 +170,17 @@ public abstract class PathStreamTask extends PathsTask{
     protected abstract Reply<Stream> onCreatePathStreamer(Path fromFile);
 
     @Override
-    protected final Result onExecutePath(Path path, Running running) {
+    protected final Result onExecutePath(Path path, Runner runner) {
         Reply<Stream> streamerReply=null;Stream streamer=null;
         streamerReply=null!=(streamerReply=onCreatePathStreamer(path))?streamerReply:
                 new Reply<>(Code.CODE_FAIL,"Fail create path streamer.",null);
         if (null==(streamer=(null!=streamerReply&&streamerReply.isSucceed()?streamerReply.getData():null))){
             Debug.W("Fail execute path stream while create path streamer fail.");
-            return new TaskResult(streamerReply.getCode(),streamerReply.getNote(),null);
+            return new ReplyResult(streamerReply.getCode(),streamerReply.getNote(),null);
         }
         Debug.D("Fetched path stream task stream.");
         Result taskResult=new StreamTask(streamer).setCover(mCover).
-                setBufferSize(mBufferSize).execute(running);
+                setBufferSize(mBufferSize).execute(runner);
         close(streamer);
         return taskResult;
     }

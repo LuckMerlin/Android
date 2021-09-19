@@ -9,8 +9,8 @@ import luckmerlin.core.Code;
 import luckmerlin.core.Result;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.task.AbstractTask;
-import luckmerlin.task.Running;
-import luckmerlin.task.TaskResult;
+import luckmerlin.task.ReplyResult;
+import luckmerlin.task.Runner;
 
 public abstract class PathsTask extends AbstractTask {
     private Map<Path,Result> mPaths;
@@ -39,16 +39,16 @@ public abstract class PathsTask extends AbstractTask {
         return null!=pathes?new HashMap<>(pathes):null;
     }
 
-    protected abstract Result onExecutePath(Path path, Running running) throws Exception;
+    protected abstract Result onExecutePath(Path path, Runner runner) throws Exception;
 
     @Override
-    protected final Result onExecute(Running running) {
+    protected final Result onExecute(Runner runner) {
         Map<Path,Result> paths=mPaths;
         final Set<Path> set=null!=paths?paths.keySet():null;
         final int size=null!=set?set.size():-1;
         if (size<=0){
             Debug.W("Can't execute paths task while paths EMPTY.");
-            return new TaskResult(Code.CODE_EMPTY,"Paths empty",null);
+            return new ReplyResult(Code.CODE_EMPTY,"Paths empty",null);
         }
         try {
             Result taskResult;Result latestFailTaskResult=null;
@@ -60,15 +60,15 @@ public abstract class PathsTask extends AbstractTask {
                     latestFailTaskResult=!taskResult.isSucceed()?taskResult:latestFailTaskResult;
                     continue;
                 }
-                taskResult=onExecutePath(path,running);
-                paths.put(path,null!=taskResult?taskResult:(taskResult=new TaskResult(Code.CODE_FAIL,"",null)));
+                taskResult=onExecutePath(path,runner);
+                paths.put(path,null!=taskResult?taskResult:(taskResult=new ReplyResult(Code.CODE_FAIL,"",null)));
                 latestFailTaskResult=!taskResult.isSucceed()?taskResult:latestFailTaskResult;
             }
-            return null==latestFailTaskResult? new TaskResult(Code.CODE_SUCCEED,
+            return null==latestFailTaskResult? new ReplyResult(Code.CODE_SUCCEED,
                     "All path succeed.",null):latestFailTaskResult;
         }catch (Exception e){
             Debug.W("Exception execute paths task.e="+e);
-            return new TaskResult(Code.CODE_EXCEPTION,"Exception execute paths task.e="+e,null);
+            return new ReplyResult(Code.CODE_EXCEPTION,"Exception execute paths task.e="+e,null);
         }
     }
 }

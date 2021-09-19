@@ -39,9 +39,11 @@ import luckmerlin.databinding.window.PopupWindow;
 import luckmerlin.task.CallableTask;
 import luckmerlin.task.OnTaskUpdate;
 import luckmerlin.task.Progress;
+import luckmerlin.task.Runner;
 import luckmerlin.task.Status;
 import luckmerlin.task.Task;
 import luckmerlin.task.TaskBinder;
+import luckmerlin.task.Tasked;
 import merlin.file.adapter.ClientBrowseAdapter;
 import merlin.file.adapter.Query;
 import merlin.file.task.BackgroundCallableTask;
@@ -50,6 +52,7 @@ import merlin.file.task.DeleteTask;
 import merlin.file.task.DownloadTask;
 import merlin.file.task.MoveTask;
 import merlin.file.task.PathTaskCreator;
+import merlin.file.task.TestTask;
 import merlin.file.task.UploadTask;
 import merlin.file.util.FileSize;
 
@@ -92,27 +95,29 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
                 if (null!=service&&service instanceof TaskBinder){
                     TaskBinder binder=((TaskBinder)service);
                     binder.put(BrowserActivityModel.this,null);
+                    binder.start(new TestTask());
                 }
             }), Context.BIND_AUTO_CREATE);
         }
     }
 
     @Override
-    public void onTaskUpdate(int status, Task task, Object arg) {
+    public void onTaskUpdate(int status, Tasked task, Object arg) {
+        final Runner runner=null!=task?task.getRunner():null;
         String taskName=null;
-        if (null!=task){
-            status=task.getStatus();
-            taskName=task.getName();
+        if (null!=runner){
+            status=runner.getStatus();
+            taskName=null!=task?task.getName():null;
         }
         String statusName=null;
         switch (status){
             case Status.STATUS_IDLE:
-                Result result=null!=task?task.getResult():null;
+                Result result=null!=runner?runner.getResult():null;
                 statusName="【"+(null!=result?getText(result.isSucceed()?
                         R.string.succeed:R.string.failed):getText(R.string.idle))+"】";
                 break;
             case Status.STATUS_DOING:
-                Progress progress=null!=task?task.getProgress():null;
+                Progress progress=null!=runner?runner.getProgress():null;
                 if (null==progress){
                     statusName="【"+getText(R.string.doing)+"】";
                 }else{

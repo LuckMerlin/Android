@@ -10,12 +10,12 @@ public class MatchIterator {
         int length=null!=values&&null!=matchable?values.length:0;
         if (length>0){
             int max=matchable instanceof Matcher?((Matcher)matchable).getMax():-1;
-            List<T> list=new ArrayList<>(length>=max?length:Math.max(0,max));
+            List<T> list=null;
             synchronized (values) {
                 for (T child : values) {
                     if (null==child){
                         continue;
-                    }else if (max>=0&&list.size()>=max){
+                    }else if (max>=0&&(null!=list&&list.size()>=max)){
                         break;
                     }
                     Integer integer= matchable.onMatch(child);
@@ -24,7 +24,7 @@ public class MatchIterator {
                     }else if (integer== Matchable.BREAK){
                         break;
                     }else if (integer== Matchable.MATCHED){
-                        list.add(child);
+                        (null!=list?list:(list=new ArrayList<>())).add(child);
                     }
                 }
             }
@@ -37,12 +37,12 @@ public class MatchIterator {
         int length=null!=values&&null!=matchable?values.size():0;
         if (length>0){
             int max=matchable instanceof Matcher?((Matcher)matchable).getMax():-1;
-            List<T> list=new ArrayList<>(length>=max?length:Math.max(0,max));
+            List<T> list=null;
             synchronized (values){
                 for (T child:values) {
                     if (null==child){
                         continue;
-                    }else if (max>=0&&list.size()>=max){
+                    }else if (max>=0&&(null!=list&&list.size()>=max)){
                         break;
                     }
                     Integer integer= matchable.onMatch(child);
@@ -51,7 +51,7 @@ public class MatchIterator {
                     }else if (integer== Matchable.BREAK){
                         break;
                     }else if (integer== Matchable.MATCHED){
-                        list.add(child);
+                        (null!=list?list:(list=new ArrayList<T>())).add(child);
                     }
                 }
             }
