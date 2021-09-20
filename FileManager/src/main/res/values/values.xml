@@ -41,6 +41,8 @@
     <string name="unknown">未知</string>
     <string name="succeed">成功</string>
     <string name="failed">失败</string>
+    <string name="add">添加</string>
+    <string name="remove">移除</string>
     <!-- -->
     <color name="textTitle">#ffffff</color>
     <color name="textTitleSub">#ffffff</color>

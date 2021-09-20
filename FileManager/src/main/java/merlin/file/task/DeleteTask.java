@@ -7,8 +7,10 @@ import java.util.List;
 import luckmerlin.core.Code;
 import luckmerlin.core.Reply;
 import luckmerlin.core.debug.Debug;
+import luckmerlin.task.Progress;
 import luckmerlin.task.ReplyResult;
 import luckmerlin.task.Runner;
+import luckmerlin.task.Status;
 
 public class DeleteTask extends PathsTask implements BackgroundTask{
 
@@ -21,6 +23,19 @@ public class DeleteTask extends PathsTask implements BackgroundTask{
         if (null==path){
             Debug.W("Can't delete file while path NULL.");
             return new ReplyResult(Code.CODE_FAIL,"Path NULL",null);
+        }
+        Progress progress=new Progress(100);
+        while (true){
+            if (path.getName()==null){
+                break;
+            }
+            progress.setDone(progress.getDone()+1);
+            if (progress.getProgress()>100){
+                progress.setDone(0);
+            }
+            progress.setTitle("SSSS "+progress.getProgress());
+            runner.update(Status.STATUS_DOING,progress);
+            Thread.sleep(1000);
         }
         String filePath=path.getPath();
         if (null==filePath||filePath.length()<=0){

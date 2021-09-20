@@ -9,6 +9,8 @@ import android.view.WindowManager;
 import androidx.databinding.ViewDataBinding;
 import com.file.manager.R;
 import com.file.manager.databinding.AlertMessageBinding;
+
+import luckmerlin.core.debug.Debug;
 import luckmerlin.databinding.OnModelBind;
 import luckmerlin.databinding.model.Model;
 import luckmerlin.databinding.touch.OnViewClick;
@@ -58,6 +60,7 @@ public class BaseModel extends Model  {
 
     protected final boolean show(View root,PopupWindow popupWindow,int layoutId,OnModelBind callback){
         if (null==popupWindow||null==(root=null!=root?root:getRootView())){
+            Debug.W("Can't show model while arg invalid.");
             return false;
         }
         popupWindow.setWidth(WindowManager.LayoutParams.WRAP_CONTENT).setHeight(WindowManager.

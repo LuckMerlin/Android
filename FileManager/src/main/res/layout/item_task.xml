@@ -17,13 +17,18 @@
         android:paddingTop="3dp" android:paddingBottom="3dp" android:clickable="false"
         android:background="@drawable/selector_task_item_background"
         android:gravity="center_vertical" android:layout_width="match_parent"
-        android:layout_marginBottom="1dp" android:layout_height="@dimen/listItemNormal">
-        <FrameLayout android:layout_width="60dp" android:layout_height="60dp">
+        android:layout_marginBottom="1dp" android:layout_height="wrap_content">
+        <LinearLayout android:layout_width="60dp" android:layout_height="wrap_content"
+            android:orientation="vertical">
             <ImageView android:src="@drawable/hidisk_icon_ppt" android:paddingTop="7dp"
                 android:paddingBottom="7dp" android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-        </FrameLayout>
+                android:layout_height="60dp"/>
+            <TextView android:text="@{statusText??``}" android:layout_gravity="center"
+                android:textColor="@color/textTitle" android:layout_marginTop="2dp"
+                android:textSize="@dimen/textTitleSub" android:singleLine="true" android:padding="2dp"
+                android:visibility="@{statusText.length()>0?View.VISIBLE:View.GONE}"
+                android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        </LinearLayout>
 
         <LinearLayout android:orientation="vertical" android:layout_weight="1"
             android:layout_width="0dp" android:layout_marginLeft="5dp"

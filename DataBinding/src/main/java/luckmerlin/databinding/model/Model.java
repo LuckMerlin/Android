@@ -204,11 +204,11 @@ public abstract class Model {
             if (this instanceof ActivityLifecycle){
                 registerActivityLifecycleCallbacks(current.getContext(),listener);
             }
-            if (null==current.getRootView()){
-                root.addOnAttachStateChangeListener(listener);
+            root.addOnAttachStateChangeListener(listener);
+            if (null!=current.getRootView()){
+                listener.onViewAttachedToWindow(current);
                 return true;
             }
-            listener.onViewAttachedToWindow(current);
             return true;
         }
         return false;

@@ -88,7 +88,7 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         super.onRootAttached(view);
         mBrowserAdapter.setPageSize(2000);
         //
-        new TestCreateLocalDeleteFiles().create(new File("/sdcard/qsvf"),100,100);
+//        new TestCreateLocalDeleteFiles().create(new File("/sdcard/qsvf"),100,100);
         //
         addClient(new LocalClient(getText(R.string.local)));
         addClient(new NasClient("http://192.168.0.4:5000",getText(R.string.nas)));
@@ -300,13 +300,22 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         return false;
     }
 
-    private boolean launchTaskProcessDialog(List<Tasked> taskeds){
+    private boolean launchTaskProcessDialog(List<Tasked> taskeds) {
         if (null!=taskeds&&taskeds.size()>0){
             TaskProcessModel processModel=mTaskProcessModel;
-            return null!=processModel?processModel.add(taskeds):show(null,
-                    null, R.layout.task_process_model,(ViewDataBinding binding)-> {
+            if (null!=processModel){
+                return processModel.add(taskeds);
+            }
+            final PopupWindow popupWindow=new PopupWindow().setDim(0.8f).setDimAnimDuration(500);
+            return show(null, popupWindow, R.layout.task_process_model,(ViewDataBinding binding)-> {
                      if (null!=binding&&binding instanceof TaskProcessModelBinding){
                          TaskProcessModel model=mTaskProcessModel=new TaskProcessModel(){
+                             @Override
+                             public boolean onClicked(View view, int id, int count, Object tag) {
+                                 return super.onClicked(view, id, count, tag)||
+                                         (id==R.drawable.icon_close&&null!=popupWindow.dismiss())||true;
+                             }
+
                              @Override
                              protected void onRootDetached(View view) {
                                  super.onRootDetached(view);
@@ -316,6 +325,7 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
                                  }
                              }
                          };
+                         model.add(taskeds);
                          ((TaskProcessModelBinding)binding).setVm(model);
                          return model; }return null; });
         }
@@ -394,9 +404,10 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
             return toast(R.string.whichEmpty,getText(R.string.delete))&&false;
         }
         final AlertMessageModel messageModel=new AlertMessageModel();
+        final Task deleteTask=new DeleteTask(paths).setName(getText(R.string.delete));
         return showAlert(messageModel.setOnViewClick((View view1, int id, int count, Object tag)->
-             id==R.string.sure&&(showDlg?launchTaskProcessDialog(startTask(new DeleteTask(paths))):
-                     null!=startTask(new DeleteTask(paths)))&&false).setTitle(getText(R.string.delete)).
+             id==R.string.sure&&(showDlg?launchTaskProcessDialog(startTask(deleteTask)):
+                     null!=startTask(deleteTask))&&false).setTitle(getText(R.string.delete)).
                 setMessage(getText(R.string.confirmWhich,getText(R.string.delete))).
                 setLeft(R.string.sure).setRight(R.string.cancel));
      }

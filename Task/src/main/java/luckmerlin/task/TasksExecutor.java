@@ -221,9 +221,9 @@ public class TasksExecutor implements TaskRunner {
         if (null==task){
             return false;
         }else if (task instanceof Task){
-            Set<Tasked> taskeds=mTaskList;Tasked tasked=null;
-            if (null!=task&&!taskeds.contains(task)&&taskeds.add(tasked=task instanceof Tasked?
-                    (Tasked)task:new Tasked((Task)task))){
+            Set<Tasked> taskeds=mTaskList;
+            final Tasked tasked=task instanceof Tasked? (Tasked)task:new Tasked((Task)task);
+            if (null!=task&&!taskeds.contains(tasked)&&taskeds.add(tasked)){
                 onTaskStatusUpdate(Status.STATUS_ADD,tasked,null);
                 return true;
             }
@@ -270,7 +270,8 @@ public class TasksExecutor implements TaskRunner {
         return null!=taskeds?taskeds.size():-1;
     }
 
-    private List<Tasked> runTaskResolve(Collection<Tasked> collection,Object taskObject, Resolver<Tasked> resolver){
+    private List<Tasked>
+    runTaskResolve(Collection<Tasked> collection,Object taskObject, Resolver<Tasked> resolver){
         if (null==taskObject||null==resolver){
             Debug.W("Can't run task resolve while args invalid.");
             return null;
