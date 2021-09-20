@@ -63,6 +63,7 @@ public class PageListAdapter<A,T> extends ListAdapter<T> implements Refresher.On
 
     @Override
     public void onRefresh(int where) {
+        Debug.D("AAonRefresh AAAAAAAA  "+where);
         if (where==Refresher.TOP){
             pre(mPageSize, (int code, String note, Page<T> data)-> {
                 if ((code&Code.CODE_CANCEL)==0){

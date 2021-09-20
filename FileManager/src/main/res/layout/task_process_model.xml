@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:binding="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable name="vm" type="merlin.file.model.TaskProcessModel" />
+        <import type="com.file.manager.R"/>
+        <import type="luckmerlin.databinding.touch.Click"/>
+    </data>
+    <LinearLayout android:background="@drawable/round_corner_gray" android:orientation="vertical"
+        android:fitsSystemWindows="true" android:layout_width="match_parent"
+        android:layout_height="match_parent" android:paddingTop="2dp">
+        <RelativeLayout android:layout_alignParentTop="true" android:layout_width="match_parent"
+            android:paddingLeft="5dp" android:paddingRight="5dp" android:layout_height="wrap_content">
+            <TextView android:text="@string/taskList" android:textSize="@dimen/textTitle"
+                android:padding="5dp" android:textStyle="bold" android:gravity="center"
+                style="@style/titleNormalTextView"/>
+        </RelativeLayout>
+
+        <View android:paddingLeft="5dp" android:paddingRight="5dp" style="@style/horizontalDividerLine"/>
+
+        <androidx.recyclerview.widget.RecyclerView android:adapter="@{vm.listAdapter}"
+            android:layout_width="match_parent" android:layout_height="match_parent"/>
+    </LinearLayout>
+</layout>

@@ -104,12 +104,15 @@ public class TasksExecutor implements TaskRunner {
             return null;
         }
         final String taskId=finalTasked.mTaskId;
-        final Runner runner=new Runner(null!=currentRunner? currentRunner.getProgress():null,
-                null!=currentRunner?currentRunner.mSaved:null){
+        Progress latestProgress=null!=currentRunner? currentRunner.getProgress():null;
+        Saved latestSaved=null!=currentRunner?currentRunner.mSaved:null;
+        final Task finalTask=finalTasked.getTask();
+        final Saved saved=null!=latestSaved?latestSaved:(null!=finalTask&&
+                finalTask instanceof Savable)?new Saved():null;
+        final Runner runner=new Runner(latestProgress, saved){
             @Override
             public Runner update(int status, Progress progress) {
                 if (mRunning){
-                    Saved saved=mSaved;
                     progress=null!=progress?progress:getProgress();
                     if (null!=saved){
                         boolean updated=saved.setProgress(progress);
@@ -125,18 +128,14 @@ public class TasksExecutor implements TaskRunner {
                 return this;
             }
         };
-        Task finalTask=finalTasked.getTask();
-        if (null!=finalTask&&null!=taskId&&taskId.length()>0 && finalTask instanceof Savable){
-            Saved saved=new Saved();
-            saved.setTaskId(taskId).setCreateTime(finalTasked.getCreateTime());
-            final Class taskClass=finalTasked.getTaskClass();
-            if(saved.setTaskClass(taskClass)){
-                Debug.TD("Saved task.",taskClass);
-                ((Savable)finalTask).onSave(saved);
-                runner.mSaved=saved;
-            }else{
-                Debug.TW("Fail save task while task class invalid.",taskClass);
+        if (null!=saved){
+            if (null!=finalTask&&finalTask instanceof Savable){
+                Saved saveCopy=new Saved(saved);
+                ((Savable)finalTask).onSave(saveCopy);
+                saved.putSafe(saveCopy);
             }
+            saved.setTaskId(taskId).setCreateTime(finalTasked.getCreateTime()).
+                    setTaskClass(finalTasked.getTaskClass());
         }
         runner.mRunning=true;
         finalTasked.setRunner(runner.update(Status.STATUS_WAIT,null));
@@ -272,7 +271,7 @@ public class TasksExecutor implements TaskRunner {
     }
 
     private List<Tasked> runTaskResolve(Collection<Tasked> collection,Object taskObject, Resolver<Tasked> resolver){
-        if (null==collection||null==taskObject||null==resolver){
+        if (null==taskObject||null==resolver){
             Debug.W("Can't run task resolve while args invalid.");
             return null;
         }else if (taskObject instanceof Task){

@@ -13,7 +13,7 @@ public class Runner implements Status{
     private Result mResult;
     private Cancel mCanceler;
     private int mStatus;
-    protected Saved mSaved;
+    protected final Saved mSaved;
     protected boolean mRunning=false;
 
     protected Runner(Progress progress,Saved saved){

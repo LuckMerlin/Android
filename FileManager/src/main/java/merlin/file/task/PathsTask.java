@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import luckmerlin.core.Code;
+import luckmerlin.core.JsonResult;
 import luckmerlin.core.Result;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.task.AbstractTask;
-import luckmerlin.task.ReplyResult;
 import luckmerlin.task.Runner;
 
-public abstract class PathsTask extends AbstractTask {
+public abstract class PathsTask extends AbstractTask<Result> {
     private Map<Path,Result> mPaths;
 
     public final PathsTask setPaths(List<Path> paths){
@@ -48,7 +48,7 @@ public abstract class PathsTask extends AbstractTask {
         final int size=null!=set?set.size():-1;
         if (size<=0){
             Debug.W("Can't execute paths task while paths EMPTY.");
-            return new ReplyResult(Code.CODE_EMPTY,"Paths empty",null);
+            return new JsonResult(Code.CODE_EMPTY,"Paths empty",null);
         }
         try {
             Result taskResult;Result latestFailTaskResult=null;
@@ -61,14 +61,14 @@ public abstract class PathsTask extends AbstractTask {
                     continue;
                 }
                 taskResult=onExecutePath(path,runner);
-                paths.put(path,null!=taskResult?taskResult:(taskResult=new ReplyResult(Code.CODE_FAIL,"",null)));
+                paths.put(path,null!=taskResult?taskResult:(taskResult=new JsonResult(Code.CODE_FAIL,"",null)));
                 latestFailTaskResult=!taskResult.isSucceed()?taskResult:latestFailTaskResult;
             }
-            return null==latestFailTaskResult? new ReplyResult(Code.CODE_SUCCEED,
+            return null==latestFailTaskResult? new JsonResult(Code.CODE_SUCCEED,
                     "All path succeed.",null):latestFailTaskResult;
         }catch (Exception e){
             Debug.W("Exception execute paths task.e="+e);
-            return new ReplyResult(Code.CODE_EXCEPTION,"Exception execute paths task.e="+e,null);
+            return new JsonResult(Code.CODE_EXCEPTION,"Exception execute paths task.e="+e,null);
         }
     }
 }

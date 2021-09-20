@@ -21,6 +21,7 @@
     <string name="whichEmpty">%1s为空</string>
     <string name="detail">详情</string>
     <string name="transporter">传输器</string>
+    <string name="taskList">任务列表</string>
     <string name="multiChoose">多选</string>
     <string name="deleteSure">确认要删除?</string>
     <string name="canNotInCurrent">当前位置不能进行此操作</string>

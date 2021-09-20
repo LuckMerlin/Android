@@ -1,9 +1,8 @@
 package com.merlin.file;
 
 import org.json.JSONObject;
-import luckmerlin.core.json.Json;
 
-public class NasPath extends Json implements Path {
+public class NasPath extends JsonPath {
 
     public NasPath(JSONObject jsonObject){
         super(jsonObject);

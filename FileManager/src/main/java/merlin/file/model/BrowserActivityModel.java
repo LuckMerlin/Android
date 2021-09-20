@@ -4,16 +4,14 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.IBinder;
-import android.view.Gravity;
 import android.view.View;
-import android.view.WindowManager;
 import androidx.databinding.ObservableField;
 import androidx.databinding.ViewDataBinding;
 import androidx.recyclerview.widget.RecyclerView;
 import com.file.manager.R;
-import com.file.manager.databinding.AlertMessageBinding;
 import com.file.manager.databinding.BrowserMenusBinding;
 import com.file.manager.databinding.PathContextMenusBinding;
+import com.file.manager.databinding.TaskProcessModelBinding;
 import com.merlin.file.Client;
 import com.merlin.file.Folder;
 import com.merlin.file.LocalClient;
@@ -22,6 +20,8 @@ import com.merlin.file.NasClient;
 import com.merlin.file.Path;
 import com.merlin.file.TaskActivity;
 import com.merlin.file.TaskService;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -47,6 +47,7 @@ import luckmerlin.task.Status;
 import luckmerlin.task.Task;
 import luckmerlin.task.TaskBinder;
 import luckmerlin.task.Tasked;
+import merli.file.test.TestCreateLocalDeleteFiles;
 import merlin.file.adapter.ClientBrowseAdapter;
 import merlin.file.adapter.Query;
 import merlin.file.task.BackgroundCallableTask;
@@ -65,8 +66,10 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
     private final ObservableField<Folder> mCurrentFolder=new ObservableField<>();
     private final ObservableField<Integer> mClientCount=new ObservableField<>();
     private final ObservableField<String> mNotifyText=new ObservableField<>();
+    private final ObservableField<Integer> mSelectedCount=new ObservableField<>();
     private final PopupWindow mPopupWindow=new PopupWindow();
     private final ServiceConnector mConnector=new ServiceConnector();
+    private TaskProcessModel mTaskProcessModel;
     private Runnable mNotifyDelayRunnable;
     private final ObservableField<RecyclerView.Adapter> mContentAdapter=new ObservableField<>();
     private final ClientBrowseAdapter mBrowserAdapter=new ClientBrowseAdapter(){
@@ -83,6 +86,10 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
     @Override
     protected void onRootAttached(View view) {
         super.onRootAttached(view);
+        mBrowserAdapter.setPageSize(2000);
+        //
+        new TestCreateLocalDeleteFiles().create(new File("/sdcard/qsvf"),100,100);
+        //
         addClient(new LocalClient(getText(R.string.local)));
         addClient(new NasClient("http://192.168.0.4:5000",getText(R.string.nas)));
         selectAny();
@@ -104,6 +111,11 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
 
     @Override
     public void onTaskUpdate(int status, Tasked task, Object arg) {
+        OnTaskUpdate processModel=mTaskProcessModel;
+        if (null!=processModel){
+            processModel.onTaskUpdate(status,task,arg);
+        }
+        //
         final Runner runner=null!=task?task.getRunner():null;
         String taskName=null;
         if (null!=runner){
@@ -194,6 +206,12 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         return null;
     }
 
+    private boolean refreshSelectCount(){
+        Mode mode=mCurrentMode.get();
+        mSelectedCount.set(null!=mode?mode.size():0);
+        return true;
+    }
+
     @Override
     public boolean onClicked(View view, int id, int count, Object tag) {
         mPopupWindow.dismiss();
@@ -203,7 +221,11 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
                     Path path=(Path)tag;
                     Mode mode=mCurrentMode.get();//Check fot multi choose
                     if (null!=mode&&mode.getMode()==Mode.MODE_MULTI_CHOOSE){
-                        return (mode.toggle(path)&&mBrowserAdapter.notifyChildChanged(path)>=0)||true;
+                        if (mode.toggle(path)){
+                            mBrowserAdapter.notifyChildChanged(path);
+                            refreshSelectCount();
+                        }
+                        return true;
                     }
                     return openPath(path)||true;
                 }
@@ -227,14 +249,14 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
             case R.drawable.selector_cancel: return entryMode(null)||true;
 //            case R.string.sure: executeIfNotEmpty((paths)->new ChooseTask(paths),true);break;
             case R.string.upload: entryOrExecuteIfNotEmpty(Mode.MODE_UPLOAD,tag,
-                    (paths,folder)->new UploadTask(paths,folder),true);break;
+                    (paths,folder)->new UploadTask(paths,folder).setName(getText(R.string.upload)),true,count<=1);break;
             case R.string.download: entryOrExecuteIfNotEmpty(Mode.MODE_DOWNLOAD,tag,
-                    (paths,folder)->new DownloadTask(paths,folder),true);break;
+                    (paths,folder)->new DownloadTask(paths,folder).setName(getText(R.string.download)),true,count<=1);break;
             case R.string.move: entryOrExecuteIfNotEmpty(Mode.MODE_MOVE,tag,
-                    (paths,folder)->new MoveTask(paths,folder),true);break;
+                    (paths,folder)->new MoveTask(paths,folder).setName(getText(R.string.move)),true,count<=1);break;
             case R.string.copy: entryOrExecuteIfNotEmpty(Mode.MODE_COPY,tag,
-                    (paths,folder)->new CopyTask(paths,folder),true);break;
-            case R.string.delete: entryOrRunIfNotEmpty(null,tag, (folder,paths)->delete(paths), true);break;
+                    (paths,folder)->new CopyTask(paths,folder).setName(getText(R.string.copy)),true,count<=1);break;
+            case R.string.delete: entryOrRunIfNotEmpty(null,tag, (folder,paths)->delete(paths,count<=1), true);break;
         }
         return false;
     }
@@ -243,7 +265,8 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         return startActivity(TaskActivity.class);
     }
 
-    private boolean entryOrExecuteIfNotEmpty(Integer mode,Object selectObject, PathTaskCreator creator, boolean emptyNotify){
+    private boolean entryOrExecuteIfNotEmpty(Integer mode,Object selectObject,
+                                             PathTaskCreator creator, boolean emptyNotify,boolean showDlg){
         if (null!=mode&&mode==Mode.MODE_MULTI_CHOOSE){
             return false;//Invalid
         }
@@ -269,7 +292,34 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
             return toast(R.string.canNotInCurrent)&&false;
         }
         Task task=null!=creator?creator.create(paths,currentFolder):null;
-        return null!=task&&startTask(task)&&entryMode(null);
+        List<Tasked> taskeds=null;
+        if (null!=task&&(taskeds=startTask(task))!=null){
+            entryMode(null);
+            return (showDlg&&launchTaskProcessDialog(taskeds))||true;
+        }
+        return false;
+    }
+
+    private boolean launchTaskProcessDialog(List<Tasked> taskeds){
+        if (null!=taskeds&&taskeds.size()>0){
+            TaskProcessModel processModel=mTaskProcessModel;
+            return null!=processModel?processModel.add(taskeds):show(null,
+                    null, R.layout.task_process_model,(ViewDataBinding binding)-> {
+                     if (null!=binding&&binding instanceof TaskProcessModelBinding){
+                         TaskProcessModel model=mTaskProcessModel=new TaskProcessModel(){
+                             @Override
+                             protected void onRootDetached(View view) {
+                                 super.onRootDetached(view);
+                                 TaskProcessModel current=mTaskProcessModel;
+                                 if(null!=current&&current==this){
+                                     mTaskProcessModel=null;
+                                 }
+                             }
+                         };
+                         ((TaskProcessModelBinding)binding).setVm(model);
+                         return model; }return null; });
+        }
+        return false;
     }
 
     private boolean entryOrRunIfNotEmpty(Integer mode, Object selectObject, OnCheckRun runnable, boolean emptyNotify){
@@ -297,18 +347,20 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
     }
 
     private <T extends Result> boolean startTask(Callable<T> callback,boolean background) {
-        return null!=callback&&startTask(background?new BackgroundCallableTask(callback):
+        return null!=callback&&null!=startTask(background?new BackgroundCallableTask(callback):
                 new CallableTask<T>(callback));
     }
 
-    private boolean startTask(Task task) {
+    private List<Tasked> startTask(Task task) {
         ServiceConnector connector=null!=task?mConnector:null;
         TaskBinder taskBinder=null!=connector?connector.getBinder(TaskBinder.class):null;
         if (null==taskBinder){
             Debug.W("Can't start task while binder invalid.");
-            return false;
+            return null;
         }
-        return taskBinder.start(task)!=null;
+        Debug.TD("To start browser task.",task);
+        taskBinder.add(task);
+        return taskBinder.start(task);
     }
 
     private boolean resetNotifyText(String text){
@@ -337,26 +389,16 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         return startTask(()->client.scan(path),true);
     }
 
-    private boolean delete(List<Path> paths){
-        final View root=getRootView();
-        if (null==root){
-            return false;
+    private boolean delete(List<Path> paths,boolean showDlg){
+        if (null==paths){
+            return toast(R.string.whichEmpty,getText(R.string.delete))&&false;
         }
-        PopupWindow popupWindow=new PopupWindow();
-//        return null!=popupWindow.setFocusable(true).setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED).
-//                setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN).
-//                setWidth(WindowManager.LayoutParams.WRAP_CONTENT).setFocusable(true).
-//                setHeight(WindowManager.LayoutParams.WRAP_CONTENT).
-//                setContentView(root.getContext(), R.layout.alert_message, (AlertMessageBinding binding)->
-//                binding.setVm(new AlertMessageModel().setTitle(getText(R.string.delete)).
-//                setMessage(getText(R.string.deleteSure)).setLeft(R.string.sure).
-//                setRight(R.string.cancel).setOnViewClick((View view, int id, int count, Object tag)-> {
-//                    popupWindow.dismiss();
-//                    if (id==R.string.sure){
-//                        startTask(new DeleteTask(paths));
-//                    }
-//                return true; }))).showAtLocation(root);
-        return false;
+        final AlertMessageModel messageModel=new AlertMessageModel();
+        return showAlert(messageModel.setOnViewClick((View view1, int id, int count, Object tag)->
+             id==R.string.sure&&(showDlg?launchTaskProcessDialog(startTask(new DeleteTask(paths))):
+                     null!=startTask(new DeleteTask(paths)))&&false).setTitle(getText(R.string.delete)).
+                setMessage(getText(R.string.confirmWhich,getText(R.string.delete))).
+                setLeft(R.string.sure).setRight(R.string.cancel));
      }
 
     private boolean renamePath(View view,Path path){
@@ -389,6 +431,7 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
         }
         mCurrentMode.set(mode=null!=mode?mode:new Mode(Mode.MODE_NORMAL));
         mBrowserAdapter.setMode(mode);
+        refreshSelectCount();
         return true;
     }
 
@@ -502,6 +545,10 @@ public class BrowserActivityModel extends BaseModel implements OnViewClick,
 
     public ObservableField<String> getNotifyText() {
         return mNotifyText;
+    }
+
+    public ObservableField<Integer> getSelectedCount() {
+        return mSelectedCount;
     }
 
     @Override

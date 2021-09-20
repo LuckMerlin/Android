@@ -42,6 +42,30 @@ public class Json extends JSONObject {
         return def;
     }
 
+    public final Json clean(){
+        Iterator<String> iterator=keys();
+        if (null!=iterator&&iterator.hasNext()){
+            String child=null;
+            do{
+                if (null!=(child=iterator.next())){
+                    remove(child);
+                }
+            }while (iterator.hasNext());
+        }
+        return this;
+    }
+
+    public final Json removeAll(String... names){
+        if (null!=names){
+            for (String child:names) {
+                if (null!=child){
+                    remove(child);
+                }
+            }
+        }
+        return this;
+    }
+
     public final String getText(JSONObject jsonObject,String key,String def){
         Object value=null!=key&&null!=jsonObject?jsonObject.opt(key):null;
         return null!=value?value instanceof String?(String)value:value.toString():def;

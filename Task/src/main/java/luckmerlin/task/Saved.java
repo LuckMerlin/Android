@@ -7,7 +7,7 @@ import luckmerlin.core.Result;
 import luckmerlin.core.debug.Debug;
 import luckmerlin.core.json.Json;
 
-public final class Saved extends Json {
+public final class  Saved extends Json {
     private static final String PROGRESS="progress";
     private static final String STATUS="status";
     private static final String TASK_ID="taskId";
