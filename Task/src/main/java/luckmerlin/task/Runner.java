@@ -16,8 +16,9 @@ public class Runner implements Status{
     protected Saved mSaved;
     protected boolean mRunning=false;
 
-    protected Runner(Progress progress){
+    protected Runner(Progress progress,Saved saved){
         mProgress=progress;
+        mSaved=saved;
     }
 
     public final Runner cleanResult(){

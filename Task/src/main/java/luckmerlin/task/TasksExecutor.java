@@ -3,7 +3,6 @@ package luckmerlin.task;
 import android.os.SystemClock;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -105,7 +104,8 @@ public class TasksExecutor implements TaskRunner {
             return null;
         }
         final String taskId=finalTasked.mTaskId;
-        final Runner runner=new Runner(null!=currentRunner? currentRunner.getProgress():null){
+        final Runner runner=new Runner(null!=currentRunner? currentRunner.getProgress():null,
+                null!=currentRunner?currentRunner.mSaved:null){
             @Override
             public Runner update(int status, Progress progress) {
                 if (mRunning){
@@ -206,7 +206,6 @@ public class TasksExecutor implements TaskRunner {
                 Runner runner=null!=data?data.getRunner():null;
                 Saved saved=null!=runner?runner.getSaved():null;
                 Saver saver=null!=saved?mSaver:null;
-                Debug.D("AAAAAAA  "+mSaver+" "+saved+" "+runner);
                 if (null!=saver&&saver.delete(saved)){
                     Debug.D("Deleted task saved.");
                 }
@@ -252,7 +251,7 @@ public class TasksExecutor implements TaskRunner {
             }
             if (null!=taskInstance&&!(taskInstance instanceof Tasked)){
                 Tasked tasked=new Tasked<>(saved.getTaskId(),taskInstance,saved.getCreateTime());
-                tasked.setRunner(new Runner(saved.getProgress()).
+                tasked.setRunner(new Runner(saved.getProgress(),saved).
                         setStatus(Status.STATUS_IDLE).setResult(saved.getResult()));
                 return add(tasked);
             }
