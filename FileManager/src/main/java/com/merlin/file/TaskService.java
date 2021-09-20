@@ -69,6 +69,7 @@ public class TaskService extends Service  implements OnTaskUpdate,Saver {
     public boolean delete(Saved saved) {
         String taskId=null!=saved?saved.getTaskId():null;
         SharedPreferences preferences=null!=taskId?mPreference:null;
+        Debug.D("AAAA delete AAAAAAaa "+saved.toString());
         return null!=preferences&&preferences.edit().remove(taskId).commit();
     }
 

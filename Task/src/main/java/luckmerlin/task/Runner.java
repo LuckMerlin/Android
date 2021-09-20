@@ -11,7 +11,7 @@ public class Runner implements Status{
     private List<Finisher> mFinishers;
     private Progress mProgress;
     private Result mResult;
-    private Canceler mCanceler;
+    private Cancel mCanceler;
     private int mStatus;
     protected Saved mSaved;
     protected boolean mRunning=false;
@@ -24,9 +24,9 @@ public class Runner implements Status{
         return setResult(null);
     }
 
-    public final boolean isInterrupted(){
-        Thread thread=Thread.currentThread();
-        return null!=thread&&thread.isInterrupted();
+    public final boolean isCanceled(){
+        Cancel cancel=mCanceler;
+        return null!=cancel&&cancel.isCanceled();
     }
 
     protected final Runner setResult(Result result) {
@@ -37,6 +37,10 @@ public class Runner implements Status{
             //Do nothing
         }
         return this;
+    }
+
+    protected final Saved getSaved() {
+        return mSaved;
     }
 
     protected final Runner setProgress(Progress progress) {
@@ -55,11 +59,9 @@ public class Runner implements Status{
     }
 
     protected final Runner setCanceler(Future future) {
-        this.mCanceler = null!=future?(interrupt)->
-                !future.isDone()&& !future.isCancelled()&&future.cancel(interrupt):null;
+        this.mCanceler=null!=future?new Cancel(future):null;
         return this;
     }
-
 
     public final Canceler getCanceler() {
         return mCanceler;
@@ -116,6 +118,7 @@ public class Runner implements Status{
             finishers.clear();
             mFinishers=null;
         }
+        mCanceler=null;
         return this;
     }
 
@@ -132,6 +135,25 @@ public class Runner implements Status{
             }
         }
         return this;
+    }
+
+    private static class Cancel implements luckmerlin.core.Canceler{
+        private final Future mFuture;
+
+        protected Cancel(Future future){
+            mFuture=future;
+        }
+
+        public boolean isCanceled(){
+            Future future=mFuture;
+            return null!=future&&future.isCancelled();
+        }
+
+        @Override
+        public boolean cancel(boolean interrupt) {
+            Future future=mFuture;
+            return !future.isCancelled()&&future.cancel(interrupt);
+        }
     }
 
 }

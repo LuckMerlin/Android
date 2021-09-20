@@ -68,7 +68,7 @@ public class TasksExecutor implements TaskRunner {
 
     @Override
     public List<Tasked> restart(Object taskObject) {
-        return runTaskResolve(taskObject,(tasked)->{
+        return runTaskResolve(mTaskList,taskObject,(tasked)->{
             Runner runner=null!=tasked?tasked.getRunner():null;
             return null!=runner&&!runner.isExecuting()&&runner.
                     cleanResult().getResult()==null&& startTask(tasked)!=null;
@@ -77,7 +77,7 @@ public class TasksExecutor implements TaskRunner {
 
     @Override
     public List<Tasked> start(Object taskObject) {
-        return runTaskResolve(taskObject,(tasked)->null!=startTask(tasked));
+        return runTaskResolve(mTaskList,taskObject,(tasked)->null!=startTask(tasked));
     }
 
     private Tasked startTask(Task task){
@@ -125,13 +125,14 @@ public class TasksExecutor implements TaskRunner {
                 return this;
             }
         };
-        if (null!=taskId&&taskId.length()>0 && task instanceof Savable){
+        Task finalTask=finalTasked.getTask();
+        if (null!=finalTask&&null!=taskId&&taskId.length()>0 && finalTask instanceof Savable){
             Saved saved=new Saved();
             saved.setTaskId(taskId).setCreateTime(finalTasked.getCreateTime());
             final Class taskClass=finalTasked.getTaskClass();
             if(saved.setTaskClass(taskClass)){
                 Debug.TD("Saved task.",taskClass);
-                ((Savable)task).onSave(saved);
+                ((Savable)finalTask).onSave(saved);
                 runner.mSaved=saved;
             }else{
                 Debug.TW("Fail save task while task class invalid.",taskClass);
@@ -156,7 +157,7 @@ public class TasksExecutor implements TaskRunner {
 
     @Override
     public List<Tasked> cancel(boolean interrupt, Object taskObject) {
-        return runTaskResolve(taskObject,(tasked)->{
+        return runTaskResolve(mTaskList,taskObject,(tasked)->{
             Runner runner=null!=tasked?tasked.getRunner():null;
             if (null==runner||!runner.isExecuting()||null!=runner.getResult()){
                 return false;
@@ -196,10 +197,25 @@ public class TasksExecutor implements TaskRunner {
     }
 
     @Override
-    public List<Task> delete(Matchable matchable) {
-        final List<Task> tasks=null!=matchable?getTasks(matchable):null;
-        Set<Tasked> taskeds=mTaskList;
-        return null!=tasks&&null!=taskeds?(taskeds.removeAll(tasks)?tasks:null):null;
+    public List<?extends Task> delete(Object matchable) {
+        final Set<Tasked> taskeds=mTaskList;
+        return null!=taskeds?runTaskResolve(new ArrayList<>(taskeds),matchable,(Tasked data) ->{
+                if (null==data){
+                    return false;
+                }
+                Runner runner=null!=data?data.getRunner():null;
+                Saved saved=null!=runner?runner.getSaved():null;
+                Saver saver=null!=saved?mSaver:null;
+                Debug.D("AAAAAAA  "+mSaver+" "+saved+" "+runner);
+                if (null!=saver&&saver.delete(saved)){
+                    Debug.D("Deleted task saved.");
+                }
+                if (taskeds.remove(data)){
+                    onTaskStatusUpdate(Status.STATUS_REMOVE,data,null);
+                    return true;
+                }
+                return false;
+        }):null;
     }
 
     @Override
@@ -207,9 +223,13 @@ public class TasksExecutor implements TaskRunner {
         if (null==task){
             return false;
         }else if (task instanceof Task){
-            Set<Tasked> taskeds=mTaskList;
-            return null!=task&&!taskeds.contains(task)&&taskeds.add(task instanceof Tasked?
-                    (Tasked)task:new Tasked((Task)task));
+            Set<Tasked> taskeds=mTaskList;Tasked tasked=null;
+            if (null!=task&&!taskeds.contains(task)&&taskeds.add(tasked=task instanceof Tasked?
+                    (Tasked)task:new Tasked((Task)task))){
+                onTaskStatusUpdate(Status.STATUS_ADD,tasked,null);
+                return true;
+            }
+            return false;
         }else if (task instanceof Saved){
             Saved saved=(Saved)task;
             Saver saver=mSaver;
@@ -242,22 +262,8 @@ public class TasksExecutor implements TaskRunner {
     }
 
     @Override
-    public List<Task> getTasks(Matchable matchable) {
-        if (null!=matchable){
-            Set<Tasked> taskeds=mTaskList;
-            final List<Task> tasks=new ArrayList<>();
-            iterateKeys(taskeds,(Tasked arg)-> {
-                Task childTask=null!=arg?arg.mTask:null;
-                Integer matched=null!=childTask?matchable.onMatch(childTask):null;
-                if (null!=matched&&matched==Matchable.MATCHED){
-                    matched=Matchable.CONTINUE;
-                    tasks.add(childTask);
-                }
-                return matched;
-            });
-            return tasks;
-        }
-        return null;
+    public List<?extends Task> getTasks(Matchable matchable) {
+        return iterateKeys(mTaskList,matchable);
     }
 
     @Override
@@ -266,22 +272,24 @@ public class TasksExecutor implements TaskRunner {
         return null!=taskeds?taskeds.size():-1;
     }
 
-    private List<Tasked> runTaskResolve(Object taskObject, Resolver<Tasked> resolver){
-        if (null==taskObject||null==resolver){
+    private List<Tasked> runTaskResolve(Collection<Tasked> collection,Object taskObject, Resolver<Tasked> resolver){
+        if (null==collection||null==taskObject||null==resolver){
+            Debug.W("Can't run task resolve while args invalid.");
             return null;
         }else if (taskObject instanceof Task){
             final Object finalTask=taskObject instanceof Tasked?((Tasked)taskObject).getTask():taskObject;
-            return runTaskResolve(new Matcher<>((Matchable)(Object arg)-> null!=arg&&arg.
+            return runTaskResolve(collection,new Matcher<>((Matchable)(Object arg)-> null!=arg&&arg.
                     equals(null!=finalTask?finalTask:taskObject)?Matchable.MATCHED:Matchable.CONTINUE).setMax(1), resolver);
         }else if (taskObject instanceof Matchable){
             Matchable matchable=(Matchable)taskObject;
-            return iterateKeys(mTaskList,(Tasked arg)-> {
+            return iterateKeys(collection,(Tasked arg)-> {
                 Task task=null!=arg?arg.mTask:null;
                 Integer match=null!=task?matchable.onMatch(task):null;
                 return null!=match&&match==Matchable.MATCHED?(resolver.onResolve(arg)?
                         Matchable.MATCHED:Matchable.CONTINUE):match;
             });
         }
+        Debug.W("Can't run task resolve while NOT support.");
         return null;
     }
 

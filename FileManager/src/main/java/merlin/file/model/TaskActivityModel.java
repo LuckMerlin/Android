@@ -13,6 +13,7 @@ import luckmerlin.databinding.model.OnActivityStarted;
 import luckmerlin.databinding.model.OnActivityStoped;
 import luckmerlin.databinding.touch.OnViewClick;
 import luckmerlin.task.OnTaskUpdate;
+import luckmerlin.task.Status;
 import luckmerlin.task.Task;
 import luckmerlin.task.TaskBinder;
 import luckmerlin.task.Tasked;
@@ -44,7 +45,10 @@ public class TaskActivityModel extends BaseModel implements OnTaskUpdate, OnActi
         Task task=null!=tasked?tasked.getTask():null;
         Integer match=null!=task?mVisibleMatchable.onMatch(task):null;
         if (null!=match&&match==Matchable.MATCHED){
-            post(()->mTaskListAdapter.replace(tasked));
+            switch (status){
+                case Status.STATUS_REMOVE: runOnUiThread(()->mTaskListAdapter.remove(tasked));break;
+                default: runOnUiThread(()->mTaskListAdapter.replace(tasked));break;
+            }
         }
     }
 
@@ -71,10 +75,24 @@ public class TaskActivityModel extends BaseModel implements OnTaskUpdate, OnActi
             TaskBinder binder=mConnector.getBinder(TaskBinder.class);
             return null!=binder&&null!=binder.restart(task);
         }
-        return showAlert(new AlertMessageModel().setOnViewClick((View view, int id, int count, Object tag)->
-                id==R.string.sure&&restartTask(task,false)&&false).setTitle(getText(R.string.reExecute)).
+        return showAlert(new AlertMessageModel().setOnViewClick((View view, int id, int count, Object tag)-> {
+                    switch (id){
+                        case R.string.sure: restartTask(task,false);break;
+                        case R.string.delete: deleteTask(task);break;
+                    }return false; }).setTitle(getText(R.string.reExecute)).
                 setMessage(getText(R.string.confirmWhich, getText(R.string.reExecute))).
-                setLeft(R.string.sure).setRight(R.string.cancel));
+                setLeft(R.string.sure).setCenter(R.string.delete).setRight(R.string.cancel));
+    }
+
+    private boolean deleteTask(Task task){
+        return showAlert(new AlertMessageModel().setOnViewClick((View view, int id, int count, Object tag)-> {
+            switch (id){
+                case R.string.delete:
+                    TaskBinder binder=mConnector.getBinder(TaskBinder.class);
+                    return null!=binder&&null!=binder.delete(task)&&false;
+            }return false; }).setTitle(getText(R.string.delete)).
+                setMessage(getText(R.string.confirmWhich, getText(R.string.delete))).
+                setCenter(R.string.delete).setRight(R.string.cancel));
     }
 
     @Override

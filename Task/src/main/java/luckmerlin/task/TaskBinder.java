@@ -30,7 +30,7 @@ public class TaskBinder extends Binder implements TaskRunner {
     }
 
     @Override
-    public List<Task> delete(Matchable matchable) {
+    public List<?extends Task> delete(Object matchable) {
         TaskRunner runner=mTaskRunner;
         return null!=runner?runner.delete(matchable):null;
     }
@@ -42,7 +42,7 @@ public class TaskBinder extends Binder implements TaskRunner {
     }
 
     @Override
-    public List<Task> getTasks(Matchable matchable) {
+    public List<?extends Task> getTasks(Matchable matchable) {
         TaskRunner runner=mTaskRunner;
         return null!=runner?runner.getTasks(matchable):null;
     }
